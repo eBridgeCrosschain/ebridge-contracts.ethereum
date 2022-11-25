@@ -19,7 +19,7 @@ describe("BridgeIn", function () {
         const bridgeOutMock = await BridgeOutMock.deploy();
         const bridgeInImplementation = await BridgeInImplementation.deploy();
 
-        const multiSigWalletMockAddress = bridgeOutMock.address;
+        const multiSigWalletMockAddress = otherAccount0.address;
         const bridgeInProxy = await BridgeIn.deploy(multiSigWalletMockAddress, bridgeInImplementation.address);
         const bridgeIn = BridgeInImplementation.attach(bridgeInProxy.address);
         await bridgeIn.setBridgeOut(bridgeOutMock.address);
@@ -378,9 +378,25 @@ describe("BridgeIn", function () {
                 var isPaused = await bridgeIn.isPaused();
                 expect(isPaused).to.equal(true);
 
+                //revert when pause again
+                var error = "paused"
+                await expect(bridgeIn.pause())
+                .to.be.revertedWith(error);
+                //revert when sender is not admin
+                var error = "Ownable: caller is not the owner"
+                await expect(bridgeIn.connect(otherAccount0).pause())
+                .to.be.revertedWith(error);
+
                 var error = "paused"
                 await expect(bridgeIn.createReceipt(elf.address, amount, chainId, targetAddress))
                 .to.be.revertedWith(error);
+
+                //restart : otherAccount0 is the mock MulsigWallet sender
+                await bridgeIn.connect(otherAccount0).restart();
+
+                //createReceipt success 
+                bridgeIn.createReceipt(elf.address, amount, chainId, targetAddress);
+                expect(await elf.balanceOf(owner.address)).to.equal(0)
 
             })
 

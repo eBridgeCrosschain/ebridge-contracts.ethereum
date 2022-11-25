@@ -85,6 +85,7 @@ contract BridgeInImplementation is ProxyStorage {
     }
 
     function pause() external onlyOwner {
+        require(!isPaused, 'already paused');
         isPaused = true;
     }
 

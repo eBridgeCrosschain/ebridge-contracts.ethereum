@@ -51,6 +51,19 @@ describe("MultiSigWallet", function () {
                 var count = await multiSigWallet.getTransactionCount(true, false);
                 expect(count).to.equal(1);
             });
+
+            it("Should revert when caller is not the owner", async function () {
+                const { bridgeIn, multiSigWallet, owner, account1 } = await loadFixture(deployMultiSigWalletFixture);
+                let ABI = [
+                    "function restart()"
+                ];
+                let iface = new ethers.utils.Interface(ABI);
+                var data = iface.encodeFunctionData("restart")
+
+                error = "Ownable: caller is not the owner"
+                await expect(multiSigWallet.connect(account1).submitTransaction(bridgeIn.address, 0, data))
+                .to.be.revertedWith(error);
+            })
         })
 
         describe("confirmTransaction test", function () {
@@ -63,6 +76,13 @@ describe("MultiSigWallet", function () {
                 var data = iface.encodeFunctionData("restart")
                 await multiSigWallet.submitTransaction(bridgeIn.address, 0, data);
                 var transactionId = 0;
+
+                //revert 
+                error = "member not exist"
+                await expect( multiSigWallet.confirmTransaction(transactionId))
+                .to.be.revertedWith(error);
+               
+
                 await multiSigWallet.connect(account).confirmTransaction(transactionId);
                 var confirmations = await multiSigWallet.getConfirmations(transactionId);
                 expect(confirmations[0]).to.equal(account.address);
@@ -71,6 +91,7 @@ describe("MultiSigWallet", function () {
                 var confirmations = await multiSigWallet.getConfirmations(transactionId);
                 expect(confirmations[1]).to.equal(account1.address);
             });
+            
         })
 
         describe("revokeConfirmation test", function () {
@@ -87,6 +108,10 @@ describe("MultiSigWallet", function () {
                 var confirmations = await multiSigWallet.getConfirmations(transactionId);
                 expect(confirmations[0]).to.equal(account.address);
 
+                  //revert 
+                  error = "member not exist"
+                  await expect( multiSigWallet.revokeConfirmation(transactionId))
+                  .to.be.revertedWith(error);
                 await multiSigWallet.connect(account).revokeConfirmation(transactionId);
 
                 var confirmations = await multiSigWallet.getConfirmations(transactionId);
@@ -140,6 +165,18 @@ describe("MultiSigWallet", function () {
                 var required = await multiSigWallet.required();
                 expect(required).to.equal(newRequired);
             });
+
+            it("Should changeRequirement success", async function () {
+                const { bridgeIn, multiSigWallet, owner, account, account1, account2, } = await loadFixture(deployMultiSigWalletFixture);
+                let ABI = [
+                    "function changeRequirement(uint256 _required)"
+                ];
+                let iface = new ethers.utils.Interface(ABI);
+                var newRequired = 2;
+                error = "only for Wallet call"
+                await expect(multiSigWallet.changeRequirement(newRequired))
+                .to.be.revertedWith(error);
+            });
         })
 
         describe("add/remove member test", function () {
@@ -164,7 +201,30 @@ describe("MultiSigWallet", function () {
                 var isMember = await multiSigWallet.isMember(account4.address);
                 expect(isMember).to.equal(false);
             });
+            it("Should failed when remove a not exist member ", async function () {
+                const { bridgeIn, multiSigWallet, owner, account, account1, account2, account3, account4 } = await loadFixture(deployMultiSigWalletFixture);
+                let ABI = [
+                    "function removeMember(address member)"
+                ];
+                let iface = new ethers.utils.Interface(ABI);
+                var data = iface.encodeFunctionData("removeMember", [owner.address])
 
+                await multiSigWallet.submitTransaction(multiSigWallet.address, 0, data);
+
+                var isMember = await multiSigWallet.isMember(account4.address);
+                expect(isMember).to.equal(true);
+
+                var transactionId = 0;
+                await multiSigWallet.connect(account).confirmTransaction(transactionId);
+                await multiSigWallet.connect(account1).confirmTransaction(transactionId);
+                await multiSigWallet.connect(account2).confirmTransaction(transactionId);
+
+                //failed event
+                var tx = await multiSigWallet.executeTransaction(transactionId);
+                const receipt = await tx.wait();
+                
+            });
+            
             it("Should add member success", async function () {
                 const { bridgeIn, multiSigWallet, owner, account, account1, account2, account3, account4 } = await loadFixture(deployMultiSigWalletFixture);
                 let ABI = [

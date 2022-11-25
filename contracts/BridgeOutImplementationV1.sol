@@ -84,11 +84,12 @@ contract BridgeOutImplementationV1 is ProxyStorage {
     }
 
     function pause() external onlyOwner {
+        require(!isPaused, 'already paused');
         isPaused = true;
     }
 
     function restart() public {
-        require(msg.sender == bridgeIn, 'no permission');
+        require(msg.sender == bridgeIn, 'No permission');
         require(isPaused == true, 'not paused');
         isPaused = false;
     }
