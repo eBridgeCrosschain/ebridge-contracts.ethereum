@@ -166,7 +166,7 @@ describe("MultiSigWallet", function () {
                 expect(required).to.equal(newRequired);
             });
 
-            it("Should changeRequirement success", async function () {
+            it("Should changeRequirement revert when sender is not wallet", async function () {
                 const { bridgeIn, multiSigWallet, owner, account, account1, account2, } = await loadFixture(deployMultiSigWalletFixture);
                 let ABI = [
                     "function changeRequirement(uint256 _required)"
