@@ -223,8 +223,40 @@ describe("MultiSigWallet", function () {
                 var tx = await multiSigWallet.executeTransaction(transactionId);
                 const receipt = await tx.wait();
                 
+                var isConfirmed = await multiSigWallet.isConfirmed(transactionId);
+                expect(isConfirmed).to.equal(true);
+                var transaction = await multiSigWallet.transactions(transactionId);
+                expect( transaction.executed).to.equal(false);
+               
             });
-            
+            it("Should failed when add an existed member ", async function () {
+                const { bridgeIn, multiSigWallet, owner, account, account1, account2, account3, account4 } = await loadFixture(deployMultiSigWalletFixture);
+                let ABI = [
+                    "function addMember(address member)"
+                ];
+                let iface = new ethers.utils.Interface(ABI);
+                var data = iface.encodeFunctionData("addMember", [account1.address])
+
+                await multiSigWallet.submitTransaction(multiSigWallet.address, 0, data);
+
+                var isMember = await multiSigWallet.isMember(account1.address);
+                expect(isMember).to.equal(true);
+
+                var transactionId = 0;
+                await multiSigWallet.connect(account).confirmTransaction(transactionId);
+                await multiSigWallet.connect(account1).confirmTransaction(transactionId);
+                await multiSigWallet.connect(account2).confirmTransaction(transactionId);
+
+                //failed event
+                var tx = await multiSigWallet.executeTransaction(transactionId);
+                const receipt = await tx.wait();
+
+                var isConfirmed = await multiSigWallet.isConfirmed(transactionId);
+                expect(isConfirmed).to.equal(true);
+                var transaction = await multiSigWallet.transactions(transactionId);
+                expect( transaction.executed).to.equal(false);
+               
+            });
             it("Should add member success", async function () {
                 const { bridgeIn, multiSigWallet, owner, account, account1, account2, account3, account4 } = await loadFixture(deployMultiSigWalletFixture);
                 let ABI = [
