@@ -16,13 +16,13 @@ describe("BridgeOut", function () {
         const BridgeOut = await ethers.getContractFactory("BridgeOut");
         const BridgeOutImplementation = await ethers.getContractFactory("BridgeOutImplementationV1");
 
-        const bridgeInMock = otherAccount0.address ;
+        const bridgeInMock = otherAccount0.address;
         const bridgeOutImplementation = await BridgeOutImplementation.deploy();
         const bridgeOutProxy = await BridgeOut.deploy(merkleTree.address, regiment.address, bridgeInMock, bridgeOutImplementation.address);
         const bridgeOut = BridgeOutImplementation.attach(bridgeOutProxy.address);
 
-      //   await bridgeOut.setDefaultNodesCount(1);
-        return { merkleTree, regimentId, regiment, bridgeOut,bridgeOutProxy, owner, otherAccount0, otherAccount1 };
+        //   await bridgeOut.setDefaultNodesCount(1);
+        return { merkleTree, regimentId, regiment, bridgeOut, bridgeOutProxy, owner, otherAccount0, otherAccount1 };
 
     }
 
@@ -81,10 +81,10 @@ describe("BridgeOut", function () {
         describe("update contract test", function () {
 
             it("Should revert when address is not a contract", async function () {
-                const {owner, bridgeOutProxy } = await loadFixture(deployBridgeOutFixture);
+                const { owner, bridgeOutProxy } = await loadFixture(deployBridgeOutFixture);
                 error = 'DESTINATION_ADDRESS_IS_NOT_A_CONTRACT'
                 await expect(bridgeOutProxy.updateImplementation(owner.address))
-                .to.be.revertedWith(error);
+                    .to.be.revertedWith(error);
             });
             it("Should update contract success", async function () {
                 const { bridgeOutProxy, owner } = await loadFixture(deployBridgeOutFixture);
@@ -111,7 +111,7 @@ describe("BridgeOut", function () {
                     fromChainId: fromChainId,
                     originShare: "100",
                     targetShare: "100",
-                    depositAmount:0
+                    depositAmount: 0
                 }
                 error = "no permission"
                 await expect(bridgeOut.connect(otherAccount0).createSwap(targetToken, regimentId))
@@ -130,9 +130,9 @@ describe("BridgeOut", function () {
                     fromChainId: chainId,
                     originShare: "100",
                     targetShare: "100",
-                    depositAmount:0
+                    depositAmount: 0
                 }
-                
+
                 error = "target token already exist"
                 await bridgeOut.createSwap(targetToken, regimentId);
                 await expect(bridgeOut.createSwap(targetToken, regimentId))
@@ -151,7 +151,7 @@ describe("BridgeOut", function () {
                     fromChainId: chainId,
                     originShare: "0",
                     targetShare: "100",
-                    depositAmount:0
+                    depositAmount: 0
                 }
                 error = "invalid swap ratio"
                 await expect(bridgeOut.createSwap(targetToken, regimentId))
@@ -166,15 +166,15 @@ describe("BridgeOut", function () {
                 _newAdmins = [bridgeOut.address];
                 await regiment.AddAdmins(regimentId, _newAdmins);
                 var token = elf.address;
-             
+
                 var targetToken = {
                     token,
                     fromChainId: chainId,
                     originShare: "100",
                     targetShare: "100",
-                    depositAmount:0
+                    depositAmount: 0
                 }
-            
+
                 await bridgeOut.createSwap(targetToken, regimentId);
 
                 var swapId = await bridgeOut.getSwapId(elf.address, chainId);
@@ -190,7 +190,7 @@ describe("BridgeOut", function () {
                     fromChainId: chainId,
                     originShare: "100",
                     targetShare: "100",
-                    depositAmount:0
+                    depositAmount: 0
                 }
                 await bridgeOut.createSwap(targetToken, regimentId);
 
@@ -213,13 +213,13 @@ describe("BridgeOut", function () {
                 amount = 1000000000;
                 await regiment.AddAdmins(regimentId, _newAdmins);
                 var token = elf.address;
-            
+
                 var targetToken = {
                     token,
                     fromChainId: chainId,
                     originShare: "100",
                     targetShare: "100",
-                    depositAmount:0
+                    depositAmount: 0
                 }
                 await bridgeOut.createSwap(targetToken, regimentId);
                 var swapId = await bridgeOut.getSwapId(elf.address, chainId);
@@ -231,11 +231,11 @@ describe("BridgeOut", function () {
                 //invalid token
                 error = "invalid token";
                 targetToken = {
-                    token:usdt.address,
+                    token: usdt.address,
                     fromChainId: chainId,
                     originShare: "100",
                     targetShare: "100",
-                    depositAmount:0
+                    depositAmount: 0
                 }
                 await bridgeOut.createSwap(targetToken, regimentId);
                 await expect(bridgeOut.deposit(swapId, usdt.address, amount))
@@ -252,7 +252,7 @@ describe("BridgeOut", function () {
                 await elf.approve(bridgeOut.address, amount);
                 await expect(bridgeOut.deposit(swapId, token, amount))
                     .to.be.revertedWith(error);
-                
+
             });
             it("Should deposit successful", async function () {
 
@@ -262,13 +262,13 @@ describe("BridgeOut", function () {
                 _newAdmins = [bridgeOut.address];
                 await regiment.AddAdmins(regimentId, _newAdmins);
                 var token = elf.address;
-             
+
                 var targetToken = {
                     token,
                     fromChainId: chainId,
                     originShare: "100",
                     targetShare: "100",
-                    depositAmount:0
+                    depositAmount: 0
                 }
                 await bridgeOut.createSwap(targetToken, regimentId);
                 var swapId = await bridgeOut.getSwapId(elf.address, chainId);
@@ -277,7 +277,7 @@ describe("BridgeOut", function () {
                 await elf.mint(owner.address, amount);
                 expect(await elf.balanceOf(bridgeOut.address)).to.equal(0)
                 await elf.approve(bridgeOut.address, amount);
-                
+
                 await bridgeOut.deposit(swapId, token, amount);
                 expect(await elf.balanceOf(bridgeOut.address)).to.equal(amount)
                 expect(await elf.balanceOf(owner.address)).to.equal(0)
@@ -301,7 +301,7 @@ describe("BridgeOut", function () {
                     fromChainId: chainId,
                     originShare: "100",
                     targetShare: "100",
-                    depositAmount:0
+                    depositAmount: 0
                 }
                 await bridgeOut.createSwap(targetToken, regimentId);
                 var swapId = await bridgeOut.getSwapId(elf.address, chainId);
@@ -311,15 +311,15 @@ describe("BridgeOut", function () {
                 error = "target token not exist";
                 await expect(bridgeOut.withdraw(swapId, usdt.address, amount))
                     .to.be.revertedWith(error);
-            
+
                 //invalid token
                 error = "invalid token";
                 targetToken = {
-                    token:usdt.address,
+                    token: usdt.address,
                     fromChainId: chainId,
                     originShare: "100",
                     targetShare: "100",
-                    depositAmount:0
+                    depositAmount: 0
                 }
                 await bridgeOut.createSwap(targetToken, regimentId);
                 await expect(bridgeOut.withdraw(swapId, usdt.address, amount))
@@ -332,7 +332,7 @@ describe("BridgeOut", function () {
                 error = "deposits not enough";
                 await expect(bridgeOut.withdraw(swapId, token, amount))
                     .to.be.revertedWith(error);
-                
+
             });
 
             it("Should withdraw successful", async function () {
@@ -349,7 +349,7 @@ describe("BridgeOut", function () {
                     fromChainId: chainId,
                     originShare: "100",
                     targetShare: "100",
-                    depositAmount:0
+                    depositAmount: 0
                 }
                 await bridgeOut.createSwap(targetToken, regimentId);
                 var swapId = await bridgeOut.getSwapId(elf.address, chainId);
@@ -359,7 +359,7 @@ describe("BridgeOut", function () {
                 await elf.mint(owner.address, amount);
                 expect(await elf.balanceOf(bridgeOut.address)).to.equal(0)
                 await elf.approve(bridgeOut.address, amounts);
-                
+
                 await bridgeOut.deposit(swapId, token, amount);
                 expect(await elf.balanceOf(bridgeOut.address)).to.equal(amount)
                 expect(await elf.balanceOf(owner.address)).to.equal(0)
@@ -383,15 +383,15 @@ describe("BridgeOut", function () {
                 _newAdmins = [bridgeOut.address];
                 await regiment.AddAdmins(regimentId, _newAdmins);
                 var token = elf.address;
-            
+
                 var targetToken = {
                     token,
                     fromChainId: chainId,
                     originShare: "100",
                     targetShare: "100",
-                    depositAmount:0
+                    depositAmount: 0
                 }
-            
+
                 await bridgeOut.createSwap(targetToken, regimentId);
                 var swapId = await bridgeOut.getSwapId(elf.address, chainId);
 
@@ -454,15 +454,15 @@ describe("BridgeOut", function () {
                 _newAdmins = [bridgeOut.address];
                 await regiment.AddAdmins(regimentId, _newAdmins);
                 var token = elf.address;
-         
+
                 var targetToken = {
                     token,
                     fromChainId: chainId,
                     originShare: "100",
                     targetShare: "100",
-                    depositAmount:0
+                    depositAmount: 0
                 }
-                
+
                 await bridgeOut.createSwap(targetToken, regimentId);
                 var swapId = await bridgeOut.getSwapId(elf.address, chainId);
 
@@ -502,20 +502,20 @@ describe("BridgeOut", function () {
                 _newAdmins = [bridgeOut.address];
                 await regiment.AddAdmins(regimentId, _newAdmins);
                 var token = elf.address;
-             
+
                 var targetToken = {
                     token,
                     fromChainId: chainId,
                     originShare: "100",
                     targetShare: "100",
-                    depositAmount:0
+                    depositAmount: 0
                 }
-               
+
                 await bridgeOut.createSwap(targetToken, regimentId);
                 var swapId = await bridgeOut.getSwapId(elf.address, chainId);
                 await regiment.AddRegimentMember(regimentId, bridgeOut.address);
 
-     
+
                 //first transmit 
                 amount = "100000000";
 
@@ -523,7 +523,7 @@ describe("BridgeOut", function () {
                 await elf.approve(bridgeOut.address, amount);
                 var tokenKey = _generateTokenKey(elf.address, chainId);
                 await bridgeOut.deposit(swapId, token, amount);
-                await bridgeOut.setLimits([token],["10000"]);
+                await bridgeOut.setLimits([token], ["10000"]);
                 var index = "123";
 
                 var receiptId = tokenKey.toString() + "." + index;
@@ -574,15 +574,15 @@ describe("BridgeOut", function () {
                 _newAdmins = [bridgeOut.address];
                 await regiment.AddAdmins(regimentId, _newAdmins);
                 var token = elf.address;
-              
+
                 var targetToken = {
                     token,
                     fromChainId: chainId,
                     originShare: "100",
                     targetShare: "100",
-                    depositAmount:0
+                    depositAmount: 0
                 }
-                
+
                 await bridgeOut.createSwap(targetToken, regimentId);
                 var swapId = await bridgeOut.getSwapId(elf.address, chainId);
                 amount = "100";
@@ -591,8 +591,8 @@ describe("BridgeOut", function () {
                 await elf.mint(owner.address, amount);
                 await elf.approve(bridgeOut.address, amount);
                 var tokenKey = _generateTokenKey(elf.address, chainId);
-              
-                await bridgeOut.setLimits([token],["10000"]);
+
+                await bridgeOut.setLimits([token], ["10000"]);
                 var index = "1234";
                 var receiptId = tokenKey.toString() + "." + index;
                 var amount = "100";
@@ -642,15 +642,15 @@ describe("BridgeOut", function () {
                 _newAdmins = [bridgeOut.address];
                 await regiment.AddAdmins(regimentId, _newAdmins);
                 var token = elf.address;
-          
+
                 var targetToken = {
                     token,
                     fromChainId: chainId,
                     originShare: "100",
                     targetShare: "100",
-                    depositAmount:0
+                    depositAmount: 0
                 }
-                
+
                 await bridgeOut.createSwap(targetToken, regimentId);
                 var swapId = await bridgeOut.getSwapId(elf.address, chainId);
                 amount = "100";
@@ -660,7 +660,7 @@ describe("BridgeOut", function () {
                 await elf.approve(bridgeOut.address, amount);
                 var tokenKey = _generateTokenKey(elf.address, chainId);
                 await bridgeOut.deposit(swapId, tokens, amounts);
-                await bridgeOut.setLimits([token],["10000"]);
+                await bridgeOut.setLimits([token], ["10000"]);
                 var index = "1234";
                 var receiptId = tokenKey.toString() + "." + index;
                 var amount = "100";
@@ -697,15 +697,15 @@ describe("BridgeOut", function () {
                 _newAdmins = [bridgeOut.address];
                 await regiment.AddAdmins(regimentId, _newAdmins);
                 var token = elf.address;
-        
+
                 var targetToken = {
                     token,
                     fromChainId: chainId,
                     originShare: "100",
                     targetShare: "100",
-                    depositAmount:0
+                    depositAmount: 0
                 }
-                
+
                 await bridgeOut.createSwap(targetToken, regimentId);
                 var swapId = await bridgeOut.getSwapId(elf.address, chainId);
 
@@ -716,7 +716,7 @@ describe("BridgeOut", function () {
                 await elf.approve(bridgeOut.address, amount);
                 var tokenKey = _generateTokenKey(elf.address, chainId);
                 await bridgeOut.deposit(swapId, tokens, amounts);
-                await bridgeOut.setLimits([token],["10000"]);
+                await bridgeOut.setLimits([token], ["10000"]);
                 var index = "1234";
                 var receiptId = tokenKey.toString() + "." + index;
                 var amount = "100";
@@ -745,15 +745,15 @@ describe("BridgeOut", function () {
 
                 //usdt
                 token = usdt.address
-       
+
                 var targetToken = {
                     token,
                     fromChainId: chainId,
                     originShare: "100",
                     targetShare: "100",
-                    depositAmount:0
+                    depositAmount: 0
                 }
-            
+
                 await bridgeOut.createSwap(targetToken, regimentId);
                 var swapId = await bridgeOut.getSwapId(token, chainId);
                 amount = "100";
@@ -763,7 +763,7 @@ describe("BridgeOut", function () {
                 await usdt.approve(bridgeOut.address, amount);
                 var tokenKey = _generateTokenKey(token, chainId);
                 await bridgeOut.deposit(swapId, tokens, amounts);
-                await bridgeOut.setLimits([token],["10000"]);
+                await bridgeOut.setLimits([token], ["10000"]);
                 var index = "1234";
                 var receiptId = tokenKey.toString() + "." + index;
                 var amount = "100";
@@ -796,13 +796,13 @@ describe("BridgeOut", function () {
                 _newAdmins = [bridgeOut.address];
                 await regiment.AddAdmins(regimentId, _newAdmins);
                 var token = elf.address;
-          
+
                 var targetToken = {
                     token,
                     fromChainId: chainId,
                     originShare: "100",
                     targetShare: "100",
-                    depositAmount:0
+                    depositAmount: 0
                 }
                 await bridgeOut.createSwap(targetToken, regimentId);
                 var swapId = await bridgeOut.getSwapId(elf.address, chainId);
@@ -814,7 +814,7 @@ describe("BridgeOut", function () {
                 var tokenKey = _generateTokenKey(elf.address, chainId);
                 await bridgeOut.deposit(swapId, tokens, amounts);
                 //setlimit 
-                await bridgeOut.setLimits([token],["50"]);
+                await bridgeOut.setLimits([token], ["50"]);
 
                 var index = "1234";
                 var receiptId = tokenKey.toString() + "." + index;
@@ -835,14 +835,14 @@ describe("BridgeOut", function () {
                 error = "receipt should be approved";
                 await expect(bridgeOut.swapToken(swapId, receiptId, amount, targetAddress))
                     .to.be.revertedWith(error);
-              
+
                 //setlimit revert 
                 error = "Ownable: caller is not the owner"
                 await expect(bridgeOut.connect(otherAccount0).approve(receiptId))
-                .to.be.revertedWith(error);
+                    .to.be.revertedWith(error);
 
                 await bridgeOut.approve(receiptId);
-              
+
                 await bridgeOut.swapToken(swapId, receiptId, amount, targetAddress);
                 expect(await elf.balanceOf(bridgeOut.address)).to.equal("0")
                 expect(await elf.balanceOf(owner.address)).to.equal(amount)
@@ -863,15 +863,15 @@ describe("BridgeOut", function () {
                 _newAdmins = [bridgeOut.address];
                 await regiment.AddAdmins(regimentId, _newAdmins);
                 var token = elf.address;
-          
+
                 var targetToken = {
                     token,
                     fromChainId: chainId,
                     originShare: "100",
                     targetShare: "100",
-                    depositAmount:0
+                    depositAmount: 0
                 }
-                
+
                 await bridgeOut.createSwap(targetToken, regimentId);
                 var swapId = await bridgeOut.getSwapId(elf.address, chainId);
                 amount = "100";
@@ -882,7 +882,7 @@ describe("BridgeOut", function () {
                 var tokenKey = _generateTokenKey(elf.address, chainId);
                 await bridgeOut.deposit(swapId, tokens, amounts);
                 //setlimit 
-                await bridgeOut.setLimits([token],["50"]);
+                await bridgeOut.setLimits([token], ["50"]);
 
                 var index = "1234";
                 var receiptId = tokenKey.toString() + "." + index;
@@ -903,15 +903,15 @@ describe("BridgeOut", function () {
                 error = "receipt should be approved";
                 await expect(bridgeOut.swapToken(swapId, receiptId, amount, targetAddress))
                     .to.be.revertedWith(error);
-              
+
                 //setlimit revert 
                 error = "Ownable: caller is not the owner"
-                await expect(bridgeOut.connect(otherAccount0).setLimits([token],["200"]))
-                .to.be.revertedWith(error);
-              
+                await expect(bridgeOut.connect(otherAccount0).setLimits([token], ["200"]))
+                    .to.be.revertedWith(error);
+
                 //setlimit 
-                await bridgeOut.setLimits([token],["200"]);
-              
+                await bridgeOut.setLimits([token], ["200"]);
+
                 //swap without approve
                 await bridgeOut.swapToken(swapId, receiptId, amount, targetAddress);
                 expect(await elf.balanceOf(bridgeOut.address)).to.equal("0")
@@ -933,13 +933,13 @@ describe("BridgeOut", function () {
                 _newAdmins = [bridgeOut.address];
                 await regiment.AddAdmins(regimentId, _newAdmins);
                 var token = elf.address;
-          
+
                 var targetToken = {
                     token,
                     fromChainId: chainId,
                     originShare: "100",
                     targetShare: "100",
-                    depositAmount:0
+                    depositAmount: 0
                 }
                 await bridgeOut.createSwap(targetToken, regimentId);
                 var swapId = await bridgeOut.getSwapId(elf.address, chainId);
@@ -950,7 +950,7 @@ describe("BridgeOut", function () {
                 await elf.approve(bridgeOut.address, amount);
                 var tokenKey = _generateTokenKey(elf.address, chainId);
                 await bridgeOut.deposit(swapId, tokens, amounts);
-                await bridgeOut.setLimits([token],["10000"]);
+                await bridgeOut.setLimits([token], ["10000"]);
                 var index = "1234";
                 var receiptId = tokenKey.toString() + "." + index;
                 var amount = "100";
@@ -968,23 +968,23 @@ describe("BridgeOut", function () {
                 await bridgeOut.transmit(swapId, message.message, [Signature.r], [Signature.s], v);
 
                 await bridgeOut.pause();
- 
+
                 //revert when paused
                 error = "paused"
                 await expect(bridgeOut.swapToken(swapId, receiptId, amount, targetAddress))
-                .to.be.revertedWith(error);
+                    .to.be.revertedWith(error);
 
                 //revert when sender is not bridgeIn
                 error = "No permission"
                 await expect(bridgeOut.restart())
-                .to.be.revertedWith(error);
+                    .to.be.revertedWith(error);
 
                 //restart : otherAccount0 is the mock sender
                 await bridgeOut.connect(otherAccount0).restart();
                 //revert when restart again
                 error = "not paused"
                 await expect(bridgeOut.connect(otherAccount0).restart())
-                .to.be.revertedWith(error);
+                    .to.be.revertedWith(error);
                 //success
                 bridgeOut.swapToken(swapId, receiptId, amount, targetAddress)
                 expect(await elf.balanceOf(owner.address)).to.equal(amount)
@@ -1020,9 +1020,9 @@ describe("BridgeOut", function () {
     }
 
 
-    function _generateTokenKey(token, chainId){   
-       var data =  ethers.utils.solidityPack(["address","string"],[token,chainId]);
-       return  ethers.utils.sha256(data);
+    function _generateTokenKey(token, chainId) {
+        var data = ethers.utils.solidityPack(["address", "string"], [token, chainId]);
+        return ethers.utils.sha256(data);
     }
 });
 

@@ -9,17 +9,14 @@ contract BridgeIn is Proxy {
     ) Proxy(_implementation) {
         delegateTo(
             _implementation,
-            abi.encodeWithSignature(
-                'initialize(address)',
-                _mutiSigWallet
-            )
+            abi.encodeWithSignature('initialize(address)', _mutiSigWallet)
         );
     }
 
-    function delegateTo(address callee, bytes memory data)
-        internal
-        returns (bytes memory)
-    {
+    function delegateTo(
+        address callee,
+        bytes memory data
+    ) internal returns (bytes memory) {
         (bool success, bytes memory returnData) = callee.delegatecall(data);
         assembly {
             if eq(success, 0) {

@@ -21,7 +21,7 @@ contract BridgeOutImplementation is ProxyStorage {
     mapping(bytes32 => SwapInfo) internal swapInfos;
     mapping(bytes32 => bytes32) internal tokenKeyToSwapIdMap;
     mapping(bytes32 => mapping(address => SwapPairInfo)) internal SwapPairInfos;
-   // mapping(bytes32 => uint256) internal leafNodeIndexMap;
+    // mapping(bytes32 => uint256) internal leafNodeIndexMap;
     mapping(bytes32 => SwapAmounts) internal ledger;
     mapping(bytes32 => ReceivedReceipt[]) internal receivedReceipts;
     mapping(string => bool) internal receiptApproveMap;
@@ -93,10 +93,9 @@ contract BridgeOutImplementation is ProxyStorage {
         isPaused = false;
     }
 
-    function setDefaultMerkleTreeDepth(uint256 _defaultMerkleTreeDepth)
-        external
-        onlyOwner
-    {
+    function setDefaultMerkleTreeDepth(
+        uint256 _defaultMerkleTreeDepth
+    ) external onlyOwner {
         defaultMerkleTreeDepth = _defaultMerkleTreeDepth;
     }
 
@@ -112,10 +111,7 @@ contract BridgeOutImplementation is ProxyStorage {
         );
         address targetToken = targetTokens[0].token;
         bytes32 tokenKey = _generateTokenKey(targetToken, fromChainId);
-        require(
-            !receiveTokenList.contains(tokenKey),
-            'token already exist'
-        );
+        require(!receiveTokenList.contains(tokenKey), 'token already exist');
         bytes32 spaceId = IMerkleTree(merkleTree).createSpace(
             regimentId,
             defaultMerkleTreeDepth
@@ -141,11 +137,7 @@ contract BridgeOutImplementation is ProxyStorage {
         emit SwapPairAdded(swapHashId, targetToken, fromChainId);
     }
 
-    function deposit(
-        bytes32 tokenKey,
-        address token,
-        uint256 amount
-    ) external {
+    function deposit(bytes32 tokenKey, address token, uint256 amount) external {
         require(receiveTokenList.contains(tokenKey), 'token not exist');
         bytes32 swapHashId = tokenKeyToSwapIdMap[tokenKey];
         SwapInfo storage swapInfo = swapInfos[swapHashId];
@@ -170,10 +162,7 @@ contract BridgeOutImplementation is ProxyStorage {
         address receiverAddress
     ) external {
         require(!isPaused, 'paused');
-        require(
-            msg.sender == receiverAddress,
-            'No permission'
-        );
+        require(msg.sender == receiverAddress, 'No permission');
         bytes32 spaceId = swapInfos[swapId].spaceId;
         require(spaceId != bytes32(0), 'token swap pair not found');
         require(amount > 0, 'invalid amount');
@@ -262,11 +251,9 @@ contract BridgeOutImplementation is ProxyStorage {
         return _leafHash;
     }
 
-    function decodeReport(bytes memory _report)
-        internal
-        pure
-        returns (uint256 receiptIndex, bytes32 receiptHash)
-    {
+    function decodeReport(
+        bytes memory _report
+    ) internal pure returns (uint256 receiptIndex, bytes32 receiptHash) {
         (, , receiptIndex, receiptHash) = abi.decode(
             _report,
             (uint256, uint256, uint256, bytes32)
@@ -319,19 +306,16 @@ contract BridgeOutImplementation is ProxyStorage {
         return ledger[receiptHash].leafNodeIndex > 0;
     }
 
-    function getSwapInfo(bytes32 swapId)
-        external
-        view
-        returns (SwapInfo memory swapInfo)
-    {
+    function getSwapInfo(
+        bytes32 swapId
+    ) external view returns (SwapInfo memory swapInfo) {
         return swapInfos[swapId];
     }
 
-    function _generateTokenKey(address token, string memory chainId)
-        private
-        pure
-        returns (bytes32)
-    {
+    function _generateTokenKey(
+        address token,
+        string memory chainId
+    ) private pure returns (bytes32) {
         return sha256(abi.encodePacked(token, chainId));
     }
 
@@ -351,11 +335,10 @@ contract BridgeOutImplementation is ProxyStorage {
         return indexs;
     }
 
-    function getSwapId(address token, string calldata fromChainId)
-        public
-        view
-        returns (bytes32)
-    {
+    function getSwapId(
+        address token,
+        string calldata fromChainId
+    ) public view returns (bytes32) {
         bytes32 tokenKey = _generateTokenKey(token, fromChainId);
         return tokenKeyToSwapIdMap[tokenKey];
     }
@@ -380,11 +363,10 @@ contract BridgeOutImplementation is ProxyStorage {
         return _receipts;
     }
 
-    function getDepositAmount(bytes32 swapId, address token)
-        public
-        view
-        returns (uint256)
-    {
+    function getDepositAmount(
+        bytes32 swapId,
+        address token
+    ) public view returns (uint256) {
         return SwapPairInfos[swapId][token].depositAmount;
     }
 
@@ -431,11 +413,11 @@ contract BridgeOutImplementation is ProxyStorage {
         }
     }
 
-    function approve(string calldata receiptId) external onlyOwner{
+    function approve(string calldata receiptId) external onlyOwner {
         receiptApproveMap[receiptId] = true;
     }
 
-//     function setDefaultNodesCount(uint256 _newNodeCount)external onlyOwner{
-//         defaultNodesCount = _newNodeCount;
-//    }
+    //     function setDefaultNodesCount(uint256 _newNodeCount)external onlyOwner{
+    //         defaultNodesCount = _newNodeCount;
+    //    }
 }

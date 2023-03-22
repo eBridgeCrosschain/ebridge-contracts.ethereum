@@ -21,8 +21,10 @@ contract BridgeInImplementation is ProxyStorage {
     mapping(bytes32 => mapping(uint256 => Receipt)) private receiptIndexMap;
     mapping(bytes32 => uint256) private tokenReceiptIndex; //from 1
     mapping(bytes32 => uint256) private totalAmountInReceipts;
-    mapping(address => mapping(bytes32 => mapping(uint256 => string))) private ownerToReceiptIdMap;
-    mapping(address => mapping(bytes32 => uint256)) private ownerToReceiptsIndexMap; //from 0
+    mapping(address => mapping(bytes32 => mapping(uint256 => string)))
+        private ownerToReceiptIdMap;
+    mapping(address => mapping(bytes32 => uint256))
+        private ownerToReceiptsIndexMap; //from 0
 
     EnumerableSet.Bytes32Set private tokenList;
 
@@ -144,7 +146,7 @@ contract BridgeInImplementation is ProxyStorage {
         bytes32 tokenKey = _generateTokenKey(token, targetChainId);
         uint256 index = ownerToReceiptsIndexMap[user][tokenKey];
         receipt_ids = new string[](index);
-        for(uint256 i=0;i<index;i++){
+        for (uint256 i = 0; i < index; i++) {
             receipt_ids[i] = ownerToReceiptIdMap[user][tokenKey][i];
         }
         return receipt_ids;
