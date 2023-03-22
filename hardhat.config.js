@@ -34,9 +34,7 @@ module.exports = {
     disambiguatePaths: false,
   },
   networks: {
-    // hardhat: {
-    //   allowUnlimitedContractSize: true
-    // }
+     
     // kovan: {
     //   url: "https://kovan.infura.io/v3/" + API_KEY,
     //   chainId: 42,

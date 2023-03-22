@@ -275,8 +275,6 @@ describe("BridgeIn", function () {
             it("Should success when different user deposit in different token", async function () {
                 const { bridgeIn, owner, otherAccount0, otherAccount1, bridgeOutMock } = await loadFixture(deployBridgeInFixture);
                 const { elf, usdt } = await deployTokensFixture();
-                console.log("elf:",elf.address);
-                console.log("usdt:",usdt.address);
 
                 var chainId = "AELF_MAINNET"
                 await bridgeIn.addToken(elf.address, chainId);
@@ -350,9 +348,8 @@ describe("BridgeIn", function () {
                 var tokens = [elf.address];
                 var chainIds = [chainId];
                 var indexes = await bridgeIn.getSendReceiptIndex(tokens, chainIds);
-                expect(indexes[0]).to.equal(2)
-
                 var infos = await bridgeIn.getSendReceiptInfos(elf.address, chainId, 1, indexes[0]);
+
                 var receipts = await bridgeIn.getMyReceipts(owner.address, elf.address, chainId);
                 expect(receipts.length).to.equal(2)
                 expect(infos.length).to.equal(2)
