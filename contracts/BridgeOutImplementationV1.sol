@@ -27,7 +27,8 @@ contract BridgeOutImplementationV1 is ProxyStorage {
         internal receivedReceiptsMap;
     mapping(bytes32 => uint256) internal receivedReceiptIndex;
     mapping(string => bool) internal receiptApproveMap;
-    mapping(address => uint256) tokenAmountLimit;
+    mapping(address => uint256) internal tokenAmountLimit;
+    mapping(bytes32 => uint256) internal tokenDepositAmount;
     bool internal isPaused;
 
     struct ReceivedReceipt {
@@ -53,7 +54,6 @@ contract BridgeOutImplementationV1 is ProxyStorage {
         string fromChainId;
         uint64 originShare;
         uint64 targetShare;
-        uint256 depositAmount;
     }
     struct SwapInfo {
         bytes32 swapId;
@@ -135,17 +135,17 @@ contract BridgeOutImplementationV1 is ProxyStorage {
             address(this),
             amount
         );
-        swapInfos[swapId].targetToken.depositAmount += amount;
+        tokenDepositAmount[swapId] += amount;
     }
 
     function withdraw(bytes32 swapId, address token, uint256 amount) external {
         check(token, swapId);
         require(
-            swapInfos[swapId].targetToken.depositAmount >= amount,
+            tokenDepositAmount[swapId] >= amount,
             'deposits not enough'
         );
         IERC20(token).safeTransfer(address(msg.sender), amount);
-        swapInfos[swapId].targetToken.depositAmount -= amount;
+        tokenDepositAmount[swapId] -= amount;
     }
 
     function check(address token, bytes32 swapId) private view {
@@ -191,13 +191,13 @@ contract BridgeOutImplementationV1 is ProxyStorage {
             .mul(swapInfo.targetToken.targetShare)
             .div(swapInfo.targetToken.originShare);
         require(
-            targetTokenAmount <= swapInfo.targetToken.depositAmount,
+            targetTokenAmount <= tokenDepositAmount[swapId],
             'deposit not enough'
         );
         if (targetTokenAmount >= tokenAmountLimit[swapInfo.targetToken.token]) {
             require(receiptApproveMap[receiptId], 'receipt should be approved');
         }
-        swapInfo.targetToken.depositAmount -= targetTokenAmount;
+        tokenDepositAmount[swapId] -= targetTokenAmount;
         IERC20(swapInfo.targetToken.token).transfer(
             receiverAddress,
             targetTokenAmount
@@ -363,7 +363,7 @@ contract BridgeOutImplementationV1 is ProxyStorage {
     }
 
     function getDepositAmount(bytes32 swapId) public view returns (uint256) {
-        return swapInfos[swapId].targetToken.depositAmount;
+        return tokenDepositAmount[swapId];
     }
 
     function getSwapInfo(

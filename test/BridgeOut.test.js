@@ -110,8 +110,7 @@ describe("BridgeOut", function () {
                     token,
                     fromChainId: fromChainId,
                     originShare: "100",
-                    targetShare: "100",
-                    depositAmount: 0
+                    targetShare: "100"
                 }
                 error = "no permission"
                 await expect(bridgeOut.connect(otherAccount0).createSwap(targetToken, regimentId))
@@ -129,8 +128,7 @@ describe("BridgeOut", function () {
                     token,
                     fromChainId: chainId,
                     originShare: "100",
-                    targetShare: "100",
-                    depositAmount: 0
+                    targetShare: "100"
                 }
 
                 error = "target token already exist"
@@ -150,8 +148,7 @@ describe("BridgeOut", function () {
                     token,
                     fromChainId: chainId,
                     originShare: "0",
-                    targetShare: "100",
-                    depositAmount: 0
+                    targetShare: "100"
                 }
                 error = "invalid swap ratio"
                 await expect(bridgeOut.createSwap(targetToken, regimentId))
@@ -189,8 +186,7 @@ describe("BridgeOut", function () {
                     token,
                     fromChainId: chainId,
                     originShare: "100",
-                    targetShare: "100",
-                    depositAmount: 0
+                    targetShare: "100"
                 }
                 await bridgeOut.createSwap(targetToken, regimentId);
 
@@ -218,8 +214,7 @@ describe("BridgeOut", function () {
                     token,
                     fromChainId: chainId,
                     originShare: "100",
-                    targetShare: "100",
-                    depositAmount: 0
+                    targetShare: "100"
                 }
                 await bridgeOut.createSwap(targetToken, regimentId);
                 var swapId = await bridgeOut.getSwapId(elf.address, chainId);
@@ -234,8 +229,7 @@ describe("BridgeOut", function () {
                     token: usdt.address,
                     fromChainId: chainId,
                     originShare: "100",
-                    targetShare: "100",
-                    depositAmount: 0
+                    targetShare: "100"
                 }
                 await bridgeOut.createSwap(targetToken, regimentId);
                 await expect(bridgeOut.deposit(swapId, usdt.address, amount))
@@ -267,8 +261,7 @@ describe("BridgeOut", function () {
                     token,
                     fromChainId: chainId,
                     originShare: "100",
-                    targetShare: "100",
-                    depositAmount: 0
+                    targetShare: "100"
                 }
                 await bridgeOut.createSwap(targetToken, regimentId);
                 var swapId = await bridgeOut.getSwapId(elf.address, chainId);
@@ -300,8 +293,7 @@ describe("BridgeOut", function () {
                     token,
                     fromChainId: chainId,
                     originShare: "100",
-                    targetShare: "100",
-                    depositAmount: 0
+                    targetShare: "100"
                 }
                 await bridgeOut.createSwap(targetToken, regimentId);
                 var swapId = await bridgeOut.getSwapId(elf.address, chainId);
@@ -318,8 +310,7 @@ describe("BridgeOut", function () {
                     token: usdt.address,
                     fromChainId: chainId,
                     originShare: "100",
-                    targetShare: "100",
-                    depositAmount: 0
+                    targetShare: "100"
                 }
                 await bridgeOut.createSwap(targetToken, regimentId);
                 await expect(bridgeOut.withdraw(swapId, usdt.address, amount))
@@ -348,8 +339,7 @@ describe("BridgeOut", function () {
                     token,
                     fromChainId: chainId,
                     originShare: "100",
-                    targetShare: "100",
-                    depositAmount: 0
+                    targetShare: "100"
                 }
                 await bridgeOut.createSwap(targetToken, regimentId);
                 var swapId = await bridgeOut.getSwapId(elf.address, chainId);
@@ -388,8 +378,7 @@ describe("BridgeOut", function () {
                     token,
                     fromChainId: chainId,
                     originShare: "100",
-                    targetShare: "100",
-                    depositAmount: 0
+                    targetShare: "100"
                 }
 
                 await bridgeOut.createSwap(targetToken, regimentId);
@@ -459,8 +448,7 @@ describe("BridgeOut", function () {
                     token,
                     fromChainId: chainId,
                     originShare: "100",
-                    targetShare: "100",
-                    depositAmount: 0
+                    targetShare: "100"
                 }
 
                 await bridgeOut.createSwap(targetToken, regimentId);
@@ -507,8 +495,7 @@ describe("BridgeOut", function () {
                     token,
                     fromChainId: chainId,
                     originShare: "100",
-                    targetShare: "100",
-                    depositAmount: 0
+                    targetShare: "100"
                 }
 
                 await bridgeOut.createSwap(targetToken, regimentId);
@@ -579,8 +566,7 @@ describe("BridgeOut", function () {
                     token,
                     fromChainId: chainId,
                     originShare: "100",
-                    targetShare: "100",
-                    depositAmount: 0
+                    targetShare: "100"
                 }
 
                 await bridgeOut.createSwap(targetToken, regimentId);
@@ -647,8 +633,7 @@ describe("BridgeOut", function () {
                     token,
                     fromChainId: chainId,
                     originShare: "100",
-                    targetShare: "100",
-                    depositAmount: 0
+                    targetShare: "100"
                 }
 
                 await bridgeOut.createSwap(targetToken, regimentId);
@@ -702,8 +687,7 @@ describe("BridgeOut", function () {
                     token,
                     fromChainId: chainId,
                     originShare: "100",
-                    targetShare: "100",
-                    depositAmount: 0
+                    targetShare: "100"
                 }
 
                 await bridgeOut.createSwap(targetToken, regimentId);
@@ -750,8 +734,7 @@ describe("BridgeOut", function () {
                     token,
                     fromChainId: chainId,
                     originShare: "100",
-                    targetShare: "100",
-                    depositAmount: 0
+                    targetShare: "100"
                 }
 
                 await bridgeOut.createSwap(targetToken, regimentId);
@@ -801,8 +784,7 @@ describe("BridgeOut", function () {
                     token,
                     fromChainId: chainId,
                     originShare: "100",
-                    targetShare: "100",
-                    depositAmount: 0
+                    targetShare: "100"
                 }
                 await bridgeOut.createSwap(targetToken, regimentId);
                 var swapId = await bridgeOut.getSwapId(elf.address, chainId);
@@ -868,8 +850,7 @@ describe("BridgeOut", function () {
                     token,
                     fromChainId: chainId,
                     originShare: "100",
-                    targetShare: "100",
-                    depositAmount: 0
+                    targetShare: "100"
                 }
 
                 await bridgeOut.createSwap(targetToken, regimentId);
@@ -938,8 +919,7 @@ describe("BridgeOut", function () {
                     token,
                     fromChainId: chainId,
                     originShare: "100",
-                    targetShare: "100",
-                    depositAmount: 0
+                    targetShare: "100"
                 }
                 await bridgeOut.createSwap(targetToken, regimentId);
                 var swapId = await bridgeOut.getSwapId(elf.address, chainId);
