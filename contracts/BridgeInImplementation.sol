@@ -180,7 +180,7 @@ contract BridgeInImplementation is ProxyStorage {
             return _receipts;
         }
         require(
-            endIndex <= tokenReceiptIndex[tokenKey] && fromIndex > 0,
+            endIndex <= tokenReceiptIndex[tokenKey] && fromIndex > 0 && fromIndex <= endIndex,
             'Invalid input'
         );
         uint256 length = endIndex.sub(fromIndex).add(1);
