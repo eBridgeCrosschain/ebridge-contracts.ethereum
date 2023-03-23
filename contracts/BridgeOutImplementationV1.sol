@@ -140,10 +140,7 @@ contract BridgeOutImplementationV1 is ProxyStorage {
 
     function withdraw(bytes32 swapId, address token, uint256 amount) external {
         check(token, swapId);
-        require(
-            tokenDepositAmount[swapId] >= amount,
-            'deposits not enough'
-        );
+        require(tokenDepositAmount[swapId] >= amount, 'deposits not enough');
         IERC20(token).safeTransfer(address(msg.sender), amount);
         tokenDepositAmount[swapId] -= amount;
     }
