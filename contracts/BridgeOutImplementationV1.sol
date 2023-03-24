@@ -139,6 +139,13 @@ contract BridgeOutImplementationV1 is ProxyStorage {
     }
 
     function withdraw(bytes32 swapId, address token, uint256 amount) external {
+        require(
+            IRegiment(regiment).IsRegimentManager(
+                swapInfos[swapId].regimentId,
+                msg.sender
+            ),
+            'no permission'
+        );
         check(token, swapId);
         require(tokenDepositAmount[swapId] >= amount, 'deposits not enough');
         IERC20(token).safeTransfer(address(msg.sender), amount);
@@ -151,13 +158,6 @@ contract BridgeOutImplementationV1 is ProxyStorage {
             swapInfos[swapId].targetToken.fromChainId
         );
         require(targetTokenList.contains(tokenKey), 'target token not exist');
-        require(
-            IRegiment(regiment).IsRegimentManager(
-                swapInfos[swapId].regimentId,
-                msg.sender
-            ),
-            'no permission'
-        );
         require(swapInfos[swapId].targetToken.token == token, 'invalid token');
     }
 
