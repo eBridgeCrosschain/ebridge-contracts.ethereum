@@ -353,7 +353,7 @@ contract BridgeOutImplementationV1 is ProxyStorage {
         );
         uint256 length = endIndex.sub(fromIndex).add(1);
         require(
-            length < MaxQueryRange,
+            length <= MaxQueryRange,
             'Query range is exceeded'
         );
         _receipts = new ReceivedReceipt[](length);
