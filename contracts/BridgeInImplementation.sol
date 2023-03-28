@@ -15,6 +15,8 @@ contract BridgeInImplementation is ProxyStorage {
     using Strings for uint256;
     using StringHex for bytes32;
 
+    uint256 constant MaxQueryRange = 100;
+
     address internal bridgeOut;
     address internal mutiSigWallet;
     bool public isPaused;
@@ -180,11 +182,16 @@ contract BridgeInImplementation is ProxyStorage {
             return _receipts;
         }
         require(
-            endIndex <= tokenReceiptIndex[tokenKey] && fromIndex > 0 && fromIndex <= endIndex,
+            endIndex <= tokenReceiptIndex[tokenKey] &&
+                fromIndex > 0 &&
+                fromIndex <= endIndex,
             'Invalid input'
         );
         uint256 length = endIndex.sub(fromIndex).add(1);
-
+        require(
+            length < MaxQueryRange,
+            'Query range is exceeded'
+        );
         _receipts = new Receipt[](length);
         for (uint256 i = 0; i < length; i++) {
             _receipts[i] = receiptIndexMap[tokenKey][i + fromIndex];

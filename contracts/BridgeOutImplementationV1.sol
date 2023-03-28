@@ -19,6 +19,7 @@ contract BridgeOutImplementationV1 is ProxyStorage {
     address private bridgeIn;
     uint256 private defaultMerkleTreeDepth = 10;
     uint256 private defaultNodesCount = 5;
+    uint256 constant MaxQueryRange = 100;
     EnumerableSet.Bytes32Set private targetTokenList;
     mapping(bytes32 => SwapInfo) internal swapInfos;
     mapping(bytes32 => bytes32) internal tokenKeyToSwapIdMap;
@@ -351,6 +352,10 @@ contract BridgeOutImplementationV1 is ProxyStorage {
             'Invalid input'
         );
         uint256 length = endIndex.sub(fromIndex).add(1);
+        require(
+            length < MaxQueryRange,
+            'Query range is exceeded'
+        );
         _receipts = new ReceivedReceipt[](length);
         for (uint256 i = 0; i < length; i++) {
             _receipts[i] = receivedReceiptsMap[tokenKey][i + fromIndex];
