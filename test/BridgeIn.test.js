@@ -14,8 +14,6 @@ describe("BridgeIn", function () {
         const BridgeInImplementation = await ethers.getContractFactory("BridgeInImplementation");
         const BridgeOutMock = await ethers.getContractFactory("MockBridgeOut");
         const BridgeIn = await ethers.getContractFactory("BridgeIn");
-        
-      
         const bridgeOutMock = await BridgeOutMock.deploy();
         const bridgeInImplementation = await BridgeInImplementation.deploy();
 
@@ -122,7 +120,7 @@ describe("BridgeIn", function () {
             })
 
             it("Should success when token support", async function () {
-                const { bridgeIn, owner, otherAccount0, otherAccount1,bridgeOutMock } = await loadFixture(deployBridgeInFixture);
+                const { bridgeIn, owner, otherAccount0, otherAccount1, bridgeOutMock } = await loadFixture(deployBridgeInFixture);
                 const { elf, usdt } = await deployTokensFixture();
 
                 var chainId = "AELF_MAINNET"
@@ -155,7 +153,7 @@ describe("BridgeIn", function () {
             })
 
             it("Should success when deposit with different token", async function () {
-                const { bridgeIn, owner, otherAccount0, otherAccount1,bridgeOutMock } = await loadFixture(deployBridgeInFixture);
+                const { bridgeIn, owner, otherAccount0, otherAccount1, bridgeOutMock } = await loadFixture(deployBridgeInFixture);
                 const { elf, usdt } = await deployTokensFixture();
 
                 var chainId = "AELF_MAINNET"
@@ -215,7 +213,7 @@ describe("BridgeIn", function () {
 
 
             it("Should success when different user deposit", async function () {
-                const { bridgeIn, owner, otherAccount0, otherAccount1, bridgeOutMock} = await loadFixture(deployBridgeInFixture);
+                const { bridgeIn, owner, otherAccount0, otherAccount1, bridgeOutMock } = await loadFixture(deployBridgeInFixture);
                 const { elf, usdt } = await deployTokensFixture();
 
                 var chainId = "AELF_MAINNET"
@@ -275,6 +273,8 @@ describe("BridgeIn", function () {
             it("Should success when different user deposit in different token", async function () {
                 const { bridgeIn, owner, otherAccount0, otherAccount1, bridgeOutMock } = await loadFixture(deployBridgeInFixture);
                 const { elf, usdt } = await deployTokensFixture();
+                console.log("elf:", elf.address);
+                console.log("usdt:", usdt.address);
 
                 var chainId = "AELF_MAINNET"
                 await bridgeIn.addToken(elf.address, chainId);
@@ -348,8 +348,9 @@ describe("BridgeIn", function () {
                 var tokens = [elf.address];
                 var chainIds = [chainId];
                 var indexes = await bridgeIn.getSendReceiptIndex(tokens, chainIds);
-                var infos = await bridgeIn.getSendReceiptInfos(elf.address, chainId, 1, indexes[0]);
+                expect(indexes[0]).to.equal(2)
 
+                var infos = await bridgeIn.getSendReceiptInfos(elf.address, chainId, 1, indexes[0]);
                 var receipts = await bridgeIn.getMyReceipts(owner.address, elf.address, chainId);
                 expect(receipts.length).to.equal(2)
                 expect(infos.length).to.equal(2)
@@ -381,15 +382,15 @@ describe("BridgeIn", function () {
                 //revert when pause again
                 var error = "paused"
                 await expect(bridgeIn.pause())
-                .to.be.revertedWith(error);
+                    .to.be.revertedWith(error);
                 //revert when sender is not admin
                 var error = "Ownable: caller is not the owner"
                 await expect(bridgeIn.connect(otherAccount0).pause())
-                .to.be.revertedWith(error);
+                    .to.be.revertedWith(error);
 
                 var error = "paused"
                 await expect(bridgeIn.createReceipt(elf.address, amount, chainId, targetAddress))
-                .to.be.revertedWith(error);
+                    .to.be.revertedWith(error);
 
                 //restart : otherAccount0 is the mock MulsigWallet sender
                 await bridgeIn.connect(otherAccount0).restart();

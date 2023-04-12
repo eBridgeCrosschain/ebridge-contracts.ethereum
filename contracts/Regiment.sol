@@ -98,9 +98,10 @@ contract Regiment {
         return regimentId;
     }
 
-    function AddRegimentMember(bytes32 regimentId, address newMemberAddress)
-        external
-    {
+    function AddRegimentMember(
+        bytes32 regimentId,
+        address newMemberAddress
+    ) external {
         RegimentInfo storage regimentInfo = regimentInfoMap[regimentId];
         EnumerableSet.AddressSet storage memberList = regimentMemberListMap[
             regimentId
@@ -140,10 +141,9 @@ contract Regiment {
         emit RegimentMemberLeft(regimentId, leaveMemberAddress);
     }
 
-    function ChangeController(address _controller)
-        external
-        assertSenderIsController
-    {
+    function ChangeController(
+        address _controller
+    ) external assertSenderIsController {
         controller = _controller;
     }
 
@@ -171,9 +171,10 @@ contract Regiment {
         regimentInfo.manager = newManagerAddress;
     }
 
-    function AddAdmins(bytes32 regimentId, address[] calldata newAdmins)
-        external
-    {
+    function AddAdmins(
+        bytes32 regimentId,
+        address[] calldata newAdmins
+    ) external {
         RegimentInfo storage regimentInfo = regimentInfoMap[regimentId];
         require(msg.sender == regimentInfo.manager, 'No permission.');
         for (uint256 i; i < newAdmins.length; i++) {
@@ -189,9 +190,10 @@ contract Regiment {
         );
     }
 
-    function DeleteAdmins(bytes32 regimentId, address[] calldata deleteAdmins)
-        external
-    {
+    function DeleteAdmins(
+        bytes32 regimentId,
+        address[] calldata deleteAdmins
+    ) external {
         RegimentInfo storage regimentInfo = regimentInfoMap[regimentId];
         require(msg.sender == regimentInfo.manager, 'No permission.');
         for (uint256 i; i < deleteAdmins.length; i++) {
@@ -209,23 +211,13 @@ contract Regiment {
         return controller;
     }
 
-    function GetConfig()
-        external
-        view
-        returns (
-            uint256,
-            uint256,
-            uint256
-        )
-    {
+    function GetConfig() external view returns (uint256, uint256, uint256) {
         return (memberJoinLimit, regimentLimit, maximumAdminsCount);
     }
 
-    function GetRegimentInfo(bytes32 regimentId)
-        external
-        view
-        returns (RegimentInfoForView memory)
-    {
+    function GetRegimentInfo(
+        bytes32 regimentId
+    ) external view returns (RegimentInfoForView memory) {
         RegimentInfo storage regimentInfo = regimentInfoMap[regimentId];
         return
             RegimentInfoForView({
@@ -235,11 +227,10 @@ contract Regiment {
             });
     }
 
-    function IsRegimentMember(bytes32 regimentId, address memberAddress)
-        external
-        view
-        returns (bool)
-    {
+    function IsRegimentMember(
+        bytes32 regimentId,
+        address memberAddress
+    ) external view returns (bool) {
         EnumerableSet.AddressSet storage memberList = regimentMemberListMap[
             regimentId
         ];
@@ -256,7 +247,10 @@ contract Regiment {
         //require no Duplicates
         for (uint256 i = 0; i < memberAddress.length; i++) {
             for (uint256 j = i; j < memberAddress.length - 1; j++) {
-                require(memberAddress[i] != memberAddress[j + 1], 'Duplicate input');
+                require(
+                    memberAddress[i] != memberAddress[j + 1],
+                    'Duplicate input'
+                );
             }
             if (memberList.contains(memberAddress[i])) continue;
             else return false;
@@ -264,30 +258,26 @@ contract Regiment {
         return true;
     }
 
-    function IsRegimentAdmin(bytes32 regimentId, address adminAddress)
-        external
-        view
-        returns (bool)
-    {
+    function IsRegimentAdmin(
+        bytes32 regimentId,
+        address adminAddress
+    ) external view returns (bool) {
         RegimentInfo storage regimentInfo = regimentInfoMap[regimentId];
         require(regimentInfo.manager != address(0), 'Invalid regimentId');
         return regimentInfo.admins.contains(adminAddress);
     }
 
-    function IsRegimentManager(bytes32 regimentId, address managerAddress)
-        external
-        view
-        returns (bool)
-    {
+    function IsRegimentManager(
+        bytes32 regimentId,
+        address managerAddress
+    ) external view returns (bool) {
         RegimentInfo storage regimentInfo = regimentInfoMap[regimentId];
         return regimentInfo.manager == managerAddress;
     }
 
-    function GetRegimentMemberList(bytes32 regimentId)
-        external
-        view
-        returns (address[] memory)
-    {
+    function GetRegimentMemberList(
+        bytes32 regimentId
+    ) external view returns (address[] memory) {
         EnumerableSet.AddressSet storage memberList = regimentMemberListMap[
             regimentId
         ];

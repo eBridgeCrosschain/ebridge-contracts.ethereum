@@ -15,12 +15,18 @@ contract BridgeInImplementation is ProxyStorage {
     using Strings for uint256;
     using StringHex for bytes32;
 
+    uint256 constant MaxQueryRange = 100;
+
     address internal bridgeOut;
     address internal mutiSigWallet;
     bool public isPaused;
-    mapping(bytes32 => Receipt[]) private receipts;
+    mapping(bytes32 => mapping(uint256 => Receipt)) private receiptIndexMap;
+    mapping(bytes32 => uint256) private tokenReceiptIndex; //from 1
     mapping(bytes32 => uint256) private totalAmountInReceipts;
-    mapping(address => mapping(bytes32 => string[])) private ownerToReceipts;
+    mapping(address => mapping(bytes32 => mapping(uint256 => string)))
+        private ownerToReceiptIdMap;
+    mapping(address => mapping(bytes32 => uint256))
+        private ownerToReceiptsIndexMap; //from 0
 
     EnumerableSet.Bytes32Set private tokenList;
 
@@ -51,18 +57,12 @@ contract BridgeInImplementation is ProxyStorage {
         uint256 amount
     );
 
-    function initialize(address _mutiSigWallet)
-        external
-        onlyOwner
-    {
+    function initialize(address _mutiSigWallet) external onlyOwner {
         require(mutiSigWallet == address(0), 'already initialized');
         mutiSigWallet = _mutiSigWallet;
     }
 
-    function setBridgeOut(address _bridgeOut) 
-        external
-        onlyOwner
-    {
+    function setBridgeOut(address _bridgeOut) external onlyOwner {
         require(bridgeOut == address(0), 'already set');
         bridgeOut = _bridgeOut;
     }
@@ -74,10 +74,10 @@ contract BridgeInImplementation is ProxyStorage {
         emit TokenAdded(token, chainId);
     }
 
-    function removeToken(address token, string calldata chainId)
-        public
-        onlyOwner
-    {
+    function removeToken(
+        address token,
+        string calldata chainId
+    ) public onlyOwner {
         bytes32 tokenKey = _generateTokenKey(token, chainId);
         require(tokenList.contains(tokenKey), 'tokenKey not exist');
         tokenList.remove(tokenKey);
@@ -95,11 +95,10 @@ contract BridgeInImplementation is ProxyStorage {
         IBridgeOut(bridgeOut).restart();
     }
 
-    function isSupported(address token, string calldata chainId)
-        public
-        view
-        returns (bool)
-    {
+    function isSupported(
+        address token,
+        string calldata chainId
+    ) public view returns (bool) {
         bytes32 tokenKey = _generateTokenKey(token, chainId);
         return tokenList.contains(tokenKey);
     }
@@ -119,28 +118,25 @@ contract BridgeInImplementation is ProxyStorage {
         require(amount > 0, 'invalid amount');
         // Deposit token to this contract
         IERC20(token).safeTransferFrom(msg.sender, address(this), amount);
-        IERC20(token).approve(bridgeOut,amount);
+        IERC20(token).approve(bridgeOut, amount);
         IBridgeOut(bridgeOut).deposit(tokenKey, token, amount);
-        uint256 receiptIndex = receipts[tokenKey].length.add(1);
+        uint256 receiptIndex = ++tokenReceiptIndex[tokenKey];
         string memory receiptId = _generateReceiptId(tokenKey, receiptIndex);
-
-        receipts[tokenKey].push(
-            Receipt(
-                token,
-                msg.sender,
-                amount,
-                block.number,
-                block.timestamp,
-                targetChainId,
-                targetAddress,
-                receiptId
-            )
+        receiptIndexMap[tokenKey][receiptIndex] = Receipt(
+            token,
+            msg.sender,
+            amount,
+            block.number,
+            block.timestamp,
+            targetChainId,
+            targetAddress,
+            receiptId
         );
         totalAmountInReceipts[tokenKey] = totalAmountInReceipts[tokenKey].add(
             amount
         );
-
-        ownerToReceipts[msg.sender][tokenKey].push(receiptId);
+        uint256 index = ownerToReceiptsIndexMap[msg.sender][tokenKey]++;
+        ownerToReceiptIdMap[msg.sender][tokenKey][index] = receiptId;
         emit NewReceipt(receiptId, token, msg.sender, amount);
     }
 
@@ -148,9 +144,13 @@ contract BridgeInImplementation is ProxyStorage {
         address user,
         address token,
         string calldata targetChainId
-    ) external view returns (string[] memory) {
+    ) external view returns (string[] memory receipt_ids) {
         bytes32 tokenKey = _generateTokenKey(token, targetChainId);
-        string[] memory receipt_ids = ownerToReceipts[user][tokenKey];
+        uint256 index = ownerToReceiptsIndexMap[user][tokenKey];
+        receipt_ids = new string[](index);
+        for (uint256 i = 0; i < index; i++) {
+            receipt_ids[i] = ownerToReceiptIdMap[user][tokenKey][i];
+        }
         return receipt_ids;
     }
 
@@ -165,7 +165,7 @@ contract BridgeInImplementation is ProxyStorage {
         indexes = new uint256[](tokens.length);
         for (uint256 i = 0; i < tokens.length; i++) {
             bytes32 tokenKey = _generateTokenKey(tokens[i], targetChainIds[i]);
-            uint256 index = receipts[tokenKey].length;
+            uint256 index = tokenReceiptIndex[tokenKey];
             indexes[i] = index;
         }
         return indexes;
@@ -178,46 +178,48 @@ contract BridgeInImplementation is ProxyStorage {
         uint256 endIndex
     ) public view returns (Receipt[] memory _receipts) {
         bytes32 tokenKey = _generateTokenKey(token, targetChainId);
-        if (receipts[tokenKey].length == 0) {
+        if (tokenReceiptIndex[tokenKey] == 0) {
             return _receipts;
         }
         require(
-            endIndex <= receipts[tokenKey].length && fromIndex > 0,
+            endIndex <= tokenReceiptIndex[tokenKey] &&
+                fromIndex > 0 &&
+                fromIndex <= endIndex,
             'Invalid input'
         );
         uint256 length = endIndex.sub(fromIndex).add(1);
-
+        require(
+            length <= MaxQueryRange,
+            'Query range is exceeded'
+        );
         _receipts = new Receipt[](length);
         for (uint256 i = 0; i < length; i++) {
-            _receipts[i] = receipts[tokenKey][i + fromIndex - 1];
+            _receipts[i] = receiptIndexMap[tokenKey][i + fromIndex];
         }
         return _receipts;
     }
 
-    function _generateTokenKey(address token, string memory chainId)
-        public
-        pure
-        returns (bytes32)
-    {
+    function _generateTokenKey(
+        address token,
+        string memory chainId
+    ) public pure returns (bytes32) {
         return sha256(abi.encodePacked(token, chainId));
     }
 
-    function _generateReceiptId(bytes32 tokenKey, uint256 receiptIndex)
-        public
-        pure
-        returns (string memory)
-    {
+    function _generateReceiptId(
+        bytes32 tokenKey,
+        uint256 receiptIndex
+    ) public pure returns (string memory) {
         string memory prefix = tokenKey.toHex();
         string memory separator = '.';
         string memory suffix = receiptIndex.toString();
         return string(abi.encodePacked(prefix, separator, suffix));
     }
 
-    function getTotalAmountInReceipts(address token, string memory chainId)
-        public
-        view
-        returns (uint256)
-    {
+    function getTotalAmountInReceipts(
+        address token,
+        string memory chainId
+    ) public view returns (uint256) {
         bytes32 tokenKey = _generateTokenKey(token, chainId);
         return totalAmountInReceipts[tokenKey];
     }
