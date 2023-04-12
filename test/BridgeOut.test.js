@@ -218,9 +218,11 @@ describe("BridgeOut", function () {
                 }
                 await bridgeOut.createSwap(targetToken, regimentId);
                 var swapId = await bridgeOut.getSwapId(elf.address, chainId);
+                var tokenKey = _generateTokenKey(elf.address, chainId);
                 //swap not exist
                 error = "target token not exist";
-                await expect(bridgeOut.deposit(swapId, usdt.address, amount))
+                var tokenKeyUsdt = _generateTokenKey(usdt.address, chainId);
+                await expect(bridgeOut.deposit(tokenKeyUsdt, usdt.address, amount))
                     .to.be.revertedWith(error);
 
                 //invalid token
@@ -231,20 +233,21 @@ describe("BridgeOut", function () {
                     originShare: "100",
                     targetShare: "100"
                 }
+            
                 await bridgeOut.createSwap(targetToken, regimentId);
-                await expect(bridgeOut.deposit(swapId, usdt.address, amount))
+                await expect(bridgeOut.deposit(tokenKey, usdt.address, amount))
                     .to.be.revertedWith(error);
 
                 //ERC20: insufficient allowance
                 error = "ERC20: insufficient allowance";
                 tokens = token;
                 amounts = 100;
-                await expect(bridgeOut.deposit(swapId, tokens, amounts))
+                await expect(bridgeOut.deposit(tokenKey, tokens, amounts))
                     .to.be.revertedWith(error);
                 //ERC20: insufficient balance
                 error = "ERC20: transfer amount exceeds balance";
                 await elf.approve(bridgeOut.address, amount);
-                await expect(bridgeOut.deposit(swapId, token, amount))
+                await expect(bridgeOut.deposit(tokenKey, token, amount))
                     .to.be.revertedWith(error);
 
             });
@@ -265,13 +268,13 @@ describe("BridgeOut", function () {
                 }
                 await bridgeOut.createSwap(targetToken, regimentId);
                 var swapId = await bridgeOut.getSwapId(elf.address, chainId);
-
+                var tokenKey =  _generateTokenKey(elf.address,chainId);
                 amount = 100;
                 await elf.mint(owner.address, amount);
                 expect(await elf.balanceOf(bridgeOut.address)).to.equal(0)
                 await elf.approve(bridgeOut.address, amount);
 
-                await bridgeOut.deposit(swapId, token, amount);
+                await bridgeOut.deposit(tokenKey, token, amount);
                 expect(await elf.balanceOf(bridgeOut.address)).to.equal(amount)
                 expect(await elf.balanceOf(owner.address)).to.equal(0)
                 var depositAmount = await bridgeOut.getDepositAmount(swapId)
@@ -297,11 +300,13 @@ describe("BridgeOut", function () {
                 }
                 await bridgeOut.createSwap(targetToken, regimentId);
                 var swapId = await bridgeOut.getSwapId(elf.address, chainId);
+                var tokenKey =  _generateTokenKey(elf.address,chainId);
                 amount = 1000000;
 
                 //swap not exist
                 error = "target token not exist";
-                await expect(bridgeOut.withdraw(swapId, usdt.address, amount))
+                var tokenKeyUsdt = _generateTokenKey(usdt.address, chainId);
+                await expect(bridgeOut.withdraw(tokenKeyUsdt, usdt.address, amount))
                     .to.be.revertedWith(error);
 
                 //invalid token
@@ -313,15 +318,15 @@ describe("BridgeOut", function () {
                     targetShare: "100"
                 }
                 await bridgeOut.createSwap(targetToken, regimentId);
-                await expect(bridgeOut.withdraw(swapId, usdt.address, amount))
+                await expect(bridgeOut.withdraw(tokenKey, usdt.address, amount))
                     .to.be.revertedWith(error);
                 //no permission.
                 error = "no permission";
-                await expect(bridgeOut.connect(otherAccount0).withdraw(swapId, token, amount))
+                await expect(bridgeOut.connect(otherAccount0).withdraw(tokenKey, token, amount))
                     .to.be.revertedWith(error);
                 //Deposits not enough
                 error = "deposits not enough";
-                await expect(bridgeOut.withdraw(swapId, token, amount))
+                await expect(bridgeOut.withdraw(tokenKey, token, amount))
                     .to.be.revertedWith(error);
 
             });
@@ -343,21 +348,21 @@ describe("BridgeOut", function () {
                 }
                 await bridgeOut.createSwap(targetToken, regimentId);
                 var swapId = await bridgeOut.getSwapId(elf.address, chainId);
-
+                var tokenKey =  _generateTokenKey(elf.address,chainId);
                 amount = 100;
 
                 await elf.mint(owner.address, amount);
                 expect(await elf.balanceOf(bridgeOut.address)).to.equal(0)
                 await elf.approve(bridgeOut.address, amounts);
 
-                await bridgeOut.deposit(swapId, token, amount);
+                await bridgeOut.deposit(tokenKey, token, amount);
                 expect(await elf.balanceOf(bridgeOut.address)).to.equal(amount)
                 expect(await elf.balanceOf(owner.address)).to.equal(0)
 
                 var depositAmount = await bridgeOut.getDepositAmount(swapId)
                 expect(depositAmount).to.equal(amount)
 
-                await bridgeOut.withdraw(swapId, token, amount);
+                await bridgeOut.withdraw(tokenKey, token, amount);
                 expect(await elf.balanceOf(owner.address)).to.equal(amount)
                 expect(await elf.balanceOf(bridgeOut.address)).to.equal(0)
                 var depositAmount = await bridgeOut.getDepositAmount(swapId)
@@ -391,7 +396,7 @@ describe("BridgeOut", function () {
                 await elf.mint(owner.address, amount);
                 await elf.approve(bridgeOut.address, amount);
                 var tokenKey = _generateTokenKey(token, chainId);
-                await bridgeOut.deposit(swapId, tokens, amounts);
+                await bridgeOut.deposit(tokenKey, tokens, amounts);
 
                 var index = "1234";
                 var receiptId = tokenKey.toString() + "." + index;
@@ -461,7 +466,7 @@ describe("BridgeOut", function () {
                 await elf.mint(owner.address, amount);
                 await elf.approve(bridgeOut.address, amount);
                 var tokenKey = _generateTokenKey(token, chainId);
-                await bridgeOut.deposit(swapId, tokens, amounts);
+                await bridgeOut.deposit(tokenKey, tokens, amounts);
 
                 var index = "1234";
                 var receiptId = tokenKey.toString() + "." + index;
@@ -509,7 +514,7 @@ describe("BridgeOut", function () {
                 await elf.mint(owner.address, amount);
                 await elf.approve(bridgeOut.address, amount);
                 var tokenKey = _generateTokenKey(elf.address, chainId);
-                await bridgeOut.deposit(swapId, token, amount);
+                await bridgeOut.deposit(tokenKey, token, amount);
                 await bridgeOut.setLimits([token], ["10000"]);
                 var index = "123";
 
@@ -613,7 +618,7 @@ describe("BridgeOut", function () {
                 await expect(bridgeOut.swapToken(swapId, receiptId, amount, targetAddress))
                     .to.be.revertedWith(error);
                 await elf.approve(bridgeOut.address, amount);
-                await bridgeOut.deposit(swapId, tokens, amounts);
+                await bridgeOut.deposit(tokenKey, tokens, amounts);
                 //already claimed
                 error = "already claimed";
                 await bridgeOut.swapToken(swapId, receiptId, amount, targetAddress);
@@ -644,7 +649,7 @@ describe("BridgeOut", function () {
                 await elf.mint(owner.address, amount);
                 await elf.approve(bridgeOut.address, amount);
                 var tokenKey = _generateTokenKey(elf.address, chainId);
-                await bridgeOut.deposit(swapId, tokens, amounts);
+                await bridgeOut.deposit(tokenKey, tokens, amounts);
                 await bridgeOut.setLimits([token], ["10000"]);
                 var index = "1234";
                 var receiptId = tokenKey.toString() + "." + index;
@@ -699,7 +704,7 @@ describe("BridgeOut", function () {
                 await elf.mint(owner.address, amount);
                 await elf.approve(bridgeOut.address, amount);
                 var tokenKey = _generateTokenKey(elf.address, chainId);
-                await bridgeOut.deposit(swapId, tokens, amounts);
+                await bridgeOut.deposit(tokenKey, tokens, amounts);
                 await bridgeOut.setLimits([token], ["10000"]);
                 var index = "1234";
                 var receiptId = tokenKey.toString() + "." + index;
@@ -745,7 +750,7 @@ describe("BridgeOut", function () {
                 await usdt.mint(owner.address, amount);
                 await usdt.approve(bridgeOut.address, amount);
                 var tokenKey = _generateTokenKey(token, chainId);
-                await bridgeOut.deposit(swapId, tokens, amounts);
+                await bridgeOut.deposit(tokenKey, tokens, amounts);
                 await bridgeOut.setLimits([token], ["10000"]);
                 var index = "1234";
                 var receiptId = tokenKey.toString() + "." + index;
@@ -794,7 +799,7 @@ describe("BridgeOut", function () {
                 await elf.mint(owner.address, amount);
                 await elf.approve(bridgeOut.address, amount);
                 var tokenKey = _generateTokenKey(elf.address, chainId);
-                await bridgeOut.deposit(swapId, tokens, amounts);
+                await bridgeOut.deposit(tokenKey, tokens, amounts);
                 //setlimit 
                 await bridgeOut.setLimits([token], ["50"]);
 
@@ -861,7 +866,7 @@ describe("BridgeOut", function () {
                 await elf.mint(owner.address, amount);
                 await elf.approve(bridgeOut.address, amount);
                 var tokenKey = _generateTokenKey(elf.address, chainId);
-                await bridgeOut.deposit(swapId, tokens, amounts);
+                await bridgeOut.deposit(tokenKey, tokens, amounts);
                 //setlimit 
                 await bridgeOut.setLimits([token], ["50"]);
 
@@ -929,7 +934,7 @@ describe("BridgeOut", function () {
                 await elf.mint(owner.address, amount);
                 await elf.approve(bridgeOut.address, amount);
                 var tokenKey = _generateTokenKey(elf.address, chainId);
-                await bridgeOut.deposit(swapId, tokens, amounts);
+                await bridgeOut.deposit(tokenKey, tokens, amounts);
                 await bridgeOut.setLimits([token], ["10000"]);
                 var index = "1234";
                 var receiptId = tokenKey.toString() + "." + index;

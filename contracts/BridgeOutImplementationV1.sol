@@ -129,17 +129,20 @@ contract BridgeOutImplementationV1 is ProxyStorage {
         emit SwapPairAdded(swapId, targetToken.token, targetToken.fromChainId);
     }
 
-    function deposit(bytes32 swapId, address token, uint256 amount) external {
-        check(token, swapId);
+    function deposit(bytes32 tokenKey, address token, uint256 amount) external {
+        check(token, tokenKey);
         IERC20(token).safeTransferFrom(
             address(msg.sender),
             address(this),
             amount
         );
+        bytes32 swapId = tokenKeyToSwapIdMap[tokenKey];
         tokenDepositAmount[swapId] += amount;
     }
 
-    function withdraw(bytes32 swapId, address token, uint256 amount) external {
+    function withdraw(bytes32 tokenKey, address token, uint256 amount) external {
+        check(token, tokenKey);
+        bytes32 swapId = tokenKeyToSwapIdMap[tokenKey];
         require(
             IRegiment(regiment).IsRegimentManager(
                 swapInfos[swapId].regimentId,
@@ -147,18 +150,14 @@ contract BridgeOutImplementationV1 is ProxyStorage {
             ),
             'no permission'
         );
-        check(token, swapId);
         require(tokenDepositAmount[swapId] >= amount, 'deposits not enough');
         IERC20(token).safeTransfer(address(msg.sender), amount);
         tokenDepositAmount[swapId] -= amount;
     }
 
-    function check(address token, bytes32 swapId) private view {
-        bytes32 tokenKey = _generateTokenKey(
-            token,
-            swapInfos[swapId].targetToken.fromChainId
-        );
+    function check(address token, bytes32 tokenKey) private view {
         require(targetTokenList.contains(tokenKey), 'target token not exist');
+        bytes32 swapId = tokenKeyToSwapIdMap[tokenKey];
         require(swapInfos[swapId].targetToken.token == token, 'invalid token');
     }
 
@@ -215,7 +214,7 @@ contract BridgeOutImplementationV1 is ProxyStorage {
         );
         uint256 receiptIndex = ++receivedReceiptIndex[tokenKey];
         receivedReceiptsMap[tokenKey][receiptIndex] = ReceivedReceipt(
-            swapInfo.targetToken.token,
+            swapInfo.targetToken.token, 
             receiverAddress,
             amount,
             block.number,
