@@ -13,14 +13,17 @@ async function main() {
     // MerkleTreeAddress = "0x4a316Cf0526627cD9cF09E5A3dCd9784cA9a8033";
     MultiSignAddress = "0x82554e2aEC5bF51C3790dA64F2a3D1E15b227bEB";
     // MultiSignAddress = "0xcb41c295021977bcd36759e179222a9d89b001Bf";
-    BridgeInImplementationAddress = "0x25C44a3D0d86121e6FBA6E0Cc1A716144BB187d3";
+    // BridgeInImplementationAddress = "0xfECC01e29eC263c37B3D1Db3748155c35b905A23";
     // BridgeInImplementationAddress = "0x11a86274622fCE5C9d95e9f9ac9A1ae8b4531cA6";
+    BridgeInImplementationAddress = "0x975fe997296E80E875c6d16f38E21AE4fd750cb7";
     BridgeInAddress = "0xd6A2BbDB1d23155A78aeB3dEB8a4df0d96AB007D";
     // BridgeInAddress = "0x66760B644668d4E7de273bc788F915Efd5536332";
     // BridgeOutImplementationV1Address = "0x88dC11314e267D14A98A153193270Cd2D31Ff5eD";
     // BridgeOutImplementationV1Address = "0x508eBa75EB1aEB8502ED95029C8e1fAe04215069";
-    BridgeOutImplementationV1Address = "0x1Ff0268295652c69Ef00718aEd32d1E0A9c1C775";
+    // BridgeOutImplementationV1Address = "0x8644Cf61404165E28595cB996f730BA5c0eCcd26";
+    // BridgeOutImplementationV1Address = "0x43559914a545bc9d1761D8fe46B6d05182777714";
     // BridgeOutImplementationV1Address = "0x785fD5EDc07c7be50F93B85f57E3B05dbA221A75";
+    BridgeOutImplementationV1Address = "0xD5421dFE2CD155278292EFd5980f5f3303161434";
     BridgeOutAddress = "0x8E0cF442690a9395C42623F6503Ab926c739f59E";
     // BridgeOutAddress = "0xaD3eaC8ad11d14808E1598D264cD25CE151e80a4";
 
@@ -31,9 +34,9 @@ async function main() {
     // usdtAddress = "0x3F280eE5876CE8B15081947E0f189E336bb740A5";
     usdtAddress = "0x35E875C8790A240bd680DEC8C0fe3ffeb5fC4933";
     // wethAddress = "0x4aE5762FA7f0E033107427Ad3e297974870D57d2";
-    wethAddress = "0xF2e5C43251157969830C5B14B0ccF026999da96d";
-    // wbnbAddress = "0xae13d989daC2f0dEbFf460aC112a837C89BAa7cd";
-    wbnbAddress = "0x7e308DC172faa2a6560C2cd806e8282C51E5BFA5";
+    wethAddress = "0x9953aD30fAa1D0364342445DECf01c3cea57e4da";
+    wbnbAddress = "0xae13d989daC2f0dEbFf460aC112a837C89BAa7cd";
+    // wbnbAddress = "0x7e308DC172faa2a6560C2cd806e8282C51E5BFA5";
 
     const BridgeInImplementation = await ethers.getContractFactory("BridgeInImplementation");
     const bridgeInImplementation = await BridgeInImplementation.attach(BridgeInAddress);
@@ -59,7 +62,7 @@ async function main() {
     const USDT = await ethers.getContractFactory("USDT");
     const usdt = await USDT.attach(usdtAddress);
 
-    const WETH = await ethers.getContractFactory("WETH");
+    const WETH = await ethers.getContractFactory("WETH9");
     const weth = await WETH.attach(wethAddress);
 
 
@@ -91,7 +94,7 @@ async function main() {
     //MainChain_AELF -> goerli
 
     //SetDefaultMerkleTreeDepth
-    var regimentId = "0x1b0b6ee3f6021282dafddb9b0d82e0c4b2ed2f57f27fd4816c3d5e8ef84fcee5";
+    var regimentId = "0xf7296bf942ea75763b3ffffd0133a94558c87477c0a7e595bf9543cd7540602f";
     // var result = await regiment.GetRegimentMemberList(regimentId);
     // console.log("result:",result);
     // await regiment.connect(newRegimentManager).AddRegimentMember(regimentId,bridgeOutImplementation.address);
@@ -104,8 +107,8 @@ async function main() {
     var wethToken = wethAddress;
 
     // console.log("Start to set token limit.");
-    // var tokens = [elfToken,usdtToken,wbnbAddress];
-    // var limits = [BigInt(100000_000000000000000000),BigInt(100000_000000000000000000),BigInt(100000_000000000000000000)];
+    // var tokens = [wethAddress];
+    // var limits = [BigInt(100000_000000000000000000)];
     // await bridgeOutImplementation.setLimits(tokens,limits);
 
 
@@ -116,11 +119,12 @@ async function main() {
     // var result = await regiment.IsRegimentAdmin(regimentId,bridgeOutImplementation.address);
     // console.log("is regiment admin:",result);
     // var address = newRegimentManager.address;
+    // console.log("manager:",address);
     // var result = await regiment.IsRegimentMember(regimentId,address);
     // console.log("is regiment member:",result);
 
      var chainId = "MainChain_AELF";
-    // var chainId = "SideChain_tDVW";
+    // var chainId = "SideChain_tDVV";
     var targetTokenElf = {
         token: elfToken,
         fromChainId: chainId,
@@ -134,7 +138,7 @@ async function main() {
         targetShare: 1
     }
     var targetTokenWeth = {
-        token: wethToken,
+        token: weth.address,
         fromChainId: chainId,
         originShare: 1,
         targetShare: 100_00000000
@@ -150,7 +154,7 @@ async function main() {
     // await bridgeOutImplementation.connect(newRegimentManager).createSwap(targetTokenWeth,regimentId);
     // await bridgeOutImplementation.connect(newRegimentManager).createSwap(targetTokenWbnb,regimentId);
 
-    var swapIdElf = await bridgeOutImplementation.getSwapId(elfToken, chainId);
+    // var swapIdElf = await bridgeOutImplementation.getSwapId(elfToken, chainId);
     // console.log("elf swap id:",swapIdElf);
     //  var infoElf = await bridgeOutImplementation.getSwapInfo(swapIdElf);
     // console.log("from chain id:",infoElf.fromChainId);
@@ -160,15 +164,15 @@ async function main() {
     // var spaceId = infoElf.spaceId;
     // var spaceInfo = await merkleTree.getSpaceInfo(spaceId);
     // console.log("leaf count",spaceInfo.maxLeafCount);
-    var tokenKey = _generateTokenKey(elfToken,chainId);
-    console.log("token key:",tokenKey);
-    var tokenKey = _generateTokenKey(usdtToken,chainId);
-    console.log("token key:",tokenKey);
-    var tokenKey = _generateTokenKey(wethToken,chainId);
-    console.log("token key:",tokenKey);
+    // var tokenKey = _generateTokenKey(elfToken,chainId);
+    // console.log("token key:",tokenKey);
+    // var tokenKey = _generateTokenKey(usdtToken,chainId);
+    // console.log("token key:",tokenKey);
+    // var tokenKey = _generateTokenKey(wethToken,chainId);
+    // console.log("token key:",tokenKey);
 
 
-    var swapIdUsdt = await bridgeOutImplementation.getSwapId(usdtToken, chainId);
+    // var swapIdUsdt = await bridgeOutImplementation.getSwapId(usdtToken, chainId);
     // console.log("usdt swap id:",swapIdUsdt);
     // var infoUsdt = await bridgeOutImplementation.getSwapInfo(swapIdUsdt);
     // console.log("from chain id:",infoUsdt.fromChainId);
@@ -181,7 +185,7 @@ async function main() {
     // var tokenKey = _generateTokenKey(usdtToken,chainId);
     // console.log("token key:",tokenKey);
 
-    var swapIdWeth = await bridgeOutImplementation.getSwapId(wethAddress, chainId);
+    // var swapIdWeth = await bridgeOutImplementation.getSwapId(wethAddress, chainId);
     // console.log("weth swap id:",swapIdWeth);
     // var infoEth = await bridgeOutImplementation.getSwapInfo(swapIdWeth);
     // console.log("from chain id:",infoEth.fromChainId);
@@ -276,7 +280,7 @@ async function main() {
     // await bridgeInImplementation.setBridgeOut(bridgeOutImplementation.address);
 
     // var chainId = "MainChain_AELF";
-    var chainId = "SideChain_tDVW";
+    // var chainId = "SideChain_tDVV";
     // await bridgeInImplementation.addToken(elf.address,chainId);
     // await bridgeInImplementation.addToken(usdt.address,chainId);
     // await bridgeInImplementation.addToken(weth.address,chainId);
@@ -293,7 +297,10 @@ async function main() {
 
 
 
+    await bridgeIn.updateImplementation(BridgeInImplementationAddress);
     // await bridgeOut.updateImplementation(BridgeOutImplementationV1Address);
+    // await bridgeInImplementation.setWbnb(wbnbAddress);
+    // await bridgeOutImplementation.setWbnb(wbnbAddress);
 
 
 
@@ -313,6 +320,8 @@ async function main() {
     // console.log("bridge out address:",bridgeOutImplementation.address);
     // await wbnb.connect(usdtowner).approve(bridgeInImplementation.address, amount);
     // await bridgeInImplementation.connect(usdtowner).createReceipt(wbnb.address, amount, chainId, targetAddress);
+
+    // await bridgeInImplementation.connect(receiver1).lock
 
     // var tokens = [elf.address];
     // var chainIds = [chainId];
@@ -340,7 +349,7 @@ async function main() {
     // console.log(result);
 
 
-    var receiptId = "274bb010153ade48615faa496df2b31720326d136096853b43fc1717460cc739.25";
+    // var receiptId = "274bb010153ade48615faa496df2b31720326d136096853b43fc1717460cc739.25";
     //var amount = BigInt(500000000);
     
     //console.log("receiver1 address:",receiver1.address);

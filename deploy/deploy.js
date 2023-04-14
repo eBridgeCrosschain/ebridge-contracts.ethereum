@@ -43,10 +43,10 @@ async function main() {
     
 
     //BridgeInImplementation
-    console.log("Start to deploy BridgeInImplementation contract.");
-    const BridgeInImplementation = await ethers.getContractFactory("BridgeInImplementation");
-    const bridgeInImplementation = await BridgeInImplementation.deploy();
-    console.log("BridgeInImplementation address:", bridgeInImplementation.address);
+    // console.log("Start to deploy BridgeInImplementation contract.");
+    // const BridgeInImplementation = await ethers.getContractFactory("BridgeInImplementation");
+    // const bridgeInImplementation = await BridgeInImplementation.deploy();
+    // console.log("BridgeInImplementation address:", bridgeInImplementation.address);
 
 
     //BridgeIn
@@ -58,11 +58,11 @@ async function main() {
     // console.log("BridgeIn address:", bridgeInProxy.address);
 
 
-    //BridgeOutImplementationV1
-    console.log("Start to deploy BridgeOutImplementationV1 contract.");
-    const BridgeOutImplementation = await ethers.getContractFactory("BridgeOutImplementationV1");
-    const bridgeOutImplementation = await BridgeOutImplementation.deploy();
-    console.log("BridgeOutImplementation address:", bridgeOutImplementation.address);
+    // BridgeOutImplementationV1
+    // console.log("Start to deploy BridgeOutImplementationV1 contract.");
+    // const BridgeOutImplementation = await ethers.getContractFactory("BridgeOutImplementationV1");
+    // const bridgeOutImplementation = await BridgeOutImplementation.deploy();
+    // console.log("BridgeOutImplementation address:", bridgeOutImplementation.address);
 
 
     
@@ -88,7 +88,7 @@ async function main() {
     // const usdt = await USDT.deploy();
     // console.log("usdt address:", usdt.address);
 
-    // const WETH = await ethers.getContractFactory("WETH");
+    // const WETH = await ethers.getContractFactory("WETH9");
     // const weth = await WETH.deploy();
     // console.log("weth address:", weth.address);
     
@@ -122,10 +122,10 @@ async function main() {
     //     constructorArguments: [members,required],
     //   })
 
-    // await run("verify:verify", {
-    //         address: bridgeInImplementationAddress,
-    //         constructorArguments: [],
-    //       })
+    await run("verify:verify", {
+            address: "0x975fe997296E80E875c6d16f38E21AE4fd750cb7",
+            constructorArguments: [],
+          })
 
     // await run("verify:verify", {
     //     address: bridgeInAddress,
@@ -134,7 +134,7 @@ async function main() {
     //       })
 
     // await run("verify:verify", {
-    //         address: bridgeOutImplementationAddress,
+    //         address: "0xD5421dFE2CD155278292EFd5980f5f3303161434",
     //         constructorArguments: [],
     //       })
 
@@ -157,9 +157,9 @@ async function main() {
     //   })
 
     // await run("verify:verify", {
-    //     address: "0xF2e5C43251157969830C5B14B0ccF026999da96d",
+    //     address: "0x9953aD30fAa1D0364342445DECf01c3cea57e4da",
     //     constructorArguments: [],
-    //     contract: "contracts/MockContracts/MockWETH.sol:WETH"
+    //     contract: "contracts/MockContracts/WETH9.sol:WETH"
     //   })
 
     // await run("verify:verify", {

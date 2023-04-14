@@ -6,6 +6,7 @@ import '@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol';
 import './Proxy.sol';
 import './libraries/StringHex.sol';
 import './interfaces/BridgeOutInterface.sol';
+import './interfaces/WBNBInterface.sol';
 pragma solidity 0.8.9;
 
 contract BridgeInImplementation is ProxyStorage {
@@ -29,6 +30,7 @@ contract BridgeInImplementation is ProxyStorage {
         private ownerToReceiptsIndexMap; //from 0
 
     EnumerableSet.Bytes32Set private tokenList;
+    address public wbnb;
 
     modifier whenNotPaused() {
         require(!isPaused, 'paused');
@@ -66,6 +68,11 @@ contract BridgeInImplementation is ProxyStorage {
         require(bridgeOut == address(0), 'already set');
         bridgeOut = _bridgeOut;
     }
+    function setWbnb(address _wbnb) external onlyOwner {
+        require(wbnb == address(0), 'already set');
+        wbnb = _wbnb;
+    }
+
 
     function addToken(address token, string calldata chainId) public onlyOwner {
         bytes32 tokenKey = _generateTokenKey(token, chainId);
@@ -102,6 +109,16 @@ contract BridgeInImplementation is ProxyStorage {
         bytes32 tokenKey = _generateTokenKey(token, chainId);
         return tokenList.contains(tokenKey);
     }
+    function lockToken(
+        string calldata targetChainId,
+        string calldata targetAddress
+    ) external payable whenNotPaused {
+        require(msg.value > 0,'balance is not enough.');
+        IWBNB(wbnb).deposit{value:msg.value}();
+        bool success = IWBNB(wbnb).approve(bridgeOut,msg.value);
+        require(success,"failed.");
+        generateReceipt(wbnb,msg.value,targetChainId,targetAddress);
+    }
 
     // Create new receipt and deposit erc20 token
     function createReceipt(
@@ -110,6 +127,7 @@ contract BridgeInImplementation is ProxyStorage {
         string calldata targetChainId,
         string calldata targetAddress
     ) external whenNotPaused {
+        require(token != wbnb,'not support token');
         bytes32 tokenKey = _generateTokenKey(token, targetChainId);
         require(
             tokenList.contains(tokenKey),
@@ -119,6 +137,10 @@ contract BridgeInImplementation is ProxyStorage {
         // Deposit token to this contract
         IERC20(token).safeTransferFrom(msg.sender, address(this), amount);
         IERC20(token).approve(bridgeOut, amount);
+        generateReceipt(token,amount,targetChainId,targetAddress);
+    }
+    function generateReceipt(address token,uint256 amount,string calldata targetChainId,string calldata targetAddress) internal{
+        bytes32 tokenKey = _generateTokenKey(token, targetChainId);
         IBridgeOut(bridgeOut).deposit(tokenKey, token, amount);
         uint256 receiptIndex = ++tokenReceiptIndex[tokenKey];
         string memory receiptId = _generateReceiptId(tokenKey, receiptIndex);

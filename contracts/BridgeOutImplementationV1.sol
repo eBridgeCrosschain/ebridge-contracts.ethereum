@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 import './interfaces/MerkleTreeInterface.sol';
 import './interfaces/RegimentInterface.sol';
+import './interfaces/WBNBInterface.sol';
 import '@openzeppelin/contracts/utils/math/SafeMath.sol';
 import '@openzeppelin/contracts/utils/Strings.sol';
 import '@openzeppelin/contracts/utils/structs/EnumerableSet.sol';
@@ -28,9 +29,10 @@ contract BridgeOutImplementationV1 is ProxyStorage {
         internal receivedReceiptsMap;
     mapping(bytes32 => uint256) internal receivedReceiptIndex;
     mapping(string => bool) internal receiptApproveMap;
-    mapping(address => uint256) internal tokenAmountLimit;
+    mapping(address => uint256) public tokenAmountLimit;
     mapping(bytes32 => uint256) internal tokenDepositAmount;
     bool internal isPaused;
+    address private wbnb;
 
     struct ReceivedReceipt {
         address asset; // ERC20 Token Address
@@ -78,7 +80,9 @@ contract BridgeOutImplementationV1 is ProxyStorage {
         regiment = _regiment;
         bridgeIn = _bridgeIn;
     }
-
+    function setWbnb(address _wbnb)external onlyOwner{
+        wbnb = _wbnb;
+    }
     function pause() external onlyOwner {
         require(!isPaused, 'already paused');
         isPaused = true;
@@ -192,13 +196,18 @@ contract BridgeOutImplementationV1 is ProxyStorage {
             'deposit not enough'
         );
         if (targetTokenAmount >= tokenAmountLimit[swapInfo.targetToken.token]) {
-            require(receiptApproveMap[receiptId], 'receipt should be approved');
+            require(receiptApproveMap[receiptId], 'should approve');
         }
         tokenDepositAmount[swapId] -= targetTokenAmount;
-        IERC20(swapInfo.targetToken.token).transfer(
-            receiverAddress,
-            targetTokenAmount
-        );
+        if(swapInfo.targetToken.token == wbnb){
+            IWBNB(wbnb).withdraw(targetTokenAmount);
+            payable(address(this)).transfer(targetTokenAmount);
+        }else{
+            IERC20(swapInfo.targetToken.token).transfer(
+                receiverAddress,
+                targetTokenAmount
+            );
+        }
         swapAmouts.receivedAmounts[
             swapInfo.targetToken.token
         ] = targetTokenAmount;
@@ -321,7 +330,7 @@ contract BridgeOutImplementationV1 is ProxyStorage {
     ) external view returns (uint256[] memory) {
         require(
             tokens.length == fromChainIds.length,
-            'invalid tokens/fromChainIds input'
+            'invalid input'
         );
         uint256[] memory indexs = new uint256[](tokens.length);
         for (uint256 i = 0; i < tokens.length; i++) {
