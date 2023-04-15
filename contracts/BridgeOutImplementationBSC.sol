@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 import './interfaces/MerkleTreeInterface.sol';
 import './interfaces/RegimentInterface.sol';
-import './interfaces/WETHInterface.sol';
+import './interfaces/WBNBInterface.sol';
 import '@openzeppelin/contracts/utils/math/SafeMath.sol';
 import '@openzeppelin/contracts/utils/Strings.sol';
 import '@openzeppelin/contracts/utils/structs/EnumerableSet.sol';
@@ -82,7 +82,7 @@ contract BridgeOutImplementationV1 is ProxyStorage {
         bridgeIn = _bridgeIn;
         tokenAddress = _tokenAddress;
     }
-
+    
     function pause() external onlyOwner {
         require(!isPaused, 'already paused');
         isPaused = true;
@@ -200,7 +200,7 @@ contract BridgeOutImplementationV1 is ProxyStorage {
         }
         tokenDepositAmount[swapId] -= targetTokenAmount;
         if(swapInfo.targetToken.token == tokenAddress){
-            IWETH9(tokenAddress).withdraw(targetTokenAmount);
+            IWBNB(tokenAddress).withdraw(targetTokenAmount);
             payable(receiverAddress).transfer(targetTokenAmount);
         }else{
             IERC20(swapInfo.targetToken.token).transfer(

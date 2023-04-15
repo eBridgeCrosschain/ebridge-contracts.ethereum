@@ -42,7 +42,7 @@ async function main() {
     // console.log("MultiSigWallet address:", multiSigWallet.address);
     
 
-    //BridgeInImplementation
+    // BridgeInImplementation
     // console.log("Start to deploy BridgeInImplementation contract.");
     // const BridgeInImplementation = await ethers.getContractFactory("BridgeInImplementation");
     // const bridgeInImplementation = await BridgeInImplementation.deploy();
@@ -123,7 +123,7 @@ async function main() {
     //   })
 
     await run("verify:verify", {
-            address: "0x975fe997296E80E875c6d16f38E21AE4fd750cb7",
+            address: "0x536E5f17238C8f134Ac6FdB698A191c4fcCbfFA2",
             constructorArguments: [],
           })
 
@@ -133,10 +133,10 @@ async function main() {
     //     contract: "contracts/BridgeIn.sol:BridgeIn"
     //       })
 
-    // await run("verify:verify", {
-    //         address: "0xD5421dFE2CD155278292EFd5980f5f3303161434",
-    //         constructorArguments: [],
-    //       })
+    await run("verify:verify", {
+            address: "0x0Be83fD8e5C12D7A5394992A42a6581ECBAfd03B",
+            constructorArguments: [],
+          })
 
     // await run("verify:verify", {
     //     address: bridgeOutAddress,
@@ -156,14 +156,14 @@ async function main() {
     //     contract: "contracts/MockContracts/MockUSDT.sol:USDT"
     //   })
 
-    // await run("verify:verify", {
-    //     address: "0x9953aD30fAa1D0364342445DECf01c3cea57e4da",
-    //     constructorArguments: [],
-    //     contract: "contracts/MockContracts/WETH9.sol:WETH"
-    //   })
+    await run("verify:verify", {
+        address: "0x035900292c309d8beCBCAFb3227238bec0EBa253",
+        constructorArguments: [],
+        contract: "contracts/MockContracts/WETH9.sol:WETH"
+      })
 
     // await run("verify:verify", {
-    //     address: wbnbAddress,
+    //     address: "0x0CBAb7E71f969Bfb3eF5b13542E9087a73244F02",
     //     constructorArguments: [],
     //     contract: "contracts/MockContracts/MockWBNB.sol:WBNB"
     //   })

@@ -15,7 +15,10 @@ async function main() {
     // MultiSignAddress = "0xcb41c295021977bcd36759e179222a9d89b001Bf";
     // BridgeInImplementationAddress = "0xfECC01e29eC263c37B3D1Db3748155c35b905A23";
     // BridgeInImplementationAddress = "0x11a86274622fCE5C9d95e9f9ac9A1ae8b4531cA6";
-    BridgeInImplementationAddress = "0x975fe997296E80E875c6d16f38E21AE4fd750cb7";
+    // BridgeInImplementationAddress = "0x975fe997296E80E875c6d16f38E21AE4fd750cb7";
+    // BridgeInImplementationAddress = "0x2e9556478F278f42a4A0fe4496e6C91D1fcaDE8c";
+    // BridgeInImplementationAddress = "0xf7FE139fCBAeF8B2633DE85c78B10A14A948e5d1";
+    BridgeInImplementationAddress = "0x536E5f17238C8f134Ac6FdB698A191c4fcCbfFA2";
     BridgeInAddress = "0xd6A2BbDB1d23155A78aeB3dEB8a4df0d96AB007D";
     // BridgeInAddress = "0x66760B644668d4E7de273bc788F915Efd5536332";
     // BridgeOutImplementationV1Address = "0x88dC11314e267D14A98A153193270Cd2D31Ff5eD";
@@ -23,7 +26,8 @@ async function main() {
     // BridgeOutImplementationV1Address = "0x8644Cf61404165E28595cB996f730BA5c0eCcd26";
     // BridgeOutImplementationV1Address = "0x43559914a545bc9d1761D8fe46B6d05182777714";
     // BridgeOutImplementationV1Address = "0x785fD5EDc07c7be50F93B85f57E3B05dbA221A75";
-    BridgeOutImplementationV1Address = "0xD5421dFE2CD155278292EFd5980f5f3303161434";
+    // BridgeOutImplementationV1Address = "0x637ceaE71Fb43E6608db07Ca5168DAd98B6A8E9A";
+    BridgeOutImplementationV1Address = "0x0Be83fD8e5C12D7A5394992A42a6581ECBAfd03B";
     BridgeOutAddress = "0x8E0cF442690a9395C42623F6503Ab926c739f59E";
     // BridgeOutAddress = "0xaD3eaC8ad11d14808E1598D264cD25CE151e80a4";
 
@@ -33,10 +37,10 @@ async function main() {
     // usdtAddress = "0x35aD61E5Ae01b105aD482D58937a2dCa87A2d832";
     // usdtAddress = "0x3F280eE5876CE8B15081947E0f189E336bb740A5";
     usdtAddress = "0x35E875C8790A240bd680DEC8C0fe3ffeb5fC4933";
-    // wethAddress = "0x4aE5762FA7f0E033107427Ad3e297974870D57d2";
-    wethAddress = "0x9953aD30fAa1D0364342445DECf01c3cea57e4da";
-    wbnbAddress = "0xae13d989daC2f0dEbFf460aC112a837C89BAa7cd";
-    // wbnbAddress = "0x7e308DC172faa2a6560C2cd806e8282C51E5BFA5";
+    wethAddress = "0x035900292c309d8beCBCAFb3227238bec0EBa253";
+    // wethAddress = "0x9953aD30fAa1D0364342445DECf01c3cea57e4da";
+    // wbnbAddress = "0xae13d989daC2f0dEbFf460aC112a837C89BAa7cd";
+    wbnbAddress = "0x0CBAb7E71f969Bfb3eF5b13542E9087a73244F02";
 
     const BridgeInImplementation = await ethers.getContractFactory("BridgeInImplementation");
     const bridgeInImplementation = await BridgeInImplementation.attach(BridgeInAddress);
@@ -94,7 +98,7 @@ async function main() {
     //MainChain_AELF -> goerli
 
     //SetDefaultMerkleTreeDepth
-    var regimentId = "0xf7296bf942ea75763b3ffffd0133a94558c87477c0a7e595bf9543cd7540602f";
+    var regimentId = "0x1b0b6ee3f6021282dafddb9b0d82e0c4b2ed2f57f27fd4816c3d5e8ef84fcee5";
     // var result = await regiment.GetRegimentMemberList(regimentId);
     // console.log("result:",result);
     // await regiment.connect(newRegimentManager).AddRegimentMember(regimentId,bridgeOutImplementation.address);
@@ -106,10 +110,10 @@ async function main() {
     var usdtToken = usdt.address;
     var wethToken = wethAddress;
 
-    // console.log("Start to set token limit.");
-    // var tokens = [wethAddress];
-    // var limits = [BigInt(100000_000000000000000000)];
-    // await bridgeOutImplementation.setLimits(tokens,limits);
+    console.log("Start to set token limit.");
+    var tokens = [wethAddress];
+    var limits = [BigInt(100000_000000000000000000)];
+    await bridgeOutImplementation.setLimits(tokens,limits);
 
 
     // console.log("elf address:",elfToken);
@@ -123,8 +127,8 @@ async function main() {
     // var result = await regiment.IsRegimentMember(regimentId,address);
     // console.log("is regiment member:",result);
 
-     var chainId = "MainChain_AELF";
-    // var chainId = "SideChain_tDVV";
+    //  var chainId = "MainChain_AELF";
+    var chainId = "SideChain_tDVW";
     var targetTokenElf = {
         token: elfToken,
         fromChainId: chainId,
@@ -138,21 +142,26 @@ async function main() {
         targetShare: 1
     }
     var targetTokenWeth = {
-        token: weth.address,
+        token: wethAddress,
         fromChainId: chainId,
         originShare: 1,
         targetShare: 100_00000000
     }
-    // var targetTokenWbnb = {
-    //     token: wbnbAddress,
-    //     fromChainId: chainId,
-    //     originShare: 1,
-    //     targetShare: 100_00000000
-    // }
+    var targetTokenWbnb = {
+        token: wbnbAddress,
+        fromChainId: chainId,
+        originShare: 1,
+        targetShare: 100_00000000
+    }
     // await bridgeOutImplementation.connect(newRegimentManager).createSwap(targetTokenElf,regimentId);
     // await bridgeOutImplementation.connect(newRegimentManager).createSwap(targetTokenUsdt,regimentId);
     // await bridgeOutImplementation.connect(newRegimentManager).createSwap(targetTokenWeth,regimentId);
     // await bridgeOutImplementation.connect(newRegimentManager).createSwap(targetTokenWbnb,regimentId);
+
+    // var token=[usdtAddress];
+    // var targetChainId = [chainId];
+    // var index = await bridgeInImplementation.getSendReceiptIndex(token,targetChainId);
+    // console.log(index);
 
     // var swapIdElf = await bridgeOutImplementation.getSwapId(elfToken, chainId);
     // console.log("elf swap id:",swapIdElf);
@@ -297,10 +306,10 @@ async function main() {
 
 
 
-    await bridgeIn.updateImplementation(BridgeInImplementationAddress);
+    // await bridgeIn.updateImplementation(BridgeInImplementationAddress);
     // await bridgeOut.updateImplementation(BridgeOutImplementationV1Address);
-    // await bridgeInImplementation.setWbnb(wbnbAddress);
-    // await bridgeOutImplementation.setWbnb(wbnbAddress);
+    // await bridgeInImplementation.setWeth(wethAddress);
+    // await bridgeOutImplementation.setWeth(wethAddress);
 
 
 
@@ -321,7 +330,6 @@ async function main() {
     // await wbnb.connect(usdtowner).approve(bridgeInImplementation.address, amount);
     // await bridgeInImplementation.connect(usdtowner).createReceipt(wbnb.address, amount, chainId, targetAddress);
 
-    // await bridgeInImplementation.connect(receiver1).lock
 
     // var tokens = [elf.address];
     // var chainIds = [chainId];

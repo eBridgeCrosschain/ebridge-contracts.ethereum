@@ -5,11 +5,12 @@ pragma solidity 0.8.9;
 contract BridgeIn is Proxy {
     constructor(
         address _mutiSigWallet,
+        address _tokenAddress,
         address _implementation
     ) Proxy(_implementation) {
         delegateTo(
             _implementation,
-            abi.encodeWithSignature('initialize(address)', _mutiSigWallet)
+            abi.encodeWithSignature('initialize(address,address)', _mutiSigWallet,_tokenAddress)
         );
     }
 

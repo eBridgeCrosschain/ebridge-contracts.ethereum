@@ -6,7 +6,7 @@ import '@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol';
 import './Proxy.sol';
 import './libraries/StringHex.sol';
 import './interfaces/BridgeOutInterface.sol';
-import './interfaces/WETHInterface.sol';
+import './interfaces/WBNBInterface.sol';
 pragma solidity 0.8.9;
 
 contract BridgeInImplementation is ProxyStorage {
@@ -111,8 +111,8 @@ contract BridgeInImplementation is ProxyStorage {
         string calldata targetAddress
     ) external payable whenNotPaused {
         require(msg.value > 0,'balance is not enough.');
-        IWETH9(tokenAddress).deposit{value:msg.value}();
-        bool success = IWETH9(tokenAddress).approve(bridgeOut,msg.value);
+        IWBNB(tokenAddress).deposit{value:msg.value}();
+        bool success = IWBNB(tokenAddress).approve(bridgeOut,msg.value);
         require(success,"failed.");
         generateReceipt(tokenAddress,msg.value,targetChainId,targetAddress);
     }
