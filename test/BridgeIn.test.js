@@ -118,7 +118,7 @@ describe("BridgeIn", function () {
                 amountMin = new BigNumber(1000000000000000000);
                 amountMax = new BigNumber(1000800000000000000);
                 var actualAmount = new BigNumber(beforeBalance - afterBalance);
-                console.log(actualAmount);
+                console.log(actualAmount.toString());
                 expect(actualAmount.lte(amountMax)).to.be.true;
                 expect(actualAmount.gte(amountMin)).to.be.true;
                 
