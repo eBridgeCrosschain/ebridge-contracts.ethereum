@@ -115,12 +115,14 @@ describe("BridgeIn", function () {
                 console.log("after balance:",afterBalance);
 
                 //contains transaction fee
-                amountMin = new BigNumber(1000000000000000000);
-                amountMax = new BigNumber(1000800000000000000);
-                var actualAmount = new BigNumber(beforeBalance - afterBalance);
+                amountMin = (new BigNumber(1000000000000000000)).integerValue().toFixed();
+                amountMax = (new BigNumber(1000800000000000000)).integerValue().toFixed();
+                var actualAmount = (new BigNumber(beforeBalance - afterBalance)).integerValue().toFixed();
                 console.log(actualAmount.toString());
-                expect(actualAmount.lte(amountMax)).to.be.true;
-                expect(actualAmount.gte(amountMin)).to.be.true;
+                // expect(actualAmount.lte(amountMax)).to.be.true;
+                // expect(actualAmount.gte(amountMin)).to.be.true;
+                expect(actualAmount < amountMax).to.be.true;
+                expect(actualAmount > amountMin).to.be.true;
                 
                 expect(await weth.balanceOf(bridgeOutMock.address)).to.equal('1000000000000000000');
                 
