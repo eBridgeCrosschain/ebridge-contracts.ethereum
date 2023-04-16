@@ -5,10 +5,13 @@ const {
 const { anyValue } = require("@nomicfoundation/hardhat-chai-matchers/withArgs");
 const { ethers } = require("hardhat");
 const { expect } = require("chai");
+
 describe("BridgeIn", function () {
     async function deployBridgeInFixture() {
         // Contracts are deployed using the first signer/account by default
 
+        const WETH = await ethers.getContractFactory("WETH9");
+        const weth = await WETH.deploy();
 
         const [owner, otherAccount0, otherAccount1] = await ethers.getSigners();
         const BridgeInImplementation = await ethers.getContractFactory("BridgeInImplementation");
@@ -18,10 +21,10 @@ describe("BridgeIn", function () {
         const bridgeInImplementation = await BridgeInImplementation.deploy();
 
         const multiSigWalletMockAddress = otherAccount0.address;
-        const bridgeInProxy = await BridgeIn.deploy(multiSigWalletMockAddress, bridgeInImplementation.address);
+        const bridgeInProxy = await BridgeIn.deploy(multiSigWalletMockAddress, weth.address, bridgeInImplementation.address);
         const bridgeIn = BridgeInImplementation.attach(bridgeInProxy.address);
         await bridgeIn.setBridgeOut(bridgeOutMock.address);
-        return { bridgeIn, owner, otherAccount0, otherAccount1, bridgeOutMock };
+        return { bridgeIn, owner, otherAccount0, otherAccount1, bridgeOutMock, weth };
 
     }
 
@@ -92,6 +95,33 @@ describe("BridgeIn", function () {
                 expect(isSupported).to.equal(false);
             });
         });
+
+        describe("create receipt native token",function(){
+            it("Should success", async function () {
+                const { bridgeIn, owner, otherAccount0, otherAccount1, bridgeOutMock,weth } = await loadFixture(deployBridgeInFixture);
+            
+                var chainId = "AELF_MAINNET";
+                await bridgeIn.addToken(weth.address, chainId);
+                
+            
+                var targetAddress = "AELF_123";
+
+                var beforeBalance = await owner.getBalance();
+                console.log("before balance:",beforeBalance);
+
+                await bridgeIn.createNativeTokenReceipt(chainId,targetAddress,{value:'1000000000000000000'});
+
+                var afterBalance = await owner.getBalance();
+                console.log("after balance:",afterBalance);
+
+                //contains transaction fee
+                amount = '1000713984206176300';
+                expect((beforeBalance-afterBalance).toString()).to.equal(amount);
+                
+                expect(await weth.balanceOf(bridgeOutMock.address)).to.equal('1000000000000000000');
+                
+            })
+        })
 
         describe("create receipt test", function () {
             it("Should revert when trigger error", async function () {
@@ -423,7 +453,10 @@ describe("BridgeIn", function () {
 
             })
         })
-
+        function _generateTokenKey(token, chainId) {
+            var data = ethers.utils.solidityPack(["address", "string"], [token, chainId]);
+            return ethers.utils.sha256(data);
+        }
 
 
     })

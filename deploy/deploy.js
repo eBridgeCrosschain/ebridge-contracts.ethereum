@@ -125,6 +125,7 @@ async function main() {
     await run("verify:verify", {
             address: "0x536E5f17238C8f134Ac6FdB698A191c4fcCbfFA2",
             constructorArguments: [],
+            contract: "contracts/BridgeInImplementation.sol:BridgeInImplementation"
           })
 
     // await run("verify:verify", {

@@ -6,7 +6,7 @@ import '@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol';
 import './Proxy.sol';
 import './libraries/StringHex.sol';
 import './interfaces/BridgeOutInterface.sol';
-import './interfaces/WETHInterface.sol';
+import './interfaces/NativeTokenInterface.sol';
 pragma solidity 0.8.9;
 
 contract BridgeInImplementation is ProxyStorage {
@@ -106,13 +106,18 @@ contract BridgeInImplementation is ProxyStorage {
         bytes32 tokenKey = _generateTokenKey(token, chainId);
         return tokenList.contains(tokenKey);
     }
-    function lockToken(
+    function createNativeTokenReceipt(
         string calldata targetChainId,
         string calldata targetAddress
     ) external payable whenNotPaused {
+        bytes32 tokenKey = _generateTokenKey(tokenAddress, targetChainId);
+        require(
+            tokenList.contains(tokenKey),
+            'Token is not support in that chain'
+        );
         require(msg.value > 0,'balance is not enough.');
-        IWETH9(tokenAddress).deposit{value:msg.value}();
-        bool success = IWETH9(tokenAddress).approve(bridgeOut,msg.value);
+        INativeToken(tokenAddress).deposit{value:msg.value}();
+        bool success = INativeToken(tokenAddress).approve(bridgeOut,msg.value);
         require(success,"failed.");
         generateReceipt(tokenAddress,msg.value,targetChainId,targetAddress);
     }
