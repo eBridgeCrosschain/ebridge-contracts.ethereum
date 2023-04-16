@@ -1,6 +1,5 @@
 // const dotenv = require('dotenv');
 require('solidity-coverage');
-require("@nomiclabs/hardhat-waffle");
 require("@nomiclabs/hardhat-etherscan");
 require('hardhat-contract-sizer');
 require("@nomicfoundation/hardhat-toolbox");

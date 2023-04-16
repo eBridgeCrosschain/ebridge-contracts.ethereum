@@ -7,6 +7,8 @@ const { expect } = require("chai");
 const { ethers } = require("hardhat");
 describe("MultiSigWallet", function () {
     async function deployMultiSigWalletFixture() {
+        const WETH = await ethers.getContractFactory("WETH9");
+        const weth = await WETH.deploy();
 
         const [owner, account, account1, account2, account3, account4] = await ethers.getSigners();
         const BridgeInImplementation = await ethers.getContractFactory("BridgeInImplementation");
@@ -19,7 +21,7 @@ describe("MultiSigWallet", function () {
         const multiSigWallet = await MultiSigWallet.deploy(members, required);
         const bridgeOutMock = await BridgeOutMock.deploy();
         const bridgeInImplementation = await BridgeInImplementation.deploy();
-        const bridgeInProxy = await BridgeIn.deploy(multiSigWallet.address, bridgeInImplementation.address);
+        const bridgeInProxy = await BridgeIn.deploy(multiSigWallet.address,weth.address, bridgeInImplementation.address);
         const bridgeIn = BridgeInImplementation.attach(bridgeInProxy.address);
         await bridgeIn.setBridgeOut(bridgeOutMock.address);
         return { bridgeIn, multiSigWallet, owner, account, account1, account2, account3, account4 };

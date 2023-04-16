@@ -5,7 +5,7 @@ const {
 const { anyValue } = require("@nomicfoundation/hardhat-chai-matchers/withArgs");
 const { ethers } = require("hardhat");
 const { expect } = require("chai");
-
+const BigNumber = require("bignumber.js")
 describe("BridgeIn", function () {
     async function deployBridgeInFixture() {
         // Contracts are deployed using the first signer/account by default
@@ -115,8 +115,12 @@ describe("BridgeIn", function () {
                 console.log("after balance:",afterBalance);
 
                 //contains transaction fee
-                amount = '1000713984206176300';
-                expect((beforeBalance-afterBalance).toString()).to.equal(amount);
+                amountMin = new BigNumber(1000000000000000000);
+                amountMax = new BigNumber(1000800000000000000);
+                var actualAmount = new BigNumber(beforeBalance - afterBalance);
+                console.log(actualAmount);
+                expect(actualAmount.lte(amountMax)).to.be.true;
+                expect(actualAmount.gte(amountMin)).to.be.true;
                 
                 expect(await weth.balanceOf(bridgeOutMock.address)).to.equal('1000000000000000000');
                 
@@ -410,7 +414,7 @@ describe("BridgeIn", function () {
                 expect(isPaused).to.equal(true);
 
                 //revert when pause again
-                var error = "paused"
+                var error = "already paused"
                 await expect(bridgeIn.pause())
                     .to.be.revertedWith(error);
                 //revert when sender is not admin

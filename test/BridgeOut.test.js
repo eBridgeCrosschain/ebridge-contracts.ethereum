@@ -2,9 +2,9 @@ const {
     time,
     loadFixture,
 } = require("@nomicfoundation/hardhat-network-helpers");
-const { anyValue } = require("@nomicfoundation/hardhat-chai-matchers/withArgs");
 const { expect } = require("chai");
 const { ethers } = require("hardhat");
+const BigNumber = require("bignumber.js")
 describe("BridgeOut", function () {
     async function deployBridgeOutFixture() {
         // Contracts are deployed using the first signer/account by default
@@ -819,8 +819,13 @@ describe("BridgeOut", function () {
                 var afterBalance = await otherAccount0.getBalance();
                 console.log("after balance:",afterBalance);
                 //contains transaction fee
-                var expectAmount = '999535423610945500';
-                expect((afterBalance-beforeBalance).toString()).to.equal(expectAmount);
+                amountMin = new BigNumber(999000000000000000);
+                amountMax = new BigNumber(1000000000000000000);
+                var actualAmount = new BigNumber(afterBalance - beforeBalance);
+                console.log(actualAmount);
+                expect(actualAmount.lte(amountMax)).to.be.true;
+                expect(actualAmount.gte(amountMin)).to.be.true;
+                
                 tokens = [token];
                 chainIds = [chainId];
                 var indexes = await bridgeOut.getReceiveReceiptIndex(tokens, chainIds);
