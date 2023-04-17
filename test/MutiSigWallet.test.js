@@ -182,7 +182,7 @@ describe("MultiSigWallet", function () {
         })
 
         describe("add/remove member test", function () {
-            it("Should remove member success", async function () {
+            it("Should remove last member success", async function () {
                 const { bridgeIn, multiSigWallet, owner, account, account1, account2, account3, account4 } = await loadFixture(deployMultiSigWalletFixture);
                 let ABI = [
                     "function removeMember(address member)"
@@ -202,6 +202,38 @@ describe("MultiSigWallet", function () {
 
                 var isMember = await multiSigWallet.isMember(account4.address);
                 expect(isMember).to.equal(false);
+
+                var members = await multiSigWallet.getmembers();
+                expect(members.length).to.equal(4);
+
+            });
+            it("Should remove member success", async function () {
+                const { bridgeIn, multiSigWallet, owner, account, account1, account2, account3, account4 } = await loadFixture(deployMultiSigWalletFixture);
+            
+                let ABI = [
+                    "function removeMember(address member)"
+                ];
+                let iface = new ethers.utils.Interface(ABI);
+                var data = iface.encodeFunctionData("removeMember", [account2.address])
+
+                await multiSigWallet.submitTransaction(multiSigWallet.address, 0, data);
+
+                var isMember = await multiSigWallet.isMember(account2.address);
+                expect(isMember).to.equal(true);
+
+                var transactionId = 0;
+                await multiSigWallet.connect(account).confirmTransaction(transactionId);
+                await multiSigWallet.connect(account1).confirmTransaction(transactionId);
+                await multiSigWallet.connect(account2).confirmTransaction(transactionId);
+
+                var isMember = await multiSigWallet.isMember(account2.address);
+                expect(isMember).to.equal(false);
+
+                var members = await multiSigWallet.getmembers();
+                members.forEach(member => {
+                    console.log(member);
+                });
+                expect(members.length).to.equal(4);
             });
             it("Should failed when remove a not exist member ", async function () {
                 const { bridgeIn, multiSigWallet, owner, account, account1, account2, account3, account4 } = await loadFixture(deployMultiSigWalletFixture);

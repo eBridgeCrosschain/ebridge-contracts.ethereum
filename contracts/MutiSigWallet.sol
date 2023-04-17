@@ -124,6 +124,7 @@ contract MultiSigWallet is Ownable {
                 members[i] = members[members.length - 1];
                 break;
             }
+        members.pop();
         if (required > members.length) changeRequirement(members.length);
         emit MemberRemoval(member);
     }
