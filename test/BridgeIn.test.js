@@ -115,9 +115,9 @@ describe("BridgeIn", function () {
                 console.log("after balance:",afterBalance);
 
                 //contains transaction fee
-                amountMin = (new BigNumber(1000000000000000000)).integerValue().toFixed();
-                amountMax = (new BigNumber(1000800000000000000)).integerValue().toFixed();
-                var actualAmount = (new BigNumber(beforeBalance - afterBalance)).integerValue().toFixed();
+                amountMin = new BigNumber(1000000000000000000);
+                amountMax = new BigNumber(1000800000000000000);
+                var actualAmount = (new BigNumber(beforeBalance).minus(new BigNumber(afterBalance)));
                 console.log(actualAmount.toString());
                 // expect(actualAmount.lte(amountMax)).to.be.true;
                 // expect(actualAmount.gte(amountMin)).to.be.true;
