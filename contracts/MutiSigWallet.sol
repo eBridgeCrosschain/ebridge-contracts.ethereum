@@ -1,4 +1,4 @@
-pragma solidity 0.8.9; 
+pragma solidity 0.8.9;
 import '@openzeppelin/contracts/access/Ownable.sol';
 
 contract MultiSigWallet is Ownable {
@@ -85,9 +85,10 @@ contract MultiSigWallet is Ownable {
         _;
     }
 
-    constructor(address[] memory _members, uint256 _required)
-        validRequirement(_members.length, _required)
-    {
+    constructor(
+        address[] memory _members,
+        uint256 _required
+    ) validRequirement(_members.length, _required) {
         for (uint256 i = 0; i < _members.length; i++) {
             require(_members[i] != address(0), 'address is null');
             isMember[_members[i]] = true;
@@ -98,7 +99,9 @@ contract MultiSigWallet is Ownable {
 
     /// @dev Allows to add a new member. Transaction has to be sent by wallet.
     /// @param member Address of new member.
-    function addMember(address member)
+    function addMember(
+        address member
+    )
         public
         onlyWallet
         memberDoesNotExist(member)
@@ -112,17 +115,16 @@ contract MultiSigWallet is Ownable {
 
     /// @dev Allows to remove an member. Transaction has to be sent by wallet.
     /// @param member Address of member.
-    function removeMember(address member)
-        public
-        onlyWallet
-        memberExists(member)
-    {
+    function removeMember(
+        address member
+    ) public onlyWallet memberExists(member) {
         isMember[member] = false;
         for (uint256 i = 0; i < members.length - 1; i++)
             if (members[i] == member) {
                 members[i] = members[members.length - 1];
                 break;
             }
+        members.pop();
         if (required > members.length) changeRequirement(members.length);
         emit MemberRemoval(member);
     }
@@ -149,11 +151,9 @@ contract MultiSigWallet is Ownable {
 
     /// @dev Allows to change the number of required confirmations. Transaction has to be sent by wallet.
     /// @param _required Number of required confirmations.
-    function changeRequirement(uint256 _required)
-        public
-        onlyWallet
-        validRequirement(members.length, _required)
-    {
+    function changeRequirement(
+        uint256 _required
+    ) public onlyWallet validRequirement(members.length, _required) {
         required = _required;
         emit RequirementChange(_required);
     }
@@ -174,7 +174,9 @@ contract MultiSigWallet is Ownable {
 
     /// @dev Allows an member to confirm a transaction.
     /// @param transactionId Transaction ID.
-    function confirmTransaction(uint256 transactionId)
+    function confirmTransaction(
+        uint256 transactionId
+    )
         public
         memberExists(msg.sender)
         transactionExists(transactionId)
@@ -187,7 +189,9 @@ contract MultiSigWallet is Ownable {
 
     /// @dev Allows an member to revoke a confirmation for a transaction.
     /// @param transactionId Transaction ID.
-    function revokeConfirmation(uint256 transactionId)
+    function revokeConfirmation(
+        uint256 transactionId
+    )
         public
         memberExists(msg.sender)
         confirmed(transactionId, msg.sender)
@@ -199,10 +203,9 @@ contract MultiSigWallet is Ownable {
 
     /// @dev Allows anyone to execute a confirmed transaction.
     /// @param transactionId Transaction ID.
-    function executeTransaction(uint256 transactionId)
-        public
-        notExecuted(transactionId)
-    {
+    function executeTransaction(
+        uint256 transactionId
+    ) public notExecuted(transactionId) {
         if (isConfirmed(transactionId)) {
             Transaction storage transaction = transactions[transactionId];
             transaction.executed = true;
@@ -259,11 +262,9 @@ contract MultiSigWallet is Ownable {
     /// @dev Returns number of confirmations of a transaction.
     /// @param transactionId Transaction ID.
     /// @return count Number of confirmations.
-    function getConfirmationCount(uint256 transactionId)
-        public
-        view
-        returns (uint256 count)
-    {
+    function getConfirmationCount(
+        uint256 transactionId
+    ) public view returns (uint256 count) {
         for (uint256 i = 0; i < members.length; i++)
             if (confirmations[transactionId][members[i]]) count += 1;
     }
@@ -272,11 +273,10 @@ contract MultiSigWallet is Ownable {
     /// @param pending Include pending transactions.
     /// @param executed Include executed transactions.
     /// @return count Total number of transactions after filters are applied.
-    function getTransactionCount(bool pending, bool executed)
-        public
-        view
-        returns (uint256 count)
-    {
+    function getTransactionCount(
+        bool pending,
+        bool executed
+    ) public view returns (uint256 count) {
         for (uint256 i = 0; i < transactionCount; i++)
             if (
                 (pending && !transactions[i].executed) ||
@@ -293,11 +293,9 @@ contract MultiSigWallet is Ownable {
     /// @dev Returns array with member addresses, which confirmed transaction.
     /// @param transactionId Transaction ID.
     /// @return _confirmations Returns array of member addresses.
-    function getConfirmations(uint256 transactionId)
-        public
-        view
-        returns (address[] memory _confirmations)
-    {
+    function getConfirmations(
+        uint256 transactionId
+    ) public view returns (address[] memory _confirmations) {
         address[] memory confirmationsTemp = new address[](members.length);
         uint256 count = 0;
         uint256 i;

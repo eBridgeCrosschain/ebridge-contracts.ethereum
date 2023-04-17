@@ -58,10 +58,10 @@ contract Merkle {
         regimentAddress = _regimentAddress;
     }
 
-    function createSpace(bytes32 regimentId, uint256 pathLength)
-        external
-        returns (bytes32)
-    {
+    function createSpace(
+        bytes32 regimentId,
+        uint256 pathLength
+    ) external returns (bytes32) {
         bool isAdmin = Regiment(regimentAddress).IsRegimentAdmin(
             regimentId,
             msg.sender
@@ -86,10 +86,10 @@ contract Merkle {
         return spaceId;
     }
 
-    function recordMerkleTree(bytes32 spaceId, bytes32[] memory leafNodeHash)
-        external
-        returns (uint256)
-    {
+    function recordMerkleTree(
+        bytes32 spaceId,
+        bytes32[] memory leafNodeHash
+    ) external returns (uint256) {
         SpaceInfo storage spaceInfo = spaceInfoMap[spaceId];
         require(spaceInfo.operator != bytes32(0), 'Invalid sapceId');
         require(
@@ -116,19 +116,15 @@ contract Merkle {
     }
 
     //view funciton
-    function getSpaceInfo(bytes32 spaceId)
-        public
-        view
-        returns (SpaceInfo memory)
-    {
+    function getSpaceInfo(
+        bytes32 spaceId
+    ) public view returns (SpaceInfo memory) {
         return spaceInfoMap[spaceId];
     }
 
-    function getRegimentSpaceIdListMap(bytes32 regimentId)
-        public
-        view
-        returns (bytes32[] memory)
-    {
+    function getRegimentSpaceIdListMap(
+        bytes32 regimentId
+    ) public view returns (bytes32[] memory) {
         return RegimentSpaceIdListMap[regimentId].values();
     }
 
@@ -137,11 +133,10 @@ contract Merkle {
         return getRemainLeafCountForExactTree(spaceId, defaultIndex);
     }
 
-    function getRemainLeafCountForExactTree(bytes32 spaceId, uint256 treeIndex)
-        public
-        view
-        returns (uint256)
-    {
+    function getRemainLeafCountForExactTree(
+        bytes32 spaceId,
+        uint256 treeIndex
+    ) public view returns (uint256) {
         {
             SpaceInfo storage spaceInfo = spaceInfoMap[spaceId];
             MerkleTree storage tree = SpaceMerkleTree[spaceId][treeIndex];
@@ -160,11 +155,10 @@ contract Merkle {
         }
     }
 
-    function getLeafLocatedMerkleTreeIndex(bytes32 spaceId, uint256 leaf_index)
-        public
-        view
-        returns (uint256)
-    {
+    function getLeafLocatedMerkleTreeIndex(
+        bytes32 spaceId,
+        uint256 leaf_index
+    ) public view returns (uint256) {
         uint256 index = LastRecordedMerkleTreeIndex[spaceId];
         MerkleTree storage tree = SpaceMerkleTree[spaceId][index];
         uint256 lastRecordLeafIndex = tree.lastLeafIndex;
@@ -184,23 +178,23 @@ contract Merkle {
         return tree.lastLeafIndex;
     }
 
-    function getMerkleTreeByIndex(bytes32 spaceId, uint256 merkle_tree_index)
-        public
-        view
-        returns (MerkleTree memory)
-    {
+    function getMerkleTreeByIndex(
+        bytes32 spaceId,
+        uint256 merkle_tree_index
+    ) public view returns (MerkleTree memory) {
         return SpaceMerkleTree[spaceId][merkle_tree_index];
     }
 
-    function getMerkleTreeCountBySpace(bytes32 spaceId)
-        public
-        view
-        returns (uint256)
-    {
+    function getMerkleTreeCountBySpace(
+        bytes32 spaceId
+    ) public view returns (uint256) {
         return LastRecordedMerkleTreeIndex[spaceId].add(1);
     }
 
-    function getMerklePath(bytes32 spaceId, uint256 leafNodeIndex)
+    function getMerklePath(
+        bytes32 spaceId,
+        uint256 leafNodeIndex
+    )
         public
         view
         returns (
@@ -268,11 +262,10 @@ contract Merkle {
 
     //private funtion
 
-    function _leavesToTree(bytes32[] memory _leaves, uint256 maximalTreeSize)
-        private
-        pure
-        returns (bytes32[] memory, uint256)
-    {
+    function _leavesToTree(
+        bytes32[] memory _leaves,
+        uint256 maximalTreeSize
+    ) private pure returns (bytes32[] memory, uint256) {
         uint256 leafCount = _leaves.length;
         bytes32 left;
         bytes32 right;
@@ -319,11 +312,10 @@ contract Merkle {
         return (nodes, nodeCount);
     }
 
-    function _generateMerkleTree(bytes32 spaceId, uint256 merkleTreeIndex)
-        private
-        view
-        returns (MerkleTree memory, bytes32[] memory)
-    {
+    function _generateMerkleTree(
+        bytes32 spaceId,
+        uint256 merkleTreeIndex
+    ) private view returns (MerkleTree memory, bytes32[] memory) {
         bytes32[] memory allNodes;
         uint256 nodeCount;
         bytes32[] memory leafNodes = treeLeafList[spaceId][merkleTreeIndex]
@@ -358,15 +350,7 @@ contract Merkle {
         uint256 _index,
         uint256 treeMaximalSize,
         uint256 pathLength
-    )
-        private
-        view
-        returns (
-            uint256,
-            bytes32[] memory,
-            bool[] memory
-        )
-    {
+    ) private view returns (uint256, bytes32[] memory, bool[] memory) {
         bytes32[] memory leaves = treeLeafList[_merkleTree.spaceId][
             _merkleTree.merkleTreeIndex
         ].values();
@@ -433,10 +417,10 @@ contract Merkle {
         return (i, neighbors, isLeftNeighbors);
     }
 
-    function saveLeaves(bytes32 spaceId, bytes32[] memory leafNodeHash)
-        private
-        returns (uint256)
-    {
+    function saveLeaves(
+        bytes32 spaceId,
+        bytes32[] memory leafNodeHash
+    ) private returns (uint256) {
         uint256 savedLeafsCount = 0;
         uint256 currentTreeIndex = LastRecordedMerkleTreeIndex[spaceId];
         uint256 remainLeafCount;

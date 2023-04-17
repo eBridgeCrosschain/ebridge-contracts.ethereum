@@ -5,25 +5,26 @@ const {
 const { anyValue } = require("@nomicfoundation/hardhat-chai-matchers/withArgs");
 const { ethers } = require("hardhat");
 const { expect } = require("chai");
+const BigNumber = require("bignumber.js")
 describe("BridgeIn", function () {
     async function deployBridgeInFixture() {
         // Contracts are deployed using the first signer/account by default
 
+        const WETH = await ethers.getContractFactory("WETH9");
+        const weth = await WETH.deploy();
 
         const [owner, otherAccount0, otherAccount1] = await ethers.getSigners();
         const BridgeInImplementation = await ethers.getContractFactory("BridgeInImplementation");
         const BridgeOutMock = await ethers.getContractFactory("MockBridgeOut");
         const BridgeIn = await ethers.getContractFactory("BridgeIn");
-        
-      
         const bridgeOutMock = await BridgeOutMock.deploy();
         const bridgeInImplementation = await BridgeInImplementation.deploy();
 
-        const multiSigWalletMockAddress = bridgeOutMock.address;
-        const bridgeInProxy = await BridgeIn.deploy(multiSigWalletMockAddress, bridgeInImplementation.address);
+        const multiSigWalletMockAddress = otherAccount0.address;
+        const bridgeInProxy = await BridgeIn.deploy(multiSigWalletMockAddress, weth.address, bridgeInImplementation.address);
         const bridgeIn = BridgeInImplementation.attach(bridgeInProxy.address);
         await bridgeIn.setBridgeOut(bridgeOutMock.address);
-        return { bridgeIn, owner, otherAccount0, otherAccount1, bridgeOutMock };
+        return { bridgeIn, owner, otherAccount0, otherAccount1, bridgeOutMock, weth };
 
     }
 
@@ -95,6 +96,39 @@ describe("BridgeIn", function () {
             });
         });
 
+        describe("create receipt native token",function(){
+            it("Should success", async function () {
+                const { bridgeIn, owner, otherAccount0, otherAccount1, bridgeOutMock,weth } = await loadFixture(deployBridgeInFixture);
+            
+                var chainId = "AELF_MAINNET";
+                await bridgeIn.addToken(weth.address, chainId);
+                
+            
+                var targetAddress = "AELF_123";
+
+                var beforeBalance = await owner.getBalance();
+                console.log("before balance:",beforeBalance);
+
+                await bridgeIn.createNativeTokenReceipt(chainId,targetAddress,{value:'1000000000000000000'});
+
+                var afterBalance = await owner.getBalance();
+                console.log("after balance:",afterBalance);
+
+                //contains transaction fee
+                amountMin = new BigNumber(1000000000000000000);
+                amountMax = new BigNumber(1000800000000000000);
+                var actualAmount = (new BigNumber(beforeBalance).minus(new BigNumber(afterBalance)));
+                console.log(actualAmount.toString());
+                // expect(actualAmount.lte(amountMax)).to.be.true;
+                // expect(actualAmount.gte(amountMin)).to.be.true;
+                expect(actualAmount < amountMax).to.be.true;
+                expect(actualAmount > amountMin).to.be.true;
+                
+                expect(await weth.balanceOf(bridgeOutMock.address)).to.equal('1000000000000000000');
+                
+            })
+        })
+
         describe("create receipt test", function () {
             it("Should revert when trigger error", async function () {
                 const { bridgeIn, owner, otherAccount0, otherAccount1 } = await loadFixture(deployBridgeInFixture);
@@ -122,7 +156,7 @@ describe("BridgeIn", function () {
             })
 
             it("Should success when token support", async function () {
-                const { bridgeIn, owner, otherAccount0, otherAccount1,bridgeOutMock } = await loadFixture(deployBridgeInFixture);
+                const { bridgeIn, owner, otherAccount0, otherAccount1, bridgeOutMock } = await loadFixture(deployBridgeInFixture);
                 const { elf, usdt } = await deployTokensFixture();
 
                 var chainId = "AELF_MAINNET"
@@ -155,7 +189,7 @@ describe("BridgeIn", function () {
             })
 
             it("Should success when deposit with different token", async function () {
-                const { bridgeIn, owner, otherAccount0, otherAccount1,bridgeOutMock } = await loadFixture(deployBridgeInFixture);
+                const { bridgeIn, owner, otherAccount0, otherAccount1, bridgeOutMock } = await loadFixture(deployBridgeInFixture);
                 const { elf, usdt } = await deployTokensFixture();
 
                 var chainId = "AELF_MAINNET"
@@ -215,7 +249,7 @@ describe("BridgeIn", function () {
 
 
             it("Should success when different user deposit", async function () {
-                const { bridgeIn, owner, otherAccount0, otherAccount1, bridgeOutMock} = await loadFixture(deployBridgeInFixture);
+                const { bridgeIn, owner, otherAccount0, otherAccount1, bridgeOutMock } = await loadFixture(deployBridgeInFixture);
                 const { elf, usdt } = await deployTokensFixture();
 
                 var chainId = "AELF_MAINNET"
@@ -275,6 +309,8 @@ describe("BridgeIn", function () {
             it("Should success when different user deposit in different token", async function () {
                 const { bridgeIn, owner, otherAccount0, otherAccount1, bridgeOutMock } = await loadFixture(deployBridgeInFixture);
                 const { elf, usdt } = await deployTokensFixture();
+                console.log("elf:", elf.address);
+                console.log("usdt:", usdt.address);
 
                 var chainId = "AELF_MAINNET"
                 await bridgeIn.addToken(elf.address, chainId);
@@ -348,8 +384,9 @@ describe("BridgeIn", function () {
                 var tokens = [elf.address];
                 var chainIds = [chainId];
                 var indexes = await bridgeIn.getSendReceiptIndex(tokens, chainIds);
-                var infos = await bridgeIn.getSendReceiptInfos(elf.address, chainId, 1, indexes[0]);
+                expect(indexes[0]).to.equal(2)
 
+                var infos = await bridgeIn.getSendReceiptInfos(elf.address, chainId, 1, indexes[0]);
                 var receipts = await bridgeIn.getMyReceipts(owner.address, elf.address, chainId);
                 expect(receipts.length).to.equal(2)
                 expect(infos.length).to.equal(2)
@@ -378,9 +415,25 @@ describe("BridgeIn", function () {
                 var isPaused = await bridgeIn.isPaused();
                 expect(isPaused).to.equal(true);
 
+                //revert when pause again
+                var error = "already paused"
+                await expect(bridgeIn.pause())
+                    .to.be.revertedWith(error);
+                //revert when sender is not admin
+                var error = "Ownable: caller is not the owner"
+                await expect(bridgeIn.connect(otherAccount0).pause())
+                    .to.be.revertedWith(error);
+
                 var error = "paused"
                 await expect(bridgeIn.createReceipt(elf.address, amount, chainId, targetAddress))
-                .to.be.revertedWith(error);
+                    .to.be.revertedWith(error);
+
+                //restart : otherAccount0 is the mock MulsigWallet sender
+                await bridgeIn.connect(otherAccount0).restart();
+
+                //createReceipt success 
+                bridgeIn.createReceipt(elf.address, amount, chainId, targetAddress);
+                expect(await elf.balanceOf(owner.address)).to.equal(0)
 
             })
 
@@ -406,7 +459,10 @@ describe("BridgeIn", function () {
 
             })
         })
-
+        function _generateTokenKey(token, chainId) {
+            var data = ethers.utils.solidityPack(["address", "string"], [token, chainId]);
+            return ethers.utils.sha256(data);
+        }
 
 
     })

@@ -13,15 +13,17 @@ contract BridgeOut is Proxy {
         address _merkleTree,
         address _regiment,
         address _bridgeIn,
-        address _implementation
+        address _implementation,
+        address _tokenAddress
     ) Proxy(_implementation) {
         delegateTo(
             _implementation,
             abi.encodeWithSignature(
-                'initialize(address,address,address)',
+                'initialize(address,address,address,address)',
                 _merkleTree,
                 _regiment,
-                _bridgeIn
+                _bridgeIn,
+                _tokenAddress
             )
         );
         delegateTo(
@@ -30,10 +32,10 @@ contract BridgeOut is Proxy {
         );
     }
 
-    function delegateTo(address callee, bytes memory data)
-        internal
-        returns (bytes memory)
-    {
+    function delegateTo(
+        address callee,
+        bytes memory data
+    ) internal returns (bytes memory) {
         (bool success, bytes memory returnData) = callee.delegatecall(data);
         assembly {
             if eq(success, 0) {
