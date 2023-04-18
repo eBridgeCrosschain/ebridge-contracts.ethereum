@@ -107,6 +107,7 @@ contract BridgeInImplementation is ProxyStorage {
     function pause() external onlyPauseController {
         require(!isPaused, 'already paused');
         isPaused = true;
+        IBridgeOut(bridgeOut).pause();
     }
 
     function restart() public onlyWallet {

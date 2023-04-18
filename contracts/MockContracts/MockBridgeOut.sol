@@ -13,7 +13,7 @@ contract MockBridgeOut {
             amount
         );
     }
-
+    function pause() external {}
     function restart() external {}
 
     function withdraw(bytes32 tokenKey, address token, uint256 amount) external{ 

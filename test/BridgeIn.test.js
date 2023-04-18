@@ -488,17 +488,24 @@ describe("BridgeIn", function () {
                 expect(await elf.balanceOf(owner.address)).to.equal(amount)
                 await elf.approve(bridgeIn.address, amount);
                 var tokenKey = _generateTokenKey(elf.address,chainId);
+
                 await bridgeIn.deposit(tokenKey,elf.address,amount);
                 var depositAmount = await bridgeIn.depositAmount(tokenKey);
                 expect(depositAmount).to.equal(amount);
+                var balanceSender = await elf.balanceOf(owner.address);
+                expect(balanceSender).to.equal(0);
                 var balance = await elf.balanceOf(bridgeOutMock.address);
                 expect(balance).to.equal(amount);
+
                 var amountWithdraw = 50;
+
                 await bridgeIn.withdraw(tokenKey,elf.address,amountWithdraw);
                 depositAmount = await bridgeIn.depositAmount(tokenKey);
                 expect(depositAmount).to.equal(amount-amountWithdraw);
                 var balance = await elf.balanceOf(bridgeOutMock.address);
                 expect(balance).to.equal(amount-amountWithdraw);
+                var balanceSender = await elf.balanceOf(owner.address);
+                expect(balanceSender).to.equal(amountWithdraw);
 
             })
             it("should revert when deposit/withdraw",async function(){
