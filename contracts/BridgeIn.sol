@@ -6,11 +6,12 @@ contract BridgeIn is Proxy {
     constructor(
         address _mutiSigWallet,
         address _tokenAddress,
+        address _pauseController,
         address _implementation
     ) Proxy(_implementation) {
         delegateTo(
             _implementation,
-            abi.encodeWithSignature('initialize(address,address)', _mutiSigWallet,_tokenAddress)
+            abi.encodeWithSignature('initialize(address,address,address)', _mutiSigWallet,_tokenAddress,_pauseController)
         );
     }
 

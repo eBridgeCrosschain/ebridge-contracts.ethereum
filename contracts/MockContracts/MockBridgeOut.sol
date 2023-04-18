@@ -15,4 +15,9 @@ contract MockBridgeOut {
     }
 
     function restart() external {}
+
+    function withdraw(bytes32 tokenKey, address token, uint256 amount) external{ 
+        IERC20(token).safeTransfer(address(msg.sender), amount);
+    }
+
 }

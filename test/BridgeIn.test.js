@@ -21,7 +21,7 @@ describe("BridgeIn", function () {
         const bridgeInImplementation = await BridgeInImplementation.deploy();
 
         const multiSigWalletMockAddress = otherAccount0.address;
-        const bridgeInProxy = await BridgeIn.deploy(multiSigWalletMockAddress, weth.address, bridgeInImplementation.address);
+        const bridgeInProxy = await BridgeIn.deploy(multiSigWalletMockAddress, weth.address, otherAccount1.address, bridgeInImplementation.address);
         const bridgeIn = BridgeInImplementation.attach(bridgeInProxy.address);
         await bridgeIn.setBridgeOut(bridgeOutMock.address);
         return { bridgeIn, owner, otherAccount0, otherAccount1, bridgeOutMock, weth };
@@ -246,8 +246,6 @@ describe("BridgeIn", function () {
 
             })
 
-
-
             it("Should success when different user deposit", async function () {
                 const { bridgeIn, owner, otherAccount0, otherAccount1, bridgeOutMock } = await loadFixture(deployBridgeInFixture);
                 const { elf, usdt } = await deployTokensFixture();
@@ -411,16 +409,16 @@ describe("BridgeIn", function () {
                 await bridgeIn.createReceipt(elf.address, amount, chainId, targetAddress);
 
                 //set pause
-                await bridgeIn.pause();
+                await bridgeIn.connect(otherAccount1).pause();
                 var isPaused = await bridgeIn.isPaused();
                 expect(isPaused).to.equal(true);
 
                 //revert when pause again
                 var error = "already paused"
-                await expect(bridgeIn.pause())
+                await expect(bridgeIn.connect(otherAccount1).pause())
                     .to.be.revertedWith(error);
                 //revert when sender is not admin
-                var error = "Ownable: caller is not the owner"
+                var error = "only for pause controller"
                 await expect(bridgeIn.connect(otherAccount0).pause())
                     .to.be.revertedWith(error);
 
@@ -457,6 +455,98 @@ describe("BridgeIn", function () {
                 expect(await elf.balanceOf(bridgeOutMock.address)).to.equal(amount)
 
 
+            })
+        })
+        describe("deposit and withdraw test",function(){
+            it("should success when deposit",async function(){
+                const { bridgeIn, owner, otherAccount0, otherAccount1, bridgeOutMock } = await loadFixture(deployBridgeInFixture);
+                const { elf, usdt } = await deployTokensFixture();
+
+                var chainId = "AELF_MAINNET";
+                var amount = 100;
+                await bridgeIn.addToken(elf.address, chainId);
+                //deposit elf
+                await elf.mint(owner.address, amount);
+                expect(await elf.balanceOf(owner.address)).to.equal(amount)
+                await elf.approve(bridgeIn.address, amount);
+                var tokenKey = _generateTokenKey(elf.address,chainId);
+                await bridgeIn.deposit(tokenKey,elf.address,amount);
+                var depositAmount = await bridgeIn.depositAmount(tokenKey);
+                expect(depositAmount).to.equal(amount);
+                var balance = await elf.balanceOf(bridgeOutMock.address);
+                expect(balance).to.equal(amount);
+            })
+            it("should success when withdraw",async function(){
+                const { bridgeIn, owner, otherAccount0, otherAccount1, bridgeOutMock } = await loadFixture(deployBridgeInFixture);
+                const { elf, usdt } = await deployTokensFixture();
+
+                var chainId = "AELF_MAINNET";
+                var amount = 100;
+                await bridgeIn.addToken(elf.address, chainId);
+                //deposit elf
+                await elf.mint(owner.address, amount);
+                expect(await elf.balanceOf(owner.address)).to.equal(amount)
+                await elf.approve(bridgeIn.address, amount);
+                var tokenKey = _generateTokenKey(elf.address,chainId);
+                await bridgeIn.deposit(tokenKey,elf.address,amount);
+                var depositAmount = await bridgeIn.depositAmount(tokenKey);
+                expect(depositAmount).to.equal(amount);
+                var balance = await elf.balanceOf(bridgeOutMock.address);
+                expect(balance).to.equal(amount);
+                var amountWithdraw = 50;
+                await bridgeIn.withdraw(tokenKey,elf.address,amountWithdraw);
+                depositAmount = await bridgeIn.depositAmount(tokenKey);
+                expect(depositAmount).to.equal(amount-amountWithdraw);
+                var balance = await elf.balanceOf(bridgeOutMock.address);
+                expect(balance).to.equal(amount-amountWithdraw);
+
+            })
+            it("should revert when deposit/withdraw",async function(){
+                const { bridgeIn, owner, otherAccount0, otherAccount1, bridgeOutMock } = await loadFixture(deployBridgeInFixture);
+                const { elf, usdt } = await deployTokensFixture();
+
+                var chainId = "AELF_MAINNET";
+                var amount = 100;
+                await elf.mint(owner.address, amount);
+                expect(await elf.balanceOf(owner.address)).to.equal(amount)
+                await elf.approve(bridgeIn.address, amount);
+                var tokenKey = _generateTokenKey(elf.address,chainId);
+                var error = 'not support';
+                await expect(bridgeIn.deposit(tokenKey,elf.address,amount))
+                    .to.be.revertedWith(error);
+
+                var error = 'not support';
+                await expect(bridgeIn.withdraw(tokenKey,elf.address,amount))
+                    .to.be.revertedWith(error);
+
+                await bridgeIn.addToken(elf.address, chainId);
+                //deposit elf
+                await bridgeIn.deposit(tokenKey,elf.address,amount);
+                var depositAmount = await bridgeIn.depositAmount(tokenKey);
+                expect(depositAmount).to.equal(amount);
+                var balance = await elf.balanceOf(bridgeOutMock.address);
+                expect(balance).to.equal(amount);
+                var amountWithdraw = 150;
+                var error = 'deposit not enough';
+                await expect(bridgeIn.withdraw(tokenKey,elf.address,amountWithdraw))
+                    .to.be.revertedWith(error);
+            })
+        })
+        describe("pause controller test",function(){
+            it("should success",async function(){
+                const { bridgeIn, owner, otherAccount0, otherAccount1, bridgeOutMock } = await loadFixture(deployBridgeInFixture);
+                var pauseController = await bridgeIn.pauseController();
+                expect(pauseController).to.equal(otherAccount1.address);
+                await bridgeIn.changePauseController(otherAccount0.address);
+                var pauseController = await bridgeIn.pauseController();
+                expect(pauseController).to.equal(otherAccount0.address);
+                var error = 'only for pause controller';
+                await expect(bridgeIn.connect(otherAccount1).pause()).to.be.revertedWith(error);
+            })
+            it("should revert no permission",async function(){
+                const { bridgeIn, owner, otherAccount0, otherAccount1, bridgeOutMock } = await loadFixture(deployBridgeInFixture);
+                var error = 'Ownable: caller is not the owner';
+                await expect(bridgeIn.connect(otherAccount1).changePauseController(otherAccount0.address)).to.be.revertedWith(error);
             })
         })
         function _generateTokenKey(token, chainId) {
