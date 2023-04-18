@@ -395,7 +395,7 @@ describe("BridgeIn", function () {
 
             })
             it("Should revert when pause", async function () {
-                const { bridgeIn, owner, otherAccount0, otherAccount1 } = await loadFixture(deployBridgeInFixture);
+                const { bridgeIn, owner, otherAccount0, otherAccount1,bridgeOutMock } = await loadFixture(deployBridgeInFixture);
                 const { elf, usdt } = await deployTokensFixture();
 
                 var chainId = "AELF_MAINNET"
@@ -412,6 +412,9 @@ describe("BridgeIn", function () {
                 await bridgeIn.connect(otherAccount1).pause();
                 var isPaused = await bridgeIn.isPaused();
                 expect(isPaused).to.equal(true);
+                var error = 'paused'
+                await expect(bridgeOutMock.withdraw(_generateTokenKey(elf.address,chainId),elf.address,100))
+                    .to.be.revertedWith(error);
 
                 //revert when pause again
                 var error = "already paused"
