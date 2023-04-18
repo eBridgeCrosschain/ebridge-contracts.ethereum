@@ -21,7 +21,7 @@ describe("MultiSigWallet", function () {
         const multiSigWallet = await MultiSigWallet.deploy(members, required);
         const bridgeOutMock = await BridgeOutMock.deploy();
         const bridgeInImplementation = await BridgeInImplementation.deploy();
-        const bridgeInProxy = await BridgeIn.deploy(multiSigWallet.address,weth.address, bridgeInImplementation.address);
+        const bridgeInProxy = await BridgeIn.deploy(multiSigWallet.address,weth.address,account1.address, bridgeInImplementation.address);
         const bridgeIn = BridgeInImplementation.attach(bridgeInProxy.address);
         await bridgeIn.setBridgeOut(bridgeOutMock.address);
         return { bridgeIn, multiSigWallet, owner, account, account1, account2, account3, account4 };
@@ -135,7 +135,7 @@ describe("MultiSigWallet", function () {
                 await multiSigWallet.connect(account1).confirmTransaction(transactionId);
 
 
-                await bridgeIn.pause();
+                await bridgeIn.connect(account1).pause();
                 var isPaused = await bridgeIn.isPaused();
                 expect(isPaused).to.equal(true);
 
