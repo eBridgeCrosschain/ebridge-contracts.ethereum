@@ -155,7 +155,7 @@ contract BridgeInImplementation is ProxyStorage {
         require(amount > 0, 'invalid amount');
         // Deposit token to this contract
         IERC20(token).safeTransferFrom(msg.sender, address(this), amount);
-        IERC20(token).approve(bridgeOut, amount);
+        IERC20(token).safeApprove(bridgeOut, amount);
         generateReceipt(token, amount, targetChainId, targetAddress);
     }
 
@@ -275,7 +275,7 @@ contract BridgeInImplementation is ProxyStorage {
         require(tokenList.contains(tokenKey), 'not support');
         depositAmount[tokenKey] += amount;
         IERC20(token).safeTransferFrom(msg.sender, address(this), amount);
-        IERC20(token).approve(bridgeOut, amount);
+        IERC20(token).safeApprove(bridgeOut, amount);
         IBridgeOut(bridgeOut).deposit(tokenKey, token, amount);
     }
 
