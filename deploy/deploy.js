@@ -13,69 +13,70 @@ async function main() {
     const _maximumAdminsCount = 3;
     
     //regiment contract
-    // console.log("Start to deploy regiment contract.");
-    // const Regiment = await ethers.getContractFactory("Regiment");
-    // const regiment = await Regiment.deploy(_memberJoinLimit, _regimentLimit, _maximumAdminsCount);
-    // console.log("Regiment address:", regiment.address);
+    console.log("Start to deploy regiment contract.");
+    const Regiment = await ethers.getContractFactory("Regiment");
+    const regiment = await Regiment.deploy(_memberJoinLimit, _regimentLimit, _maximumAdminsCount);
+    console.log("Regiment address:", regiment.address);
 
       
     //merkleTree
-    // console.log("Start to deploy merkle tree contract.");
-    // const regimentAddress = regiment.address;
-    // const MerkleTree = await ethers.getContractFactory("Merkle");
-    // const merkleTree = await MerkleTree.deploy(regimentAddress);
-    // console.log("merkleTree address:", merkleTree.address);
+    console.log("Start to deploy merkle tree contract.");
+    const regimentAddress = regiment.address;
+    const MerkleTree = await ethers.getContractFactory("Merkle");
+    const merkleTree = await MerkleTree.deploy(regimentAddress);
+    console.log("merkleTree address:", merkleTree.address);
 
 
     //MultiSigWallet
-    // console.log("Start to deploy MultiSigWallet contract.");
-    // var members = [
-    //     "0x00378D56583235ECc92E7157A8BdaC1483094223",
-    //     "0xEA7Dfc13498E2Ca99a3a74e144F4Afa4dD28b3fc",
-    //     "0x2B5BD5995D6AAeC027c2f6d6a80ae2D792b52aFA",
-    //     "0xA36FF0f2cB7A35E597Bf862C5618c201bD44Dd29",
-    //     "0xE91839Cb35e0c67B5179B31d7A9DE4fde269aBD4",
-    //     ];
-    // var required = 3;
-    // const MultiSigWallet = await ethers.getContractFactory("MultiSigWallet");
-    // const multiSigWallet = await MultiSigWallet.deploy(members, required);
-    // console.log("MultiSigWallet address:", multiSigWallet.address);
+    console.log("Start to deploy MultiSigWallet contract.");
+    var members = [
+        "0x00378D56583235ECc92E7157A8BdaC1483094223",
+        "0xEA7Dfc13498E2Ca99a3a74e144F4Afa4dD28b3fc",
+        "0x2B5BD5995D6AAeC027c2f6d6a80ae2D792b52aFA",
+        "0xA36FF0f2cB7A35E597Bf862C5618c201bD44Dd29",
+        "0xE91839Cb35e0c67B5179B31d7A9DE4fde269aBD4",
+        ];
+    var required = 3;
+    const MultiSigWallet = await ethers.getContractFactory("MultiSigWallet");
+    const multiSigWallet = await MultiSigWallet.deploy(members, required);
+    console.log("MultiSigWallet address:", multiSigWallet.address);
     
 
     // BridgeInImplementation
-    // console.log("Start to deploy BridgeInImplementation contract.");
-    // const BridgeInImplementation = await ethers.getContractFactory("BridgeInImplementation");
-    // const bridgeInImplementation = await BridgeInImplementation.deploy();
-    // console.log("BridgeInImplementation address:", bridgeInImplementation.address);
+    console.log("Start to deploy BridgeInImplementation contract.");
+    const BridgeInImplementation = await ethers.getContractFactory("BridgeInImplementation");
+    const bridgeInImplementation = await BridgeInImplementation.deploy();
+    console.log("BridgeInImplementation address:", bridgeInImplementation.address);
 
 
     //BridgeIn
-    // console.log("Start to deploy BridgeIn contract.");
-    // const multiSigWalletAddress = "0xcb41c295021977bcd36759e179222a9d89b001Bf";
-    // const bridgeInImplementationAddress = "0x11a86274622fCE5C9d95e9f9ac9A1ae8b4531cA6";
-    // const BridgeIn = await ethers.getContractFactory("BridgeIn");
-    // const bridgeInProxy = await BridgeIn.deploy(multiSigWalletAddress, bridgeInImplementationAddress);
-    // console.log("BridgeIn address:", bridgeInProxy.address);
+    console.log("Start to deploy BridgeIn contract.");
+    const multiSigWalletAddress =  multiSigWallet.address;
+    const bridgeInImplementationAddress = bridgeInImplementation.address;
+    const wethAddress = "0x035900292c309d8beCBCAFb3227238bec0EBa253";
+    const pauseController = "0x00378D56583235ECc92E7157A8BdaC1483094223";
+    const BridgeIn = await ethers.getContractFactory("BridgeIn");
+    const bridgeInProxy = await BridgeIn.deploy(multiSigWalletAddress, wethAddress, pauseController,bridgeInImplementationAddress);
+    console.log("BridgeIn address:", bridgeInProxy.address);
 
 
     // BridgeOutImplementationV1
-    // console.log("Start to deploy BridgeOutImplementationV1 contract.");
-    // const BridgeOutImplementation = await ethers.getContractFactory("BridgeOutImplementationV1");
-    // const bridgeOutImplementation = await BridgeOutImplementation.deploy();
-    // console.log("BridgeOutImplementation address:", bridgeOutImplementation.address);
+    console.log("Start to deploy BridgeOutImplementationV1 contract.");
+    const BridgeOutImplementation = await ethers.getContractFactory("BridgeOutImplementationV1");
+    const bridgeOutImplementation = await BridgeOutImplementation.deploy();
+    console.log("BridgeOutImplementation address:", bridgeOutImplementation.address);
 
 
-    
 
     //BridgeOut
-    // console.log("Start to deploy BridgeOut contract.");
-    // const merkleTreeAddress = "0x4a316Cf0526627cD9cF09E5A3dCd9784cA9a8033";
-    // const regimentAddress = "0x88dC11314e267D14A98A153193270Cd2D31Ff5eD";
-    // const bridgeInAddress = "0x66760B644668d4E7de273bc788F915Efd5536332";
-    // const bridgeOutImplementationAddress = "0x785fD5EDc07c7be50F93B85f57E3B05dbA221A75";
-    // const BridgeOut = await ethers.getContractFactory("BridgeOut");
-    // const bridgeOutProxy = await BridgeOut.deploy(merkleTreeAddress, regimentAddress, bridgeInAddress, bridgeOutImplementationAddress);
-    // console.log("BridgeOut address:", bridgeOutProxy.address);
+    console.log("Start to deploy BridgeOut contract.");
+    const merkleTreeAddress = merkleTree.address;
+    const bridgeInAddress = bridgeInProxy.address;
+    const bridgeOutImplementationAddress = bridgeOutImplementation.address;
+    const approveController = "0x00378D56583235ECc92E7157A8BdaC1483094223";
+    const BridgeOut = await ethers.getContractFactory("BridgeOut");
+    const bridgeOutProxy = await BridgeOut.deploy(merkleTreeAddress, regimentAddress, bridgeInAddress, approveController,wethAddress,bridgeOutImplementationAddress);
+    console.log("BridgeOut address:", bridgeOutProxy.address);
    
 
 
@@ -122,10 +123,10 @@ async function main() {
     //     constructorArguments: [members,required],
     //   })
 
-    await run("verify:verify", {
-            address: "0x536E5f17238C8f134Ac6FdB698A191c4fcCbfFA2",
-            constructorArguments: [],
-          })
+    // await run("verify:verify", {
+    //         address: "0x536E5f17238C8f134Ac6FdB698A191c4fcCbfFA2",
+    //         constructorArguments: [],
+    //       })
 
     // await run("verify:verify", {
     //     address: bridgeInAddress,
@@ -133,10 +134,10 @@ async function main() {
     //     contract: "contracts/BridgeIn.sol:BridgeIn"
     //       })
 
-    await run("verify:verify", {
-            address: "0x0Be83fD8e5C12D7A5394992A42a6581ECBAfd03B",
-            constructorArguments: [],
-          })
+    // await run("verify:verify", {
+    //         address: "0x0Be83fD8e5C12D7A5394992A42a6581ECBAfd03B",
+    //         constructorArguments: [],
+    //       })
 
     // await run("verify:verify", {
     //     address: bridgeOutAddress,
@@ -156,11 +157,11 @@ async function main() {
     //     contract: "contracts/MockContracts/MockUSDT.sol:USDT"
     //   })
 
-    await run("verify:verify", {
-        address: "0x035900292c309d8beCBCAFb3227238bec0EBa253",
-        constructorArguments: [],
-        contract: "contracts/MockContracts/WETH9.sol:WETH"
-      })
+    // await run("verify:verify", {
+    //     address: "0x035900292c309d8beCBCAFb3227238bec0EBa253",
+    //     constructorArguments: [],
+    //     contract: "contracts/MockContracts/WETH9.sol:WETH"
+    //   })
 
     // await run("verify:verify", {
     //     address: "0x0CBAb7E71f969Bfb3eF5b13542E9087a73244F02",

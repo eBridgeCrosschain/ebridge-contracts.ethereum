@@ -13,17 +13,19 @@ contract BridgeOut is Proxy {
         address _merkleTree,
         address _regiment,
         address _bridgeIn,
-        address _implementation,
-        address _tokenAddress
+        address _approveController,
+        address _tokenAddress,
+        address _implementation
     ) Proxy(_implementation) {
         delegateTo(
             _implementation,
             abi.encodeWithSignature(
-                'initialize(address,address,address,address)',
+                'initialize(address,address,address,address,address)',
                 _merkleTree,
                 _regiment,
                 _bridgeIn,
-                _tokenAddress
+                _tokenAddress,
+                _approveController
             )
         );
         delegateTo(

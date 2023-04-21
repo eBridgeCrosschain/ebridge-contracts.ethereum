@@ -16,10 +16,9 @@ contract BridgeOutImplementationV1 is ProxyStorage {
     using EnumerableSet for EnumerableSet.Bytes32Set;
     using EnumerableSet for EnumerableSet.AddressSet;
     address private merkleTree;
-    address private regiment;
-    address private bridgeIn;
+    address public regiment;
+    address public bridgeIn;
     uint256 private defaultMerkleTreeDepth = 10;
-    uint256 private defaultNodesCount = 5;
     uint256 constant MaxQueryRange = 100;
     EnumerableSet.Bytes32Set private targetTokenList;
     mapping(bytes32 => SwapInfo) internal swapInfos;
@@ -32,7 +31,8 @@ contract BridgeOutImplementationV1 is ProxyStorage {
     mapping(address => uint256) public tokenAmountLimit;
     mapping(bytes32 => uint256) internal tokenDepositAmount;
     bool internal isPaused;
-    address private tokenAddress;
+    address public tokenAddress;
+    address public approveController;
 
     struct ReceivedReceipt {
         address asset; // ERC20 Token Address
@@ -70,27 +70,31 @@ contract BridgeOutImplementationV1 is ProxyStorage {
         mapping(address => uint256) receivedAmounts;
     }
 
+    modifier onlyBridgeInContract(){
+        require(msg.sender == bridgeIn,'no permission');
+        _;
+    }
+
     function initialize(
         address _merkleTree,
         address _regiment,
         address _bridgeIn,
-        address _tokenAddress
+        address _tokenAddress,
+       address _approveController
     ) external onlyOwner {
         require(merkleTree == address(0), 'already initialized');
         merkleTree = _merkleTree;
         regiment = _regiment;
         bridgeIn = _bridgeIn;
         tokenAddress = _tokenAddress;
+        approveController = _approveController;
     }
 
-    function pause() external onlyOwner {
-        require(!isPaused, 'already paused');
+    function pause() external onlyBridgeInContract {
         isPaused = true;
     }
 
-    function restart() public {
-        require(msg.sender == bridgeIn, 'No permission');
-        require(isPaused == true, 'not paused');
+    function restart() public onlyBridgeInContract {
         isPaused = false;
     }
 
@@ -144,17 +148,9 @@ contract BridgeOutImplementationV1 is ProxyStorage {
         tokenDepositAmount[swapId] += amount;
     }
 
-    function withdraw(bytes32 tokenKey, address token, uint256 amount) external {
+    function withdraw(bytes32 tokenKey, address token, uint256 amount) external onlyBridgeInContract{
         check(token, tokenKey);
         bytes32 swapId = tokenKeyToSwapIdMap[tokenKey];
-        require(
-            IRegiment(regiment).IsRegimentManager(
-                swapInfos[swapId].regimentId,
-                msg.sender
-            ),
-            'no permission'
-        );
-        require(tokenDepositAmount[swapId] >= amount, 'deposits not enough');
         IERC20(token).safeTransfer(address(msg.sender), amount);
         tokenDepositAmount[swapId] -= amount;
     }
@@ -416,11 +412,12 @@ contract BridgeOutImplementationV1 is ProxyStorage {
         }
     }
 
-    function approve(string calldata receiptId) external onlyOwner {
+    function approve(string calldata receiptId) external {
+        require(msg.sender == approveController,'no permission');
         receiptApproveMap[receiptId] = true;
     }
 
-    function setDefaultNodesCount(uint256 _newNodeCount) external onlyOwner {
-        defaultNodesCount = _newNodeCount;
+    function changeApproveController(address _approveController) external onlyOwner{
+        approveController = _approveController;
     }
 }
