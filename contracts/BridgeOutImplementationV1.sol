@@ -199,7 +199,7 @@ contract BridgeOutImplementationV1 is ProxyStorage {
             INativeToken(tokenAddress).withdraw(targetTokenAmount);
             payable(receiverAddress).transfer(targetTokenAmount);
         }else{
-            IERC20(swapInfo.targetToken.token).transfer(
+            IERC20(swapInfo.targetToken.token).safeTransfer(
                 receiverAddress,
                 targetTokenAmount
             );
