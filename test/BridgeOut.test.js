@@ -13,11 +13,19 @@ describe("BridgeOut", function () {
             = await deployMerkleTreeFixture()
         const WETH = await ethers.getContractFactory("WETH9");
         const weth = await WETH.deploy();
+        const LIB = await ethers.getContractFactory("BridgeOutLibrary");
+        const lib = await LIB.deploy();
         const [owner, otherAccount0, otherAccount1] = await ethers.getSigners();
         const MockBridgeIn = await ethers.getContractFactory("MockBridgeIn");
 
         const BridgeOut = await ethers.getContractFactory("BridgeOut");
-        const BridgeOutImplementation = await ethers.getContractFactory("BridgeOutImplementationV1");
+        const BridgeOutImplementation = await ethers.getContractFactory("BridgeOutImplementationV1"
+        ,{
+            libraries:{
+                BridgeOutLibrary : lib.address
+            }
+        }
+        );
 
         const bridgeInMock = await MockBridgeIn.deploy();
         const bridgeOutImplementation = await BridgeOutImplementation.deploy();
@@ -91,9 +99,15 @@ describe("BridgeOut", function () {
             });
             it("Should update contract success", async function () {
                 const { bridgeOutProxy, owner } = await loadFixture(deployBridgeOutFixture);
-                const MockBridgeOut = await ethers.getContractFactory("MockBridgeOut");
+                const LIB = await ethers.getContractFactory("MockBridgeOutLib");
+                const lib = await LIB.deploy();
+                const MockBridgeOut = await ethers.getContractFactory("MockBridgeOutTestLib",{
+                    libraries:{
+                        BridgeOutLibrary : lib.address
+                    }
+                });
                 const mockBridgeOut = await MockBridgeOut.deploy();
-                await bridgeOutProxy.updateImplementation(mockBridgeOut.address)
+                await bridgeOutProxy.updateImplementation(mockBridgeOut.address);
                 var implementation = await bridgeOutProxy.implementation();
                 expect(implementation).to.equal(mockBridgeOut.address);
             });

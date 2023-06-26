@@ -7,7 +7,11 @@ import '@openzeppelin/contracts/utils/Strings.sol';
 import '@openzeppelin/contracts/utils/structs/EnumerableSet.sol';
 import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 import '@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol';
+import '@openzeppelin/contracts/utils/cryptography/ECDSA.sol';
 import './Proxy.sol';
+import './libraries/BridgeOutLibrary.sol';
+import './BridgeOutData.sol';
+import 'hardhat/console.sol';
 pragma solidity 0.8.9;
 
 contract BridgeOutImplementationV1 is ProxyStorage {
@@ -33,7 +37,7 @@ contract BridgeOutImplementationV1 is ProxyStorage {
     bool internal isPaused;
     address public tokenAddress;
     address public approveController;
-
+    using BridgeOutLibrary for *;
     struct ReceivedReceipt {
         address asset; // ERC20 Token Address
         address targetAddress; // User address in eth
@@ -151,8 +155,8 @@ contract BridgeOutImplementationV1 is ProxyStorage {
     function withdraw(bytes32 tokenKey, address token, uint256 amount) external onlyBridgeInContract{
         check(token, tokenKey);
         bytes32 swapId = tokenKeyToSwapIdMap[tokenKey];
-        IERC20(token).safeTransfer(address(msg.sender), amount);
         tokenDepositAmount[swapId] -= amount;
+        IERC20(token).safeTransfer(address(msg.sender), amount);
     }
 
     function check(address token, bytes32 tokenKey) private view {
@@ -197,7 +201,8 @@ contract BridgeOutImplementationV1 is ProxyStorage {
         tokenDepositAmount[swapId] -= targetTokenAmount;
         if(swapInfo.targetToken.token == tokenAddress){
             INativeToken(tokenAddress).withdraw(targetTokenAmount);
-            payable(receiverAddress).transfer(targetTokenAmount);
+            (bool success, ) = payable(receiverAddress).call{value: targetTokenAmount}("");
+            require(success, "failed");
         }else{
             IERC20(swapInfo.targetToken.token).safeTransfer(
                 receiverAddress,
@@ -235,36 +240,10 @@ contract BridgeOutImplementationV1 is ProxyStorage {
         uint256 amount,
         address receiverAddress
     ) public view returns (bytes32) {
-        bytes32[] memory _merkelTreePath;
-        bool[] memory _isLeftNode;
         bytes32 _leafHash = computeLeafHash(receiptId, amount, receiverAddress);
         uint256 leafNodeIndex = ledger[_leafHash].leafNodeIndex.sub(1);
-        (, , _merkelTreePath, _isLeftNode) = IMerkleTree(merkleTree)
-            .getMerklePath(spaceId, leafNodeIndex);
-        require(
-            IMerkleTree(merkleTree).merkleProof(
-                spaceId,
-                IMerkleTree(merkleTree).getLeafLocatedMerkleTreeIndex(
-                    spaceId,
-                    leafNodeIndex
-                ),
-                _leafHash,
-                _merkelTreePath,
-                _isLeftNode
-            ),
-            'failed to swap token'
-        );
-
+        spaceId.verify(merkleTree,leafNodeIndex,_leafHash);
         return _leafHash;
-    }
-
-    function decodeReport(
-        bytes memory _report
-    ) internal pure returns (uint256 receiptIndex, bytes32 receiptHash) {
-        (, , receiptIndex, receiptHash) = abi.decode(
-            _report,
-            (uint256, uint256, uint256, bytes32)
-        );
     }
 
     function transmit(
@@ -274,30 +253,16 @@ contract BridgeOutImplementationV1 is ProxyStorage {
         bytes32[] calldata _ss, //observer signatures->s
         bytes32 _rawVs // signatures->v (Each 1 byte is combined into a 32-byte binder, which means that the maximum number of observer signatures is 32.)
     ) external {
+        console.log("bridge out transmit sender:",msg.sender);
         SwapInfo storage swapInfo = swapInfos[swapHashId];
 
-        require(
-            IRegiment(regiment).IsRegimentMember(
-                swapInfo.regimentId,
-                msg.sender
-            ),
-            'no permission to transmit'
-        );
-        bytes32 messageDigest = keccak256(_report);
-        address[] memory signers = new address[](_rs.length);
-        for (uint256 i = 0; i < _rs.length; i++) {
-            signers[i] = ecrecover(
-                messageDigest,
-                uint8(_rawVs[i]) + 27,
-                _rs[i],
-                _ss[i]
-            );
-        }
-        require(
-            IRegiment(regiment).IsRegimentMembers(swapInfo.regimentId, signers),
-            'no permission to sign'
-        );
-        (uint256 receiptIndex, bytes32 receiptHash) = decodeReport(_report);
+        Report memory report;
+        report._report = _report;
+        report._rawVs = _rawVs;
+        report._rs = _rs;
+        report._ss = _ss;
+
+        (uint256 receiptIndex, bytes32 receiptHash) = swapInfo.regimentId.transmit(report,regiment);
         bytes32[] memory leafNodes = new bytes32[](1);
         leafNodes[0] = receiptHash;
         require(ledger[receiptHash].leafNodeIndex == 0, 'already recorded');

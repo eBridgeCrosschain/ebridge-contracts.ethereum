@@ -71,6 +71,7 @@ contract Regiment {
         address manager,
         address[] calldata initialMemberList
     ) external assertSenderIsController returns (bytes32) {
+        require(manager != address(0),'invalid address.');
         bytes32 regimentId = sha256(abi.encodePacked(regimentCount, manager));
         regimentCount = regimentCount.add(1);
         EnumerableSet.AddressSet storage memberList = regimentMemberListMap[
@@ -152,6 +153,18 @@ contract Regiment {
         uint256 _regimentLimit,
         uint256 _maximumAdminsCount
     ) external assertSenderIsController {
+        require(
+            _memberJoinLimit <= DefaultMemberJoinLimit,
+            'Invalid memberJoinLimit'
+        );
+        require(
+            _regimentLimit <= DefaultRegimentLimit,
+            'Invalid regimentLimit'
+        );
+        require(
+            _maximumAdminsCount <= DefaultMaximumAdminsCount,
+            'Invalid maximumAdminsCount'
+        );
         memberJoinLimit = _memberJoinLimit == 0
             ? memberJoinLimit
             : _memberJoinLimit;

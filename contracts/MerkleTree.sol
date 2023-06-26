@@ -1,6 +1,7 @@
 import './Regiment.sol';
 import '@openzeppelin/contracts/utils/math/SafeMath.sol';
 import '@openzeppelin/contracts/utils/structs/EnumerableSet.sol';
+import 'hardhat/console.sol';
 pragma solidity 0.8.9;
 
 contract Merkle {
@@ -210,6 +211,7 @@ contract Merkle {
         uint256 lastRecordLeafIndex = tree.lastLeafIndex;
         require(lastRecordLeafIndex >= leafNodeIndex, 'not recorded yet');
 
+        // 不需要 for循环 mod
         for (; treeIndex >= 0; treeIndex--) {
             if (
                 leafNodeIndex >=
@@ -281,7 +283,7 @@ contract Merkle {
 
         uint256 nodeCount = leafCount;
         if (_leaves.length.mod(2) == 1) {
-            nodes[leafCount] = (_leaves[leafCount.sub(1)]);
+            nodes[leafCount] = bytes32(0);
             nodeCount = nodeCount.add(1);
         }
 

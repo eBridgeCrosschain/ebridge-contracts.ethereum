@@ -3,6 +3,7 @@ const {
     loadFixture,
 } = require("@nomicfoundation/hardhat-network-helpers");
 const { expect } = require("chai");
+const { ethers } = require("hardhat");
 describe("MerkleTree", function () {
     async function deployRegimentFixture() {
         // Contracts are deployed using the first signer/account by default
@@ -171,7 +172,9 @@ describe("MerkleTree", function () {
                 var remainLeafCountAfter = await merkleTree.getRemainLeafCount(actualSpaceId);
 
                 expect(remainLeafCountBefore).to.equal(remainLeafCountAfter.add(nodeToAdd));
-                var rootExpect = ethers.utils.sha256(ethers.utils.defaultAbiCoder.encode(["bytes32", "bytes32"], [mockLeafNode0, mockLeafNode0]));
+                var node = ethers.utils.formatBytes32String(0);
+                console.log("node",node);
+                var rootExpect = ethers.utils.sha256(ethers.utils.defaultAbiCoder.encode(["bytes32", "bytes32"], [mockLeafNode0,node]));
                 var tree = await merkleTree.getMerkleTreeByIndex(actualSpaceId, 0);
 
                 expect(tree.merkleTreeRoot).to.equal(rootExpect);

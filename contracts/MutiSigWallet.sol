@@ -215,7 +215,6 @@ contract MultiSigWallet is Ownable {
             if (success) emit Execution(transactionId);
             else {
                 emit ExecutionFailure(transactionId);
-                transaction.executed = false;
             }
         }
     }

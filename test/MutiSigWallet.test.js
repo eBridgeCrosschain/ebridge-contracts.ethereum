@@ -253,14 +253,12 @@ describe("MultiSigWallet", function () {
                 await multiSigWallet.connect(account1).confirmTransaction(transactionId);
                 await multiSigWallet.connect(account2).confirmTransaction(transactionId);
 
-                //failed event
-                var tx = await multiSigWallet.executeTransaction(transactionId);
-                const receipt = await tx.wait();
+                //failed 
                 
                 var isConfirmed = await multiSigWallet.isConfirmed(transactionId);
                 expect(isConfirmed).to.equal(true);
                 var transaction = await multiSigWallet.transactions(transactionId);
-                expect( transaction.executed).to.equal(false);
+                expect( transaction.executed).to.equal(true);
                
             });
             it("Should failed when add an existed member ", async function () {
@@ -281,14 +279,12 @@ describe("MultiSigWallet", function () {
                 await multiSigWallet.connect(account1).confirmTransaction(transactionId);
                 await multiSigWallet.connect(account2).confirmTransaction(transactionId);
 
-                //failed event
-                var tx = await multiSigWallet.executeTransaction(transactionId);
-                const receipt = await tx.wait();
+                //failed
 
                 var isConfirmed = await multiSigWallet.isConfirmed(transactionId);
                 expect(isConfirmed).to.equal(true);
                 var transaction = await multiSigWallet.transactions(transactionId);
-                expect( transaction.executed).to.equal(false);
+                expect( transaction.executed).to.equal(true);
                
             });
             it("Should add member success", async function () {
