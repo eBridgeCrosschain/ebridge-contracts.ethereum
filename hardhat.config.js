@@ -1,16 +1,16 @@
-// const dotenv = require('dotenv');
+const dotenv = require('dotenv');
 require('solidity-coverage');
 require("@nomiclabs/hardhat-etherscan");
 require('hardhat-contract-sizer');
 require("@nomicfoundation/hardhat-toolbox");
-// const result = dotenv.config();
-// if (result.error) {
-//   throw result.error;
-// }
-// console.log(result.parsed);
-// const API_KEY = process.env.apikey;
+const result = dotenv.config();
+if (result.error) {
+  throw result.error;
+}
+console.log(result.parsed);
+const API_KEY = process.env.apikey;
 
-// console.log("API_KEY--------" + API_KEY)
+console.log("API_KEY--------" + API_KEY)
 // Replace this private key with your Goerli account private key
 // To export your private key from Metamask, open Metamask and
 // go to Account Details > Export Private Key
@@ -43,9 +43,9 @@ module.exports = {
     disambiguatePaths: false,
   },
   networks: {
-    // hardhat: {
-    //   allowUnlimitedContractSize: true
-    // },
+    hardhat: {
+      allowUnlimitedContractSize: true
+    },
     // kovan: {
     //   url: "https://kovan.infura.io/v3/" + API_KEY,
     //   chainId: 42,
@@ -56,23 +56,23 @@ module.exports = {
     //   chainId: 5,
     //   accounts: [process.env.goerli_key0,process.env.goerli_key1,process.env.goerli_key2,process.env.goerli_key3,process.env.goerli_key4,process.env.goerli_key5]
     // },
-    // bsc_test: {
-    //   url: "https://data-seed-prebsc-1-s1.binance.org:8545",
-    //   chainId: 97,
-    //   accounts: [process.env.goerli_key0,process.env.goerli_key1,process.env.goerli_key2,process.env.goerli_key3,process.env.goerli_key4,process.env.goerli_key5]
-    // },
-    // sepolia: {
-    //   url: "https://sepolia.infura.io/v3/" + API_KEY,
-    //   chainId: 11155111,
-    //   accounts: [process.env.key0]
-    // }
-
+    bsc_test: {
+      url: "https://data-seed-prebsc-1-s1.binance.org:8545",
+      chainId: 97,
+      accounts: [process.env.key0,process.env.keymanager]
+    },
+    sepolia: {
+      url: "https://sepolia.infura.io/v3/" + API_KEY,
+      chainId: 11155111,
+      accounts: [process.env.key0,process.env.keymanager]
+    }
 
   },
   etherscan: {
-    // apiKey: {
-    //   sepolia: process.env.ethsacn_api_key
-    // },
+    apiKey: {
+      sepolia: process.env.ethsacn_api_key,
+      bscTestnet: process.env.bscscan_api_key
+    },
     // customChains: [
     //   {
     //     network: "sepolia",

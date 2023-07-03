@@ -25,6 +25,7 @@ contract BridgeInImplementation is ProxyStorage {
     bool public isPaused;
     uint256 public constant MaxQueryRange = 100;
     uint256 public constant MaxTokenCount = 200;
+    uint256 public constant MaxTokenCountPerAddOrRemove = 10;
     EnumerableSet.Bytes32Set private tokenList;
 
     mapping(bytes32 => mapping(uint256 => Receipt)) private receiptIndexMap;
@@ -61,6 +62,10 @@ contract BridgeInImplementation is ProxyStorage {
         string targetChainId;
         string targetAddress; // User address in aelf
         string receiptId;
+    }
+    struct Token {
+        address tokenAddress;
+        string chainId;
     }
     event TokenAdded(address token, string chainId);
     event TokenRemoved(address token, string chainId);
@@ -102,25 +107,33 @@ contract BridgeInImplementation is ProxyStorage {
         pauseController = _pauseController;
     }
 
-    function addToken(
-        address token,
-        string calldata chainId
-    ) public onlyWallet {
-        require(tokenList.length() <= MaxTokenCount, "token count exceed");
-        bytes32 tokenKey = _generateTokenKey(token, chainId);
-        require(!tokenList.contains(tokenKey), "tokenKey already added");
-        tokenList.add(tokenKey);
-        emit TokenAdded(token, chainId);
+    function addToken(Token[] calldata tokens) public onlyWallet {
+        require(
+            tokenList.length() <= MaxTokenCount && tokens.length <= MaxTokenCountPerAddOrRemove,
+            "token count exceed"
+        );
+        for (uint256 i = 0; i < tokens.length; i++) {
+            bytes32 tokenKey = _generateTokenKey(
+                tokens[i].tokenAddress,
+                tokens[i].chainId
+            );
+            require(!tokenList.contains(tokenKey), "tokenKey already added");
+            tokenList.add(tokenKey);
+            emit TokenAdded(tokens[i].tokenAddress, tokens[i].chainId);
+        }
     }
 
-    function removeToken(
-        address token,
-        string calldata chainId
-    ) public onlyWallet {
-        bytes32 tokenKey = _generateTokenKey(token, chainId);
-        require(tokenList.contains(tokenKey), "tokenKey not exist");
-        tokenList.remove(tokenKey);
-        emit TokenRemoved(token, chainId);
+    function removeToken(Token[] calldata tokens) public onlyWallet {
+        require(tokens.length <= MaxTokenCountPerAddOrRemove, "input token count exceed");
+        for (uint256 i = 0; i < tokens.length; i++) {
+            bytes32 tokenKey = _generateTokenKey(
+                tokens[i].tokenAddress,
+                tokens[i].chainId
+            );
+            require(tokenList.contains(tokenKey), "tokenKey not exist");
+            tokenList.remove(tokenKey);
+            emit TokenRemoved(tokens[i].tokenAddress, tokens[i].chainId);
+        }
     }
 
     function pause() external onlyPauseController {

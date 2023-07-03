@@ -55,9 +55,13 @@ describe("BridgeIn", function () {
 
                 var error = "BridgeIn:only for Wallet call"
                 var chainId = "AELF_MAINNET"
-                await expect(bridgeIn.connect(otherAccount1).addToken(elf.address, chainId))
+                var tokens = [{
+                    tokenAddress : elf.address,
+                    chainId : chainId
+                }]
+                await expect(bridgeIn.connect(otherAccount1).addToken(tokens))
                     .to.be.revertedWith(error);
-                await expect(bridgeIn.connect(otherAccount1).removeToken(elf.address, chainId))
+                await expect(bridgeIn.connect(otherAccount1).removeToken(tokens))
                     .to.be.revertedWith(error);
             });
             it("Should addToken/remove success when sender is owner", async function () {
@@ -65,11 +69,15 @@ describe("BridgeIn", function () {
                 const { bridgeIn, owner, otherAccount0, otherAccount1 } = await loadFixture(deployBridgeInFixture);
 
                 var chainId = "AELF_MAINNET"
-                await bridgeIn.connect(otherAccount0).addToken(elf.address, chainId);
+                var tokens = [{
+                    tokenAddress : elf.address,
+                    chainId : chainId
+                }]
+                await bridgeIn.connect(otherAccount0).addToken(tokens);
                 var isSupported = await bridgeIn.isSupported(elf.address, chainId);
                 expect(isSupported).to.equal(true);
 
-                await bridgeIn.connect(otherAccount0).removeToken(elf.address, chainId);
+                await bridgeIn.connect(otherAccount0).removeToken(tokens);
 
                 isSupported = await bridgeIn.isSupported(elf.address, chainId);
                 expect(isSupported).to.equal(false);
@@ -80,16 +88,20 @@ describe("BridgeIn", function () {
                 const { bridgeIn, owner, otherAccount0, otherAccount1 } = await loadFixture(deployBridgeInFixture);
 
                 var chainId = "AELF_MAINNET"
-                await bridgeIn.connect(otherAccount0).addToken(elf.address, chainId);
+                var tokens = [{
+                    tokenAddress : elf.address,
+                    chainId : chainId
+                }]
+                await bridgeIn.connect(otherAccount0).addToken(tokens);
                 var isSupported = await bridgeIn.isSupported(elf.address, chainId);
                 expect(isSupported).to.equal(true);
                 var error = "tokenKey already added"
-                await expect(bridgeIn.connect(otherAccount0).addToken(elf.address, chainId))
+                await expect(bridgeIn.connect(otherAccount0).addToken(tokens))
                     .to.be.revertedWith(error);
 
-                await bridgeIn.connect(otherAccount0).removeToken(elf.address, chainId);
+                await bridgeIn.connect(otherAccount0).removeToken(tokens);
                 error = "tokenKey not exist"
-                await expect(bridgeIn.connect(otherAccount0).removeToken(elf.address, chainId))
+                await expect(bridgeIn.connect(otherAccount0).removeToken(tokens))
                     .to.be.revertedWith(error);
                 isSupported = await bridgeIn.isSupported(elf.address, chainId);
                 expect(isSupported).to.equal(false);
@@ -101,7 +113,11 @@ describe("BridgeIn", function () {
                 const { bridgeIn, owner, otherAccount0, otherAccount1, bridgeOutMock,weth } = await loadFixture(deployBridgeInFixture);
             
                 var chainId = "AELF_MAINNET";
-                await bridgeIn.connect(otherAccount0).addToken(weth.address, chainId);
+                var tokens = [{
+                    tokenAddress : weth.address,
+                    chainId : chainId
+                }]
+                await bridgeIn.connect(otherAccount0).addToken(tokens);
                 
             
                 var targetAddress = "AELF_123";
@@ -134,7 +150,11 @@ describe("BridgeIn", function () {
                 const { bridgeIn, owner, otherAccount0, otherAccount1 } = await loadFixture(deployBridgeInFixture);
                 const { elf, usdt } = await deployTokensFixture();
                 var chainId = "AELF_MAINNET"
-                await bridgeIn.connect(otherAccount0).addToken(elf.address, chainId);
+                var tokens = [{
+                    tokenAddress : elf.address,
+                    chainId : chainId
+                }]
+                await bridgeIn.connect(otherAccount0).addToken(tokens);
 
                 var error0 = "Token is not support in that chain";
                 var amount = 100;
@@ -160,7 +180,11 @@ describe("BridgeIn", function () {
                 const { elf, usdt } = await deployTokensFixture();
 
                 var chainId = "AELF_MAINNET"
-                await bridgeIn.connect(otherAccount0).addToken(elf.address, chainId);
+                var tokens = [{
+                    tokenAddress : elf.address,
+                    chainId : chainId
+                }]
+                await bridgeIn.connect(otherAccount0).addToken(tokens);
 
                 var amount = 100;
                 var targetAddress = "AELF_123";
@@ -193,8 +217,16 @@ describe("BridgeIn", function () {
                 const { elf, usdt } = await deployTokensFixture();
 
                 var chainId = "AELF_MAINNET"
-                await bridgeIn.connect(otherAccount0).addToken(elf.address, chainId);
-                await bridgeIn.connect(otherAccount0).addToken(usdt.address, chainId);
+                var tokens = [{
+                    tokenAddress : elf.address,
+                    chainId : chainId
+                }]
+                await bridgeIn.connect(otherAccount0).addToken(tokens);
+                var tokens1 = [{
+                    tokenAddress : usdt.address,
+                    chainId : chainId
+                }]
+                await bridgeIn.connect(otherAccount0).addToken(tokens1);
                 var amount = 100;
                 var targetAddress = "AELF_123";
 
@@ -251,8 +283,16 @@ describe("BridgeIn", function () {
                 const { elf, usdt } = await deployTokensFixture();
 
                 var chainId = "AELF_MAINNET"
-                await bridgeIn.connect(otherAccount0).addToken(elf.address, chainId);
-                await bridgeIn.connect(otherAccount0).addToken(usdt.address, chainId);
+                var tokens = [{
+                    tokenAddress : elf.address,
+                    chainId : chainId
+                }]
+                await bridgeIn.connect(otherAccount0).addToken(tokens);
+                var tokens1 = [{
+                    tokenAddress : usdt.address,
+                    chainId : chainId
+                }]
+                await bridgeIn.connect(otherAccount0).addToken(tokens1);
                 var amount = 100;
                 var targetAddress = "AELF_123";
 
@@ -311,8 +351,16 @@ describe("BridgeIn", function () {
                 console.log("usdt:", usdt.address);
 
                 var chainId = "AELF_MAINNET"
-                await bridgeIn.connect(otherAccount0).addToken(elf.address, chainId);
-                await bridgeIn.connect(otherAccount0).addToken(usdt.address, chainId);
+                var tokens = [{
+                    tokenAddress : elf.address,
+                    chainId : chainId
+                }]
+                await bridgeIn.connect(otherAccount0).addToken(tokens);
+                var tokens1 = [{
+                    tokenAddress : usdt.address,
+                    chainId : chainId
+                }]
+                await bridgeIn.connect(otherAccount0).addToken(tokens1);
                 var amount = 100;
                 var targetAddress = "AELF_123";
 
@@ -368,7 +416,11 @@ describe("BridgeIn", function () {
                 const { elf, usdt } = await deployTokensFixture();
 
                 var chainId = "AELF_MAINNET"
-                await bridgeIn.connect(otherAccount0).addToken(elf.address, chainId);
+                var tokens = [{
+                    tokenAddress : elf.address,
+                    chainId : chainId
+                }]
+                await bridgeIn.connect(otherAccount0).addToken(tokens);
 
                 var amount = 100;
                 var targetAddress = "AELF_123";
@@ -399,8 +451,12 @@ describe("BridgeIn", function () {
                 const { elf, usdt } = await deployTokensFixture();
 
                 var chainId = "AELF_MAINNET"
-                await bridgeIn.connect(otherAccount0).addToken(elf.address, chainId);
-
+                var tokens = [{
+                    tokenAddress : elf.address,
+                    chainId : chainId
+                }]
+                await bridgeIn.connect(otherAccount0).addToken(tokens);
+            
                 var amount = 100;
                 var targetAddress = "AELF_123";
 
@@ -445,7 +501,11 @@ describe("BridgeIn", function () {
                 const { elf, usdt } = await deployTokensFixture();
 
                 var chainId = "AELF_MAINNET"
-                await bridgeIn.connect(otherAccount0).addToken(elf.address, chainId);
+                var tokens = [{
+                    tokenAddress : elf.address,
+                    chainId : chainId
+                }]
+                await bridgeIn.connect(otherAccount0).addToken(tokens);
 
                 var amount = 100;
                 var targetAddress = "AELF_123";
@@ -469,7 +529,11 @@ describe("BridgeIn", function () {
 
                 var chainId = "AELF_MAINNET";
                 var amount = 100;
-                await bridgeIn.connect(otherAccount0).addToken(elf.address, chainId);
+                var tokens = [{
+                    tokenAddress : elf.address,
+                    chainId : chainId
+                }]
+                await bridgeIn.connect(otherAccount0).addToken(tokens);
                 //deposit elf
                 await elf.mint(owner.address, amount);
                 expect(await elf.balanceOf(owner.address)).to.equal(amount)
@@ -487,7 +551,11 @@ describe("BridgeIn", function () {
 
                 var chainId = "AELF_MAINNET";
                 var amount = 100;
-                await bridgeIn.connect(otherAccount0).addToken(elf.address, chainId);
+                var tokens = [{
+                    tokenAddress : elf.address,
+                    chainId : chainId
+                }]
+                await bridgeIn.connect(otherAccount0).addToken(tokens);
                 //deposit elf
                 await elf.mint(owner.address, amount);
                 expect(await elf.balanceOf(owner.address)).to.equal(amount)
@@ -531,7 +599,11 @@ describe("BridgeIn", function () {
                 await expect(bridgeIn.withdraw(tokenKey,elf.address,amount))
                     .to.be.revertedWith(error);
 
-                await bridgeIn.connect(otherAccount0).addToken(elf.address, chainId);
+                    var tokens = [{
+                        tokenAddress : elf.address,
+                        chainId : chainId
+                    }]
+                    await bridgeIn.connect(otherAccount0).addToken(tokens);
                 //deposit elf
                 await bridgeIn.deposit(tokenKey,elf.address,amount);
                 var depositAmount = await bridgeIn.depositAmount(tokenKey);
