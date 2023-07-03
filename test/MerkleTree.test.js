@@ -12,8 +12,12 @@ describe("MerkleTree", function () {
         const _maximumAdminsCount = 3;
 
         const [owner] = await ethers.getSigners();
+        const RegimentImplementation = await ethers.getContractFactory("RegimentImplementation");
         const Regiment = await ethers.getContractFactory("Regiment");
-        const regiment = await Regiment.deploy(_memberJoinLimit, _regimentLimit, _maximumAdminsCount);
+        const regimentImplementation = await RegimentImplementation.deploy();
+        const regimentProxy = await Regiment.deploy(_memberJoinLimit, _regimentLimit, _maximumAdminsCount,regimentImplementation.address);
+        const regiment = RegimentImplementation.attach(regimentProxy.address);
+        
         const _manager = owner.address;
         const _initialMemberList = [owner.address];
 
@@ -34,8 +38,12 @@ describe("MerkleTree", function () {
         // Contracts are deployed using the first signer/account by default
 
         const { regiment, owner, regimentId } = await loadFixture(deployRegimentFixture);
-        const MerkleTree = await ethers.getContractFactory("Merkle");
-        const merkleTree = await MerkleTree.deploy(regiment.address);
+        const MerkleTreeImplementation = await ethers.getContractFactory("MerkleTreeImplementation");
+        const MerkleTree = await ethers.getContractFactory("MerkleTree");
+        const merkleTreeImplementation = await MerkleTreeImplementation.deploy();
+        const merkleTreeProxy = await MerkleTree.deploy(regiment.address,merkleTreeImplementation.address);
+        const merkleTree = MerkleTreeImplementation.attach(merkleTreeProxy.address);
+
         return { merkleTree, owner, regimentId, regiment };
     }
     describe("action function test", function () {

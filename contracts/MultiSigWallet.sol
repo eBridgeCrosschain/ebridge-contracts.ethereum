@@ -1,7 +1,9 @@
 pragma solidity 0.8.9;
-import '@openzeppelin/contracts/access/Ownable.sol';
+import "@openzeppelin/contracts/utils/math/SafeMath.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
 
 contract MultiSigWallet is Ownable {
+    using SafeMath for uint256;
     uint256 public constant MAX_member_COUNT = 20;
 
     event Confirmation(address indexed sender, uint256 indexed transactionId);
@@ -29,24 +31,27 @@ contract MultiSigWallet is Ownable {
     }
 
     modifier onlyWallet() {
-        require(msg.sender == address(this), 'only for Wallet call');
+        require(
+            msg.sender == address(this),
+            "MultiSigWallet:only for Wallet call"
+        );
         _;
     }
 
     modifier memberDoesNotExist(address member) {
-        require(!isMember[member], 'member exists');
+        require(!isMember[member], "member exists");
         _;
     }
 
     modifier memberExists(address member) {
-        require(isMember[member], 'member not exist');
+        require(isMember[member], "member not exist");
         _;
     }
 
     modifier transactionExists(uint256 transactionId) {
         require(
             transactions[transactionId].destination != address(0),
-            'transaction not exist'
+            "transaction not exist"
         );
         _;
     }
@@ -54,23 +59,23 @@ contract MultiSigWallet is Ownable {
     modifier confirmed(uint256 transactionId, address member) {
         require(
             confirmations[transactionId][member],
-            'transaction not comfired'
+            "transaction not comfired"
         );
         _;
     }
 
     modifier notConfirmed(uint256 transactionId, address member) {
-        require(!confirmations[transactionId][member], 'transaction comfired');
+        require(!confirmations[transactionId][member], "transaction comfired");
         _;
     }
 
     modifier notExecuted(uint256 transactionId) {
-        require(!transactions[transactionId].executed, 'transaction executed');
+        require(!transactions[transactionId].executed, "transaction executed");
         _;
     }
 
     modifier notNull(address _address) {
-        require(_address != address(0), 'address is null');
+        require(_address != address(0), "address is null");
         _;
     }
 
@@ -80,7 +85,7 @@ contract MultiSigWallet is Ownable {
                 _required <= memberCount &&
                 _required != 0 &&
                 memberCount != 0,
-            'error'
+            "error"
         );
         _;
     }
@@ -90,7 +95,7 @@ contract MultiSigWallet is Ownable {
         uint256 _required
     ) validRequirement(_members.length, _required) {
         for (uint256 i = 0; i < _members.length; i++) {
-            require(_members[i] != address(0), 'address is null');
+            require(_members[i] != address(0), "address is null");
             isMember[_members[i]] = true;
         }
         members = _members;
@@ -106,7 +111,7 @@ contract MultiSigWallet is Ownable {
         onlyWallet
         memberDoesNotExist(member)
         notNull(member)
-        validRequirement(members.length + 1, required)
+        validRequirement(members.length.add(1), required)
     {
         isMember[member] = true;
         members.push(member);
@@ -121,7 +126,7 @@ contract MultiSigWallet is Ownable {
         isMember[member] = false;
         for (uint256 i = 0; i < members.length - 1; i++)
             if (members[i] == member) {
-                members[i] = members[members.length - 1];
+                members[i] = members[members.length.sub(1)];
                 break;
             }
         members.pop();
@@ -225,7 +230,7 @@ contract MultiSigWallet is Ownable {
     function isConfirmed(uint256 transactionId) public view returns (bool) {
         uint256 count = 0;
         for (uint256 i = 0; i < members.length; i++) {
-            if (confirmations[transactionId][members[i]]) count += 1;
+            if (confirmations[transactionId][members[i]]) count = count.add(1);
             if (count == required) return true;
         }
         return false;
@@ -251,7 +256,7 @@ contract MultiSigWallet is Ownable {
             data: data,
             executed: false
         });
-        transactionCount += 1;
+        transactionCount = transactionCount.add(1);
         emit Submission(transactionId);
     }
 
@@ -265,7 +270,7 @@ contract MultiSigWallet is Ownable {
         uint256 transactionId
     ) public view returns (uint256 count) {
         for (uint256 i = 0; i < members.length; i++)
-            if (confirmations[transactionId][members[i]]) count += 1;
+            if (confirmations[transactionId][members[i]]) count = count.add(1);
     }
 
     /// @dev Returns total number of transactions after filers are applied.
@@ -280,7 +285,7 @@ contract MultiSigWallet is Ownable {
             if (
                 (pending && !transactions[i].executed) ||
                 (executed && transactions[i].executed)
-            ) count += 1;
+            ) count = count.add(1);
     }
 
     /// @dev Returns list of members.
@@ -301,7 +306,7 @@ contract MultiSigWallet is Ownable {
         for (i = 0; i < members.length; i++)
             if (confirmations[transactionId][members[i]]) {
                 confirmationsTemp[count] = members[i];
-                count += 1;
+                count = count.add(1);
             }
         _confirmations = new address[](count);
         for (i = 0; i < count; i++) _confirmations[i] = confirmationsTemp[i];

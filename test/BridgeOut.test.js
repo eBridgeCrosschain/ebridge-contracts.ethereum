@@ -15,7 +15,7 @@ describe("BridgeOut", function () {
         const weth = await WETH.deploy();
         const LIB = await ethers.getContractFactory("BridgeOutLibrary");
         const lib = await LIB.deploy();
-        const [owner, otherAccount0, otherAccount1] = await ethers.getSigners();
+        const [owner, otherAccount0, otherAccount1,otherAccount2,otherAccount3,otherAccount4] = await ethers.getSigners();
         const MockBridgeIn = await ethers.getContractFactory("MockBridgeIn");
 
         const BridgeOut = await ethers.getContractFactory("BridgeOut");
@@ -24,16 +24,16 @@ describe("BridgeOut", function () {
             libraries:{
                 BridgeOutLibrary : lib.address
             }
-        }
-        );
+        });
+        const multiSigWalletMocAddress = otherAccount2.address;
 
         const bridgeInMock = await MockBridgeIn.deploy();
         const bridgeOutImplementation = await BridgeOutImplementation.deploy();
-        const bridgeOutProxy = await BridgeOut.deploy(merkleTree.address, regiment.address, bridgeInMock.address, otherAccount0.address, weth.address, bridgeOutImplementation.address);
+        const bridgeOutProxy = await BridgeOut.deploy(merkleTree.address, regiment.address, bridgeInMock.address, otherAccount0.address, multiSigWalletMocAddress, weth.address, bridgeOutImplementation.address);
         const bridgeOut = BridgeOutImplementation.attach(bridgeOutProxy.address);
 
-        //   await bridgeOut.setDefaultNodesCount(1);
-        return { merkleTree, regimentId, regiment, bridgeOut, bridgeOutProxy, owner, otherAccount0, otherAccount1, bridgeInMock, weth };
+        await bridgeOut.connect(otherAccount2).setDefaultMerkleTreeDepth(10);
+        return { merkleTree, regimentId, regiment, bridgeOut, bridgeOutProxy, owner, otherAccount0, otherAccount1, bridgeInMock, weth, lib, otherAccount2 };
 
     }
 
@@ -54,8 +54,12 @@ describe("BridgeOut", function () {
         const _maximumAdminsCount = 3;
 
         const [owner] = await ethers.getSigners();
+        const RegimentImplementation = await ethers.getContractFactory("RegimentImplementation");
         const Regiment = await ethers.getContractFactory("Regiment");
-        const regiment = await Regiment.deploy(_memberJoinLimit, _regimentLimit, _maximumAdminsCount);
+        const regimentImplementation = await RegimentImplementation.deploy();
+        const regimentProxy = await Regiment.deploy(_memberJoinLimit, _regimentLimit, _maximumAdminsCount,regimentImplementation.address);
+        const regiment = RegimentImplementation.attach(regimentProxy.address);
+
         const _manager = owner.address;
         const _initialMemberList = [owner.address];
 
@@ -74,10 +78,14 @@ describe("BridgeOut", function () {
     }
     async function deployMerkleTreeFixture() {
         // Contracts are deployed using the first signer/account by default
-
         const { regiment, owner, regimentId } = await loadFixture(deployRegimentFixture);
-        const MerkleTree = await ethers.getContractFactory("Merkle");
-        const merkleTree = await MerkleTree.deploy(regiment.address);
+
+        const MerkleTreeImplementation = await ethers.getContractFactory("MerkleTreeImplementation");
+        const MerkleTree = await ethers.getContractFactory("MerkleTree");
+        const merkleTreeImplementation = await MerkleTreeImplementation.deploy();
+        const merkleTreeProxy = await MerkleTree.deploy(regiment.address,merkleTreeImplementation.address);
+        const merkleTree = MerkleTreeImplementation.attach(merkleTreeProxy.address);
+    
         return { merkleTree, owner, regimentId, regiment };
     }
 
@@ -385,7 +393,7 @@ describe("BridgeOut", function () {
 
         describe("transmit test", function () {
             it("Should tramsmit failed when trigger error", async function () {
-                const { merkleTree, regimentId, regiment, bridgeOut, owner, otherAccount0, otherAccount1 } = await loadFixture(deployBridgeOutFixture);
+                const { merkleTree, regimentId, regiment, bridgeOut, owner, otherAccount0, otherAccount1,lib } = await loadFixture(deployBridgeOutFixture);
                 const { elf, usdt } = await deployTokensFixture()
                 var chainId = "AELF_MAINNET";
                 _newAdmins = [bridgeOut.address];
@@ -415,7 +423,7 @@ describe("BridgeOut", function () {
                 var receiptId = tokenKey.toString() + "." + index;
                 var amount = "100";
                 var targetAddress = owner.address;
-                var leafHash = await bridgeOut.computeLeafHash(receiptId, amount, targetAddress);
+                var leafHash = await lib.computeLeafHash(receiptId, amount, targetAddress);
                 var message = createMessage("0", leafHash);
                 hashMessage = ethers.utils.keccak256(message.message)
                 await regiment.AddRegimentMember(regimentId, bridgeOut.address);
@@ -455,7 +463,7 @@ describe("BridgeOut", function () {
             })
             it("Should tramsmit correctly", async function () {
 
-                const { merkleTree, regimentId, regiment, bridgeOut, owner, otherAccount0, otherAccount1 } = await loadFixture(deployBridgeOutFixture);
+                const { merkleTree, regimentId, regiment, bridgeOut, owner, otherAccount0, otherAccount1, lib } = await loadFixture(deployBridgeOutFixture);
                 const { elf, usdt } = await deployTokensFixture()
                 var chainId = "AELF_MAINNET";
                 _newAdmins = [bridgeOut.address];
@@ -485,7 +493,7 @@ describe("BridgeOut", function () {
                 var receiptId = tokenKey.toString() + "." + index;
                 var amount = "100";
                 var targetAddress = owner.address;
-                var leafHash = await bridgeOut.computeLeafHash(receiptId, amount, targetAddress);
+                var leafHash = await lib.computeLeafHash(receiptId, amount, targetAddress);
                 var message = createMessage("0", leafHash);
                 hashMessage = ethers.utils.keccak256(message.message)
                 await regiment.AddRegimentMember(regimentId, bridgeOut.address);
@@ -502,7 +510,7 @@ describe("BridgeOut", function () {
             })
 
             it("Should getReceivedReceiptInfos correctly when transmited muti messages", async function () {
-                const { merkleTree, regimentId, regiment, bridgeOut, owner, otherAccount0, otherAccount1 } = await loadFixture(deployBridgeOutFixture);
+                const { merkleTree, regimentId, regiment, bridgeOut, owner, otherAccount0, otherAccount1,lib } = await loadFixture(deployBridgeOutFixture);
                 const { elf, usdt } = await deployTokensFixture()
                 var chainId = "AELF_MAINNET";
                 _newAdmins = [bridgeOut.address];
@@ -534,7 +542,7 @@ describe("BridgeOut", function () {
                 var receiptId = tokenKey.toString() + "." + index;
                 var amount = "100";
                 var targetAddress = owner.address;
-                var leafHash = await bridgeOut.computeLeafHash(receiptId, amount, targetAddress);
+                var leafHash = await lib.computeLeafHash(receiptId, amount, targetAddress);
                 var message = createMessage(index, leafHash)
                 hashMessage = ethers.utils.keccak256(message.message)
 
@@ -550,7 +558,7 @@ describe("BridgeOut", function () {
                 receiptId = tokenKey.toString() + "." + index;
                 amount = "100";
                 targetAddress = owner.address;
-                leafHash = await bridgeOut.computeLeafHash(receiptId, amount, targetAddress);
+                leafHash = await lib.computeLeafHash(receiptId, amount, targetAddress);
                 message = createMessage(index, leafHash)
                 hashMessage = ethers.utils.keccak256(message.message)
                 Signature = signKey.signDigest(hashMessage);
@@ -573,7 +581,7 @@ describe("BridgeOut", function () {
         });
         describe("swapToken test", function () {
             it("Should revert when trigger error", async function () {
-                const { merkleTree, regimentId, regiment, bridgeOut, owner, otherAccount0, otherAccount1 } = await loadFixture(deployBridgeOutFixture);
+                const { merkleTree, regimentId, regiment, bridgeOut, owner, otherAccount0, otherAccount1, lib } = await loadFixture(deployBridgeOutFixture);
                 const { elf, usdt } = await deployTokensFixture()
                 var chainId = "AELF_MAINNET";
                 _newAdmins = [bridgeOut.address];
@@ -601,7 +609,7 @@ describe("BridgeOut", function () {
                 var receiptId = tokenKey.toString() + "." + index;
                 var amount = "100";
                 var targetAddress = owner.address;
-                var leafHash = await bridgeOut.computeLeafHash(receiptId, amount, targetAddress);
+                var leafHash = await lib.computeLeafHash(receiptId, amount, targetAddress);
                 var message = createMessage(index, leafHash)
                 hashMessage = ethers.utils.keccak256(message.message)
                 // Sign the hashed address
@@ -640,7 +648,7 @@ describe("BridgeOut", function () {
             })
 
             it("Should swapToken correctly with test token", async function () {
-                const { merkleTree, regimentId, regiment, bridgeOut, owner, otherAccount0, otherAccount1 } = await loadFixture(deployBridgeOutFixture);
+                const { merkleTree, regimentId, regiment, bridgeOut, owner, otherAccount0, otherAccount1, lib } = await loadFixture(deployBridgeOutFixture);
                 const { elf, usdt } = await deployTokensFixture()
                 var chainId = "AELF_MAINNET";
                 _newAdmins = [bridgeOut.address];
@@ -668,7 +676,7 @@ describe("BridgeOut", function () {
                 var receiptId = tokenKey.toString() + "." + index;
                 var amount = "100";
                 var targetAddress = owner.address;
-                var leafHash = await bridgeOut.computeLeafHash(receiptId, amount, targetAddress);
+                var leafHash = await lib.computeLeafHash(receiptId, amount, targetAddress);
                 var message = createMessage(index, leafHash)
                 hashMessage = ethers.utils.keccak256(message.message)
                 // Sign the hashed address
@@ -694,7 +702,7 @@ describe("BridgeOut", function () {
             })
 
             it("Should swapToken correctly with muti test token", async function () {
-                const { merkleTree, regimentId, regiment, bridgeOut, owner, otherAccount0, otherAccount1, bridgeInMock, weth } = await loadFixture(deployBridgeOutFixture);
+                const { merkleTree, regimentId, regiment, bridgeOut, owner, otherAccount0, otherAccount1, bridgeInMock, weth, lib } = await loadFixture(deployBridgeOutFixture);
                 const { elf, usdt } = await deployTokensFixture()
                 var chainId = "AELF_MAINNET";
                 _newAdmins = [bridgeOut.address];
@@ -723,7 +731,7 @@ describe("BridgeOut", function () {
                 var receiptId = tokenKey.toString() + "." + index;
                 var amount = "100";
                 var targetAddress = owner.address;
-                var leafHash = await bridgeOut.computeLeafHash(receiptId, amount, targetAddress);
+                var leafHash = await lib.computeLeafHash(receiptId, amount, targetAddress);
                 var message = createMessage(index, leafHash)
                 hashMessage = ethers.utils.keccak256(message.message)
                 // Sign the hashed address
@@ -769,7 +777,7 @@ describe("BridgeOut", function () {
                 var receiptId = tokenKey.toString() + "." + index;
                 var amount = "100";
                 var targetAddress = owner.address;
-                var leafHash = await bridgeOut.computeLeafHash(receiptId, amount, targetAddress);
+                var leafHash = await lib.computeLeafHash(receiptId, amount, targetAddress);
                 var message = createMessage(index, leafHash)
                 hashMessage = ethers.utils.keccak256(message.message)
                 // Sign the hashed address
@@ -813,7 +821,7 @@ describe("BridgeOut", function () {
                 var receiptId = tokenKey.toString() + "." + index;
                 amount = BigInt(100000000);
                 var targetAddress = otherAccount0.address;
-                var leafHash = await bridgeOut.computeLeafHash(receiptId, amount, targetAddress);
+                var leafHash = await lib.computeLeafHash(receiptId, amount, targetAddress);
                 var message = createMessage(index, leafHash)
                 hashMessage = ethers.utils.keccak256(message.message)
                 // Sign the hashed address
@@ -847,7 +855,7 @@ describe("BridgeOut", function () {
             })
 
             it("Should swapToken revert with test token amount beyond the limit", async function () {
-                const { merkleTree, regimentId, regiment, bridgeOut, owner, otherAccount0, otherAccount1 } = await loadFixture(deployBridgeOutFixture);
+                const { merkleTree, regimentId, regiment, bridgeOut, owner, otherAccount0, otherAccount1,bridgeInMock, weth, lib, otherAccount2 } = await loadFixture(deployBridgeOutFixture);
                 const { elf, usdt } = await deployTokensFixture()
                 var chainId = "AELF_MAINNET";
                 _newAdmins = [bridgeOut.address];
@@ -876,7 +884,7 @@ describe("BridgeOut", function () {
                 var receiptId = tokenKey.toString() + "." + index;
                 var amount = "100";
                 var targetAddress = owner.address;
-                var leafHash = await bridgeOut.computeLeafHash(receiptId, amount, targetAddress);
+                var leafHash = await lib.computeLeafHash(receiptId, amount, targetAddress);
                 var message = createMessage(index, leafHash)
                 hashMessage = ethers.utils.keccak256(message.message)
                 // Sign the hashed address
@@ -913,7 +921,7 @@ describe("BridgeOut", function () {
             })
 
             it("Should set the limit success", async function () {
-                const { merkleTree, regimentId, regiment, bridgeOut, owner, otherAccount0, otherAccount1 } = await loadFixture(deployBridgeOutFixture);
+                const { merkleTree, regimentId, regiment, bridgeOut, owner, otherAccount0, otherAccount1, lib } = await loadFixture(deployBridgeOutFixture);
                 const { elf, usdt } = await deployTokensFixture()
                 var chainId = "AELF_MAINNET";
                 _newAdmins = [bridgeOut.address];
@@ -943,7 +951,7 @@ describe("BridgeOut", function () {
                 var receiptId = tokenKey.toString() + "." + index;
                 var amount = "100";
                 var targetAddress = owner.address;
-                var leafHash = await bridgeOut.computeLeafHash(receiptId, amount, targetAddress);
+                var leafHash = await lib.computeLeafHash(receiptId, amount, targetAddress);
                 var message = createMessage(index, leafHash)
                 hashMessage = ethers.utils.keccak256(message.message)
                 // Sign the hashed address
@@ -982,7 +990,7 @@ describe("BridgeOut", function () {
             })
 
             it("Should revert when pause", async function () {
-                const { merkleTree, regimentId, regiment, bridgeOut, owner, otherAccount0, otherAccount1, bridgeInMock } = await loadFixture(deployBridgeOutFixture);
+                const { merkleTree, regimentId, regiment, bridgeOut, owner, otherAccount0, otherAccount1, bridgeInMock, lib } = await loadFixture(deployBridgeOutFixture);
                 const { elf, usdt } = await deployTokensFixture()
                 var chainId = "AELF_MAINNET";
                 _newAdmins = [bridgeOut.address];
@@ -1009,7 +1017,7 @@ describe("BridgeOut", function () {
                 var receiptId = tokenKey.toString() + "." + index;
                 var amount = "100";
                 var targetAddress = owner.address;
-                var leafHash = await bridgeOut.computeLeafHash(receiptId, amount, targetAddress);
+                var leafHash = await lib.computeLeafHash(receiptId, amount, targetAddress);
                 var message = createMessage(index, leafHash)
                 hashMessage = ethers.utils.keccak256(message.message)
                 // Sign the hashed address
@@ -1024,7 +1032,7 @@ describe("BridgeOut", function () {
                 await bridgeInMock.pause(bridgeOut.address);
 
                 //revert when paused
-                error = "paused"
+                error = "BridgeOut:paused"
                 await expect(bridgeOut.swapToken(swapId, receiptId, amount, targetAddress))
                     .to.be.revertedWith(error);
 
@@ -1049,7 +1057,7 @@ describe("BridgeOut", function () {
         describe("computeLeafHash test", function () {
             it("Should computeLeafHash successful", async function () {
 
-                const { merkleTree, regimentId, regiment, bridgeOut, owner, otherAccount0, otherAccount1 } = await loadFixture(deployBridgeOutFixture);
+                const { merkleTree, regimentId, regiment, bridgeOut, owner, otherAccount0, otherAccount1, lib } = await loadFixture(deployBridgeOutFixture);
                 const { elf, usdt } = await deployTokensFixture()
                 var chainId = "AELF_MAINNET";
                 var tokenKey = _generateTokenKey(elf.address, chainId);
@@ -1061,22 +1069,22 @@ describe("BridgeOut", function () {
                 // console.log("amount" + "----------" + amount)
                 var targetAddress = owner.address;
                 // console.log("targetAddress" + "----------" + targetAddress)
-                var leafHash = await bridgeOut.computeLeafHash(receiptId, amount, targetAddress);
+                var leafHash = await lib.computeLeafHash(receiptId, amount, targetAddress);
                 // console.log("leafHash" + "----------" + leafHash)
 
             })
         });
         describe("change approve transfer controller", function () {
             it("Should change approve transfer controller successful", async function () {
-                const { merkleTree, regimentId, regiment, bridgeOut, owner, otherAccount0, otherAccount1, bridgeInMock } = await loadFixture(deployBridgeOutFixture);
+                const { merkleTree, regimentId, regiment, bridgeOut, owner, otherAccount0, otherAccount1, bridgeInMock, weth, lib, otherAccount2 } = await loadFixture(deployBridgeOutFixture);
                 expect(await bridgeOut.approveController()).to.equal(otherAccount0.address);
-                await bridgeOut.changeApproveController(otherAccount1.address);
+                await bridgeOut.connect(otherAccount2).changeApproveController(otherAccount1.address);
                 expect(await bridgeOut.approveController()).to.equal(otherAccount1.address);
             });
             it("revert no permission", async function () {
                 const { merkleTree, regimentId, regiment, bridgeOut, owner, otherAccount0, otherAccount1, bridgeInMock } = await loadFixture(deployBridgeOutFixture);
                 expect(await bridgeOut.approveController()).to.equal(otherAccount0.address);
-                var error = 'Ownable: caller is not the owner';
+                var error = 'BridgeOut:only for Wallet call';
                 await expect(bridgeOut.connect(otherAccount1).changeApproveController(otherAccount1.address)).to.be.revertedWith(error);
             });
         });

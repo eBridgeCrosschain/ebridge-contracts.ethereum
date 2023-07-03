@@ -1,9 +1,9 @@
 pragma solidity 0.8.9;
 
-import '../interfaces/MerkleTreeInterface.sol';
-import '../interfaces/RegimentInterface.sol';
-import '@openzeppelin/contracts/utils/cryptography/ECDSA.sol';
-import '../BridgeOutData.sol';
+import "../interfaces/MerkleTreeInterface.sol";
+import "../interfaces/RegimentInterface.sol";
+import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
+
 /**
  * @dev String operations.
  */
@@ -29,8 +29,7 @@ library MockBridgeOutLib {
                 _merkelTreePath,
                 _isLeftNode
             ),
-            'failed to swap token'
+            "failed to swap token"
         );
     }
-
 }

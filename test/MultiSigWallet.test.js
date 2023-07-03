@@ -23,8 +23,8 @@ describe("MultiSigWallet", function () {
         const bridgeInImplementation = await BridgeInImplementation.deploy();
         const bridgeInProxy = await BridgeIn.deploy(multiSigWallet.address,weth.address,account1.address, bridgeInImplementation.address);
         const bridgeIn = BridgeInImplementation.attach(bridgeInProxy.address);
-        await bridgeIn.setBridgeOut(bridgeOutMock.address);
-        return { bridgeIn, multiSigWallet, owner, account, account1, account2, account3, account4 };
+        
+        return { bridgeIn, multiSigWallet, owner, account, account1, account2, account3, account4,bridgeOutMock };
 
     }
 
@@ -123,14 +123,29 @@ describe("MultiSigWallet", function () {
 
         describe("executeTransaction test", function () {
             it("Should executeTransaction success", async function () {
-                const { bridgeIn, multiSigWallet, owner, account, account1, account2, } = await loadFixture(deployMultiSigWalletFixture);
+                const { bridgeIn, multiSigWallet, owner, account, account1, account2,bridgeOutMock } = await loadFixture(deployMultiSigWalletFixture);
+                let ABI1 = [
+                    "function setBridgeOut(address _bridgeOut)"
+                ];
+                let iface1 = new ethers.utils.Interface(ABI1);
+                var data1 = iface1.encodeFunctionData("setBridgeOut",[bridgeOutMock.address]);
+                await multiSigWallet.submitTransaction(bridgeIn.address, 0, data1);
+                var transactionId = 0;
+                await multiSigWallet.connect(account).confirmTransaction(transactionId);
+                await multiSigWallet.connect(account1).confirmTransaction(transactionId);
+                await multiSigWallet.connect(account2).confirmTransaction(transactionId);
+
+                var bridgeOut = await bridgeIn.bridgeOut();
+                expect(bridgeOut).to.equal(bridgeOutMock.address);
+
+
                 let ABI = [
                     "function restart()"
                 ];
                 let iface = new ethers.utils.Interface(ABI);
                 var data = iface.encodeFunctionData("restart")
                 await multiSigWallet.submitTransaction(bridgeIn.address, 0, data);
-                var transactionId = 0;
+                var transactionId = 1;
                 await multiSigWallet.connect(account).confirmTransaction(transactionId);
                 await multiSigWallet.connect(account1).confirmTransaction(transactionId);
 
@@ -175,7 +190,7 @@ describe("MultiSigWallet", function () {
                 ];
                 let iface = new ethers.utils.Interface(ABI);
                 var newRequired = 2;
-                error = "only for Wallet call"
+                error = "MultiSigWallet:only for Wallet call"
                 await expect(multiSigWallet.changeRequirement(newRequired))
                 .to.be.revertedWith(error);
             });

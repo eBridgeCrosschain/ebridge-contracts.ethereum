@@ -1,17 +1,28 @@
-import './Proxy.sol';
+import "./Proxy.sol";
 
 pragma solidity 0.8.9;
 
 contract BridgeIn is Proxy {
     constructor(
-        address _mutiSigWallet,
+        address _multiSigWallet,
         address _tokenAddress,
         address _pauseController,
         address _implementation
     ) Proxy(_implementation) {
+        require(
+            _multiSigWallet != address(0) &&
+                _tokenAddress != address(0) &&
+                _pauseController != address(0),
+            "invalid input"
+        );
         delegateTo(
             _implementation,
-            abi.encodeWithSignature('initialize(address,address,address)', _mutiSigWallet,_tokenAddress,_pauseController)
+            abi.encodeWithSignature(
+                "initialize(address,address,address)",
+                _multiSigWallet,
+                _tokenAddress,
+                _pauseController
+            )
         );
     }
 

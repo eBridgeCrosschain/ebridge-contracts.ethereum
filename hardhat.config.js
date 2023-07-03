@@ -30,6 +30,9 @@ module.exports = {
       }
     },
     {
+      version: "0.8.10",
+    },
+    {
       version: "0.4.18",
     }
     ]
@@ -40,9 +43,9 @@ module.exports = {
     disambiguatePaths: false,
   },
   networks: {
-    hardhat: {
-      allowUnlimitedContractSize: true
-    },
+    // hardhat: {
+    //   allowUnlimitedContractSize: true
+    // },
     // kovan: {
     //   url: "https://kovan.infura.io/v3/" + API_KEY,
     //   chainId: 42,
@@ -61,26 +64,16 @@ module.exports = {
     // sepolia: {
     //   url: "https://sepolia.infura.io/v3/" + API_KEY,
     //   chainId: 11155111,
-    //   accounts: [process.env.goerli_key0,process.env.goerli_key1,process.env.goerli_key2,process.env.goerli_key3,process.env.goerli_key4,process.env.goerli_key5]
+    //   accounts: [process.env.key0]
     // }
 
 
   },
   etherscan: {
     // apiKey: {
-    //   goerli: process.env.ethsacn_api_key,
-    //   sepolia: process.env.ethsacn_api_key,
-    //   bscTestnet: process.env.bscsacn_api_key
+    //   sepolia: process.env.ethsacn_api_key
     // },
     // customChains: [
-    //   {
-    //     network: "goerli",
-    //     chainId: 5,
-    //     urls: {
-    //       apiURL: "https://api-goerli.etherscan.io/api",
-    //       browserURL: "https://goerli.etherscan.io"
-    //     }
-    //   },
     //   {
     //     network: "sepolia",
     //     chainId: 11155111,
