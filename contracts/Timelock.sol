@@ -45,6 +45,7 @@ contract Timelock {
     mapping(bytes32 => bool) public queuedTransactions;
 
     constructor(address admin_, uint delay_) {
+        require(admin_ != address(0),"Invalid input.");
         require(
             delay_ >= MINIMUM_DELAY,
             "Timelock::constructor: Delay must exceed minimum delay."
@@ -90,6 +91,7 @@ contract Timelock {
     }
 
     function setPendingAdmin(address pendingAdmin_) public {
+        require(pendingAdmin_ != address(0),"Invalid input.");
         require(
             msg.sender == address(this),
             "Timelock::setPendingAdmin: Call must come from Timelock."
@@ -106,6 +108,7 @@ contract Timelock {
         bytes memory data,
         uint eta
     ) public returns (bytes32) {
+        require(target != address(0),"Invalid input.");
         require(
             msg.sender == admin,
             "Timelock::queueTransaction: Call must come from admin."
@@ -131,6 +134,7 @@ contract Timelock {
         bytes memory data,
         uint eta
     ) public {
+        require(target != address(0),"Invalid input.");
         require(
             msg.sender == admin,
             "Timelock::cancelTransaction: Call must come from admin."
@@ -151,6 +155,7 @@ contract Timelock {
         bytes memory data,
         uint eta
     ) public payable returns (bytes memory) {
+        require(target != address(0),"Invalid input.");
         require(
             msg.sender == admin,
             "Timelock::executeTransaction: Call must come from admin."

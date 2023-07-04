@@ -111,6 +111,7 @@ contract RegimentImplementation is ProxyStorage {
         bytes32 regimentId,
         address newMemberAddress
     ) external {
+        require(newMemberAddress != address(0),'invalid input');
         RegimentInfo storage regimentInfo = regimentInfoMap[regimentId];
         EnumerableSet.AddressSet storage memberList = regimentMemberListMap[
             regimentId
@@ -151,6 +152,7 @@ contract RegimentImplementation is ProxyStorage {
     function ChangeController(
         address _controller
     ) external assertSenderIsController {
+        require(_controller != address(0),"invalid input");
         controller = _controller;
     }
 
