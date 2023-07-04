@@ -1,6 +1,8 @@
 const { constants } = require("buffer");
 const { concat } = require("ethers/lib/utils");
 const { ethers } = require("hardhat");
+const BigNumber = require('bignumber.js');
+
 
 async function main() {
     const [deployer] = await ethers.getSigners();
@@ -108,6 +110,13 @@ async function main() {
     // console.log("BridgeOut address:", bridgeOutProxy.address);
    
 
+    //TimeLock
+    console.log("Start to deploy Timelock contract.");
+    const delay = new BigNumber(3 * 24 * 60 * 60);   //3 days in second
+    // const Timelock = await ethers.getContractFactory("Timelock");
+    // const timelock = await Timelock.deploy(deployer.address,delay.toFixed());
+    // console.log("timelock address:", timelock.address);
+
     //token 
     // const ELF = await ethers.getContractFactory("ELF");
     // const elf = await ELF.deploy();
@@ -178,11 +187,16 @@ async function main() {
     //         contract: "contracts/BridgeOutImplementationV1.sol:BridgeOutImplementationV1"
     //       })
 
+    // await run("verify:verify", {
+    //     address: bridgeOutAddress,
+    //     constructorArguments: [merkleTreeAddress, regimentAddress, bridgeInAddress, approveController ,mockMultiSigWalletAddress, wethAddress,bridgeOutImplementationAddress],
+    //     contract: "contracts/BridgeOut.sol:BridgeOut"
+    //       })
+
     await run("verify:verify", {
-        address: bridgeOutAddress,
-        constructorArguments: [merkleTreeAddress, regimentAddress, bridgeInAddress, approveController ,mockMultiSigWalletAddress, wethAddress,bridgeOutImplementationAddress],
-        contract: "contracts/BridgeOut.sol:BridgeOut"
-          })
+        address: '0x5e3c4c00aC600B00030a667D44bD96d299cdE2dc',
+        constructorArguments: [deployer.address,delay.toFixed()],
+      })
 
     // await run("verify:verify", {
     //     address: "0x8adD57b8aD6C291BC3E3ffF89F767fcA08e0E7Ab",

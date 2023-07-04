@@ -227,7 +227,7 @@ contract MerkleTreeImplementation is ProxyStorage {
         (pathLength, path, isLeftNeighbors) = _generatePath(
             locatedTree,
             index,
-            spaceInfo.maxLeafCount * 2,
+            spaceInfo.maxLeafCount.mul(2),
             spaceInfo.pathLength
         );
 
@@ -324,12 +324,11 @@ contract MerkleTreeImplementation is ProxyStorage {
         bytes32[] memory leafNodes = treeLeafList[spaceId][merkleTreeIndex]
             .values();
 
-        uint256 treeMaximalSize = spaceInfoMap[spaceId].maxLeafCount * 2;
+        uint256 treeMaximalSize = spaceInfoMap[spaceId].maxLeafCount.mul(2);
 
         bool isFullTree = spaceInfoMap[spaceId].maxLeafCount ==
             leafNodes.length;
-        uint256 firstLeafIndex = spaceInfoMap[spaceId].maxLeafCount *
-            merkleTreeIndex;
+        uint256 firstLeafIndex = spaceInfoMap[spaceId].maxLeafCount.mul(merkleTreeIndex);
         uint256 lastLeafIndex = firstLeafIndex.add(leafNodes.length).sub(1);
         (allNodes, nodeCount) = _leavesToTree(leafNodes, treeMaximalSize);
         MerkleTree memory merkleTree = MerkleTree(
