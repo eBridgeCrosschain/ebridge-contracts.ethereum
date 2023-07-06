@@ -310,12 +310,13 @@ contract BridgeInImplementation is ProxyStorage {
     function withdraw(
         bytes32 tokenKey,
         address token,
-        uint256 amount
+        uint256 amount,
+        address receiverAddress
     ) external onlyOwner {
         require(tokenList.contains(tokenKey), "not support");
         require(depositAmount[tokenKey] >= amount, "deposit not enough");
         depositAmount[tokenKey] = depositAmount[tokenKey].sub(amount);
         IBridgeOut(bridgeOut).withdraw(tokenKey, token, amount);
-        IERC20(token).safeTransfer(msg.sender, amount);
+        IERC20(token).safeTransfer(receiverAddress, amount);
     }
 }

@@ -59,12 +59,12 @@ module.exports = {
     bsc_test: {
       url: "https://data-seed-prebsc-1-s1.binance.org:8545",
       chainId: 97,
-      accounts: [process.env.key0,process.env.keymanager]
+      accounts: [process.env.key0,process.env.keymanager,process.env.key1]
     },
     sepolia: {
       url: "https://sepolia.infura.io/v3/" + API_KEY,
       chainId: 11155111,
-      accounts: [process.env.key0,process.env.keymanager]
+      accounts: [process.env.key0,process.env.keymanager,]
     }
 
   },

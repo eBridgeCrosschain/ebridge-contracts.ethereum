@@ -572,7 +572,7 @@ describe("BridgeIn", function () {
 
                 var amountWithdraw = 50;
 
-                await bridgeIn.withdraw(tokenKey,elf.address,amountWithdraw);
+                await bridgeIn.withdraw(tokenKey,elf.address,amountWithdraw,owner.address);
                 depositAmount = await bridgeIn.depositAmount(tokenKey);
                 expect(depositAmount).to.equal(amount-amountWithdraw);
                 var balance = await elf.balanceOf(bridgeOutMock.address);
@@ -596,7 +596,7 @@ describe("BridgeIn", function () {
                     .to.be.revertedWith(error);
 
                 var error = 'not support';
-                await expect(bridgeIn.withdraw(tokenKey,elf.address,amount))
+                await expect(bridgeIn.withdraw(tokenKey,elf.address,amount,bridgeOutMock.address))
                     .to.be.revertedWith(error);
 
                     var tokens = [{
@@ -612,7 +612,7 @@ describe("BridgeIn", function () {
                 expect(balance).to.equal(amount);
                 var amountWithdraw = 150;
                 var error = 'deposit not enough';
-                await expect(bridgeIn.withdraw(tokenKey,elf.address,amountWithdraw))
+                await expect(bridgeIn.withdraw(tokenKey,elf.address,amountWithdraw,bridgeOutMock.address))
                     .to.be.revertedWith(error);
             })
         })

@@ -1,9 +1,11 @@
 pragma solidity 0.8.9;
+import "hardhat/console.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 contract MockBridgeOut {
     using SafeERC20 for IERC20;
     bool isPaused = false;
+    mapping(address => uint256) public tokenAmountLimit;
 
     function deposit(
         bytes32 swapHashId,
@@ -30,5 +32,14 @@ contract MockBridgeOut {
     ) external {
         require(!isPaused, "BridgeOut:paused");
         IERC20(token).safeTransfer(address(msg.sender), amount);
+    }
+    function setLimits(
+        address[] memory tokens,
+        uint256[] memory limits
+    ) external{
+        console.log("set");
+        for (uint256 i = 0; i < tokens.length; i++) {
+            tokenAmountLimit[tokens[i]] = limits[i];
+        }
     }
 }
