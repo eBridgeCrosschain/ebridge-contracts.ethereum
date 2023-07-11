@@ -10,7 +10,7 @@ contract MultiSigWallet is Ownable {
     event Revocation(address indexed sender, uint256 indexed transactionId);
     event Submission(uint256 indexed transactionId);
     event Execution(uint256 indexed transactionId);
-    event ExecutionFailure(uint256 indexed transactionId);
+    event ExecutionFailure(uint256 indexed transactionId,string returnValue);
     event Deposit(address indexed sender, uint256 value);
     event MemberAddition(address indexed member);
     event MemberRemoval(address indexed member);
@@ -214,12 +214,17 @@ contract MultiSigWallet is Ownable {
         if (isConfirmed(transactionId)) {
             Transaction storage transaction = transactions[transactionId];
             transaction.executed = true;
-            (bool success, ) = transaction.destination.call{
+            (bool success, bytes memory returnData) = transaction.destination.call{
                 value: transaction.value
             }(transaction.data);
             if (success) emit Execution(transactionId);
             else {
-                emit ExecutionFailure(transactionId);
+                bytes memory returnValue = new bytes(returnData.length-4);
+                for(uint i = 4; i < returnData.length;i++){
+                    returnValue[i-4] = returnData[i];
+                }
+                string memory returnValueString = abi.decode(returnValue,(string));
+                emit ExecutionFailure(transactionId,returnValueString);
             }
         }
     }

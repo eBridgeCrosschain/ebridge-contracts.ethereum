@@ -16,7 +16,7 @@ async function main() {
     const bridgeInAddress = '0xf9Ab39c7A0A925BAf94f9C1c1d1CE8bFc9F9b2b3';
     const bridgeOutAddress = '0x276A12Bd934cb9753AdB89DFe88CA1442c5B1B47';
     
-    // //deploy regiment implementation
+    //deploy regiment implementation
     // console.log("Start to deploy regiment implementation contract.");
     // const RegimentImplementation = await ethers.getContractFactory("RegimentImplementation");
     // const regimentImplementation = await RegimentImplementation.deploy();
@@ -50,24 +50,26 @@ async function main() {
 
     // //MultiSigWallet
     // console.log("Start to deploy MultiSigWallet contract.");
-    var members = [
-        "0x00378D56583235ECc92E7157A8BdaC1483094223",
-        "0xEA7Dfc13498E2Ca99a3a74e144F4Afa4dD28b3fc",
-        "0x2B5BD5995D6AAeC027c2f6d6a80ae2D792b52aFA",
-        "0xA36FF0f2cB7A35E597Bf862C5618c201bD44Dd29",
-        "0xE91839Cb35e0c67B5179B31d7A9DE4fde269aBD4",
-        ];
-    var required = 3;
+    // var members = [
+    //     "0x00378D56583235ECc92E7157A8BdaC1483094223",
+    //     "0xEA7Dfc13498E2Ca99a3a74e144F4Afa4dD28b3fc",
+    //     "0x2B5BD5995D6AAeC027c2f6d6a80ae2D792b52aFA",
+    //     "0xA36FF0f2cB7A35E597Bf862C5618c201bD44Dd29",
+    //     "0xE91839Cb35e0c67B5179B31d7A9DE4fde269aBD4",
+    //     ];
+    // var required = 3;
     // const MultiSigWallet = await ethers.getContractFactory("MultiSigWallet");
     // const multiSigWallet = await MultiSigWallet.deploy(members, required);
     // console.log("MultiSigWallet address:", multiSigWallet.address);
-    
 
-    // //BridgeInImplementation
+
+
+    //BridgeInImplementation
     // console.log("Start to deploy BridgeInImplementation contract.");
     // const BridgeInImplementation = await ethers.getContractFactory("BridgeInImplementation");
     // const bridgeInImplementation = await BridgeInImplementation.deploy();
     // console.log("BridgeInImplementation address:", bridgeInImplementation.address);
+    // 0xb87726D66c84c5823eDEDa105316e7eB91f411FC
 
 
     //BridgeIn
@@ -111,8 +113,9 @@ async function main() {
    
 
     //TimeLock
-    console.log("Start to deploy Timelock contract.");
-    const delay = new BigNumber(3 * 24 * 60 * 60);   //3 days in second
+    // console.log("Start to deploy Timelock contract.");
+    // const delay = new BigNumber(3 * 24 * 60 * 60);   //3 days in second
+    // const delay = new BigNumber(10 * 60);
     // const Timelock = await ethers.getContractFactory("Timelock");
     // const timelock = await Timelock.deploy(deployer.address,delay.toFixed());
     // console.log("timelock address:", timelock.address);
@@ -120,10 +123,10 @@ async function main() {
     //token 
     // const ELF = await ethers.getContractFactory("ELF");
     // const elf = await ELF.deploy();
-    // console.log("elf address:", elf.address);
+    // console.log("elf address:", elf.address);  
 
-    // const USDT = await ethers.getContractFactory("USDT");
-    // const usdt = await USDT.deploy();
+    // const USDT = await ethers.getContractFactory("TetherToken");
+    // const usdt = await USDT.deploy('1000000000000','USDT','USDT',6);
     // console.log("usdt address:", usdt.address);
 
     // const WETH = await ethers.getContractFactory("WETH9");
@@ -136,7 +139,7 @@ async function main() {
 
 
     // await run("verify:verify", {
-    //     address: regimentImplementationAddress,
+    //     address: "0x90F6FFBB2690B26e0A9B8E86358128A15DAC1b74",
     //     constructorArguments: [],
     //     contract: "contracts/RegimentImplementation.sol:RegimentImplementation"
     //   })
@@ -148,7 +151,7 @@ async function main() {
     //   })
     
     //   await run("verify:verify", {
-    //     address: merkleTreeImplementationAddress,
+    //     address: "0xa43784E19F09a0aF56277C1e309E948058356B0e",
     //     constructorArguments: [],
     //     contract: "contracts/MerkleTreeImplementation.sol:MerkleTreeImplementation"
     //   })
@@ -160,15 +163,17 @@ async function main() {
     //   })
 
     // await run("verify:verify", {
-    //     address: multiSigWalletAddress,
+    //     address: "0xf3BC257216B4f23bB36d6e2557Dc4344Cd38a508",
     //     constructorArguments: [members,required],
     //   })
 
     // await run("verify:verify", {
-    //         address: bridgeInImplementationAddress,
+    //         address: "0xEA5Fb60a0a2e0Ff651A9E193e5023A52466B03BD",
     //         constructorArguments: [],
     //         contract: "contracts/BridgeInImplementation.sol:BridgeInImplementation"
     //       })
+
+
 
     // await run("verify:verify", {
     //     address: bridgeInAddress,
@@ -193,10 +198,10 @@ async function main() {
     //     contract: "contracts/BridgeOut.sol:BridgeOut"
     //       })
 
-    await run("verify:verify", {
-        address: '0x5e3c4c00aC600B00030a667D44bD96d299cdE2dc',
-        constructorArguments: [deployer.address,delay.toFixed()],
-      })
+    // await run("verify:verify", {
+    //     address: '0x3B0b21708acB3604C49f9d40d366f024b5366378',
+    //     constructorArguments: [deployer.address,delay.toFixed()],
+    //   })
 
     // await run("verify:verify", {
     //     address: "0x8adD57b8aD6C291BC3E3ffF89F767fcA08e0E7Ab",
@@ -205,9 +210,9 @@ async function main() {
     //   })
 
     // await run("verify:verify", {
-    //     address: "0x35E875C8790A240bd680DEC8C0fe3ffeb5fC4933",
-    //     constructorArguments: [],
-    //     contract: "contracts/MockContracts/MockUSDT.sol:USDT"
+    //     address: "0x60eeCc4d19f65B9EaDe628F2711C543eD1cE6679",
+    //     constructorArguments: ['1000000000000','USDT','USDT',6],
+    //     contract: "contracts/MockContracts/MockTetherToken.sol:TetherToken"
     //   })
 
     // await run("verify:verify", {
@@ -217,9 +222,9 @@ async function main() {
     //   })
 
     // await run("verify:verify", {
-    //     address: "0x0CBAb7E71f969Bfb3eF5b13542E9087a73244F02",
+    //     address: "0x035900292c309d8beCBCAFb3227238bec0EBa253",
     //     constructorArguments: [],
-    //     contract: "contracts/MockContracts/MockWBNB.sol:WBNB"
+    //     contract: "contracts/MockContracts/WETH9.sol:WETH9"
     //   })
 
     

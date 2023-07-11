@@ -1,30 +1,32 @@
 const { checkResultErrors } = require("@ethersproject/abi");
-const { logger } = require("ethers");
+const { logger,providers } = require("ethers");
 const { ethers } = require("hardhat");
+const { string } = require("hardhat/internal/core/params/argumentTypes");
 async function main() {
-    const [sender,managerAddress] = await ethers.getSigners();
+    const [sender,managerAddress,receiver1, account1, account2, account3, account4, account5] = await ethers.getSigners();
     //initailize
-    console.log("Sending tx with the account:", sender.address);
-    console.log("Sender account balance:", (await sender.getBalance()).toString());
+    // console.log("Sending tx with the account:", sender.address);
+    // console.log("Sender account balance:", (await sender.getBalance()).toString());
 
-    // const RegimentAddress = '0x9D5a36b132C3bE5F7F55DedBF5361fF405f35A5B';
-    // const MerkleTreeAddress = '0x18cE1AFF5cdc8bAB0017b42d22a71265E82Ce606';
-    // const MultiSigWalletAddress = '0x5e3c4c00aC600B00030a667D44bD96d299cdE2dc';
-    // const BridgeInAddress = '0xf9Ab39c7A0A925BAf94f9C1c1d1CE8bFc9F9b2b3';
-    // const BridgeOutAddress = '0x276A12Bd934cb9753AdB89DFe88CA1442c5B1B47';
-    // const RegimentImplementationAddress = '0x44846e35FbAd298c286575daCE76A8b03449c24b';
-    // const MerkleTreeImplementationAddress = '0x551424aCa6961aF8dB63b0b0492ED5BA5083d8Df';
-    // const BridgeInImplementationAddress = '0x5B1992aC3903E6b6b56e1B718CaFCF4e7Ae7da38';
-    // const BridgeOutLib = '0x3052ce9e1bf0C15EB963F6a73c9b5c42bAE23EbE';
-    // const BridgeOutImplementationAddress = '0xE8Ef9c4CD625fcEB03d4F3e9EA94c84Bb7Ee9dA9';
+    // // const RegimentAddress = '0x9D5a36b132C3bE5F7F55DedBF5361fF405f35A5B';
+    // // const MerkleTreeAddress = '0x18cE1AFF5cdc8bAB0017b42d22a71265E82Ce606';
+    // // const MultiSigWalletAddress = '0x5e3c4c00aC600B00030a667D44bD96d299cdE2dc';
+    // // const BridgeInAddress = '0xf9Ab39c7A0A925BAf94f9C1c1d1CE8bFc9F9b2b3';
+    // // const BridgeOutAddress = '0x276A12Bd934cb9753AdB89DFe88CA1442c5B1B47';
+    // // const RegimentImplementationAddress = '0x44846e35FbAd298c286575daCE76A8b03449c24b';
+    // // const MerkleTreeImplementationAddress = '0x551424aCa6961aF8dB63b0b0492ED5BA5083d8Df';
+    // // const BridgeInImplementationAddress = '0x5B1992aC3903E6b6b56e1B718CaFCF4e7Ae7da38';
+    // // const BridgeOutLib = '0x3052ce9e1bf0C15EB963F6a73c9b5c42bAE23EbE';
+    // // const BridgeOutImplementationAddress = '0xE8Ef9c4CD625fcEB03d4F3e9EA94c84Bb7Ee9dA9';
+    // // const Timelock = '0xcbEd324b624bB1B17A7842595B5295E249c44Abb';
 
-    // elfAddress = "0x8adD57b8aD6C291BC3E3ffF89F767fcA08e0E7Ab";
-    // usdtAddress = "0x83367063872F4BF7E855871E04f4Bd1Da98D75d1";
-    // wethAddress = "0x035900292c309d8beCBCAFb3227238bec0EBa253";
+    // // elfAddress = "0x8adD57b8aD6C291BC3E3ffF89F767fcA08e0E7Ab";
+    // // usdtAddress = "0x60eeCc4d19f65B9EaDe628F2711C543eD1cE6679";
+    // // wethAddress = "0x035900292c309d8beCBCAFb3227238bec0EBa253";
 
     const RegimentAddress = '0x282BA3b79B47Bcbcf56d4C729ebe82b0E3Ed2e16';
     const MerkleTreeAddress = '0x1B74aFb1d664597Fcd39301B0Eee43fc605E7FC0';
-    const MultiSigWalletAddress = '0x1A4341e369380578Fe72BC1156045e21eEf55307';
+    const MultiSigWalletAddress = '0xcDEA4ba71a873D2e4A702219644751a235e0a495';
     const BridgeInAddress = '0xD032D743A87586039056E3d35894D9F0560E26Be';
     const BridgeOutAddress = '0x4C6720dec7C7dcdE1c7B5E9dd2b327370AC9F834';
     const RegimentImplementationAddress = '0xC109d3298F6fbcb18c5890e91fa4b3E9Ee3FbE20';
@@ -36,6 +38,7 @@ async function main() {
     elfAddress = "0xd1CD51a8d28ab58464839ba840E16950A6a635ad";
     usdtAddress = "0x3F280eE5876CE8B15081947E0f189E336bb740A5";
     wbnbAddress = "0x0CBAb7E71f969Bfb3eF5b13542E9087a73244F02";
+    newElfAddress = "0x3791e375c5D7Ec6Cc5C95feD772F448065083160";
 
     const BridgeInImplementation = await ethers.getContractFactory("BridgeInImplementation");
     const bridgeInImplementation = await BridgeInImplementation.attach(BridgeInAddress);
@@ -55,6 +58,9 @@ async function main() {
     const MerkleTree = await ethers.getContractFactory("MerkleTree");
     const merkleTree = await MerkleTree.attach(MerkleTreeAddress);
 
+    const MultiSign = await ethers.getContractFactory("MultiSigWallet");
+    const multiSign = await MultiSign.attach(MultiSigWalletAddress);
+
     const BridgeOutImplementation = await ethers.getContractFactory("BridgeOutImplementationV1",{
         libraries:{
             BridgeOutLibrary : BridgeOutLib
@@ -65,17 +71,17 @@ async function main() {
     const BridgeOut = await ethers.getContractFactory("BridgeOut");
     const bridgeOut = await BridgeOut.attach(BridgeOutAddress);
 
-    const ELF = await ethers.getContractFactory("ELF");
-    const elf = await ELF.attach(elfAddress);
+    // const ELF = await ethers.getContractFactory("ELF");
+    // const elf = await ELF.attach(newElfAddress);
 
-    const USDT = await ethers.getContractFactory("USDT");
-    const usdt = await USDT.attach(usdtAddress);
+    // const USDT = await ethers.getContractFactory("USDT");
+    // const usdt = await USDT.attach(usdtAddress);
 
     // const WETH = await ethers.getContractFactory("WETH9");
     // const weth = await WETH.attach(wethAddress);
 
-    const WBNB = await ethers.getContractFactory("WBNB");
-    const wbnb = await WBNB.attach(wbnbAddress);
+    // const WBNB = await ethers.getContractFactory("WBNB");
+    // const wbnb = await WBNB.attach(wbnbAddress);
 
 
 
@@ -96,7 +102,7 @@ async function main() {
     // var regimentId = event.regimentId;
     // console.log("regiment id:",regimentId);
 
-    var regimentId = '0xf7296bf942ea75763b3ffffd0133a94558c87477c0a7e595bf9543cd7540602f';
+    // var regimentId = '0xf7296bf942ea75763b3ffffd0133a94558c87477c0a7e595bf9543cd7540602f';
 
     // var oldAdmins = ['0x3B0b21708acB3604C49f9d40d366f024b5366378'];    
     // await regimentImplementation.connect(managerAddress).DeleteAdmins(regimentId, oldAdmins);
@@ -112,17 +118,17 @@ async function main() {
     // await bridgeOutImplementation.setDefaultMerkleTreeDepth(3);
 
 
-    var elfToken = elf.address;
-    var usdtToken = usdt.address;
+    // var elfToken = elf.address;
+    // var usdtToken = usdt.address;
     // var wethToken = wethAddress;
-    var wbnbToken = wbnb.address;
+    // var wbnbToken = wbnb.address;
 
     // console.log("elf address:",elfToken);
     // console.log("usdt address:",usdtToken);
     // console.log("weth address:",wethToken);
 
     // var chainId = "MainChain_AELF";
-    var chainId = "SideChain_tDVW";
+    // var chainId = "SideChain_tDVW";
     // var targetTokenElf = {
     //     token: elfToken,
     //     fromChainId: chainId,
@@ -133,7 +139,7 @@ async function main() {
     //     token: usdtToken,
     //     fromChainId: chainId,
     //     originShare: 1,
-    //     targetShare: 100_0000000000
+    //     targetShare: 1
     // }
     // // var targetTokenWeth = {
     // //     token: wethAddress,
@@ -206,8 +212,8 @@ async function main() {
     // console.log("token key:",tokenKey);
 
     // console.log("Start to set token limit.");
-    // var tokens = [elfToken,usdtToken,wbnbToken];
-    // var limits = ['100000000000000000000000','1000000000000000000000','10000000000000000000000'];
+    // var tokens = [usdtToken];
+    // var limits = ['100000000000'];
     // await bridgeOutImplementation.setLimits(tokens,limits);
 
 
@@ -290,6 +296,8 @@ async function main() {
 
     // var chainId = "MainChain_AELF";
     // var chainId = "SideChain_tDVW";
+    var chainId = "SideChain_tDVV";
+
     // var tokens = [{
     //     tokenAddress:elf.address,
     //     chainId:chainId
@@ -301,7 +309,57 @@ async function main() {
     //     chainId:chainId
     // }]
     // await bridgeInImplementation.addToken(tokens);
+    // var tokens = [{
+    //     tokenAddress: newElfAddress,
+    //     chainId: chainId
+    // }]
+    // let ABI1 = [
+    //     "function addToken(tuple(address tokenAddress, string chainId)[] tokens)"
+    // ];
+    // let iface1 = new ethers.utils.Interface(ABI1);
+    // console.log(iface1);
 
+    // var data1 = iface1.encodeFunctionData("addToken",[tokens]);
+    // console.log(data1);
+
+
+    // let ABI1 = [
+    //     "function AddAdmins(bytes32 regimentId, address[] newAdmins)"
+    // ];
+    // let iface1 = new ethers.utils.Interface(ABI1);
+    // let newAdmins = [account1.address]
+    // let regimentId = '0x2F06A134F5B3406F6EA6068FA0874A4177D119EA8571088274B5F0A4A1331F41';
+    // let data1 = iface1.encodeFunctionData("AddAdmins",[regimentId, newAdmins]);
+
+    //     // var result = await multiSign.submitTransaction(regiment.address, 0, data1);
+    //     // console.log(result)
+
+    // // var result1 = await multiSign.connect(account1).confirmTransaction(0);
+    // // console.log(result1);
+
+    // // var result2 = await multiSign.connect(account2).confirmTransaction(0);
+    // // console.log(result2);
+    // var result3 = await multiSign.connect(account3).confirmTransaction(0);
+    // console.log(result3);
+
+    // const receipt = await result3.wait();
+    // console.log(receipt);
+    // const data = receipt.logs[1].data;
+    // const topics = receipt.logs[1].topics;
+    // const interface = new ethers.utils.Interface(["event ExecutionFailure(uint256 indexed transactionId,string returnValue);"]);
+    // const event = interface.decodeEventLog("ExecutionFailure", data, topics);
+    // console.log(event);
+    // var transactionId = event.transactionId;
+    // var result = event.returnValue;
+    // console.log("transactionId",transactionId);
+    // console.log("result",result);
+
+    // var txHash = "0x9617fa2eeec497d5db850db2c8ff4934ad6ff1c21e07bbff746a8818a5bd296c";
+    // var providers = new ethers.providers.JsonRpcProvider("https://data-seed-prebsc-1-s1.binance.org:8545");
+    // console.log(providers);
+    // // let tx = await connect.provider.getTransaction(txHash);
+    // var tx = await providers.getTransaction(txHash);
+    // console.log(tx);
 
     // await bridgeIn.updateImplementation(BridgeInImplementationAddress);
     // await bridgeOut.updateImplementation(BridgeOutImplementationV1Address);
@@ -313,8 +371,9 @@ async function main() {
     // create receipt
     // var chainId = "MainChain_AELF"
     // await bridgeIn.addToken(elf.address, chainId);
-    //  var amount = BigInt(100000000000000);
-    //  var targetAddress = "29smfm3TjJg7Mi8Xx33gnJjJ8P6VvxfNFqeFETXuPGaKJPH9ut";
+     var amount = '1000000000000000000';
+     var targetAddress = "6eR4wXd2CmUDKboe7zrka1xAHTPi8xTuXFE1LXKsrpzhEhWQX";
+
     // await elf.mint(sender.address, amount);
     // console.log("address:",bridgeInImplementation.address);
     // var senderBalance = await wbnb.balanceOf(usdtowner.address);
@@ -325,7 +384,7 @@ async function main() {
     // console.log("allowance:",allowance);
     // console.log("bridge out address:",bridgeOutImplementation.address);
     // await wbnb.connect(usdtowner).approve(bridgeInImplementation.address, amount);
-    // await bridgeInImplementation.connect(usdtowner).createReceipt(wbnb.address, amount, chainId, targetAddress);
+    // await bridgeInImplementation.createReceipt(elfAddress, amount, chainId, targetAddress);
 
 
     // var tokens = [elf.address];
@@ -359,7 +418,10 @@ async function main() {
     
     //console.log("receiver1 address:",receiver1.address);
     //await bridgeOutImplementation.connect(sender).approve(receiptId);
-    //  await bridgeOutImplementation.connect(receiver1).swapToken(swapIdElf, receiptId, 200000000, receiver1.address);
+    var swapIdElf = '0x1f43016496b1a8ef4dc15d0f5d3165de466809a046fe158408f5ed9c0bb45c5a';
+    var receiptId = '274bb010153ade48615faa496df2b31720326d136096853b43fc1717460cc739.1';
+    var amount = '300000000';
+    // await bridgeOutImplementation.connect(receiver1).swapToken(swapIdElf, receiptId, 200000000, receiver1.address);
     // var leafHash = await bridgeOutImplementation.computeLeafHash(receiptId,500000000,receiver1.address);
     // console.log("result:",leafHash);
 
@@ -380,7 +442,6 @@ async function main() {
 
     // var isReceiptRecorded = await bridgeOut.isReceiptRecorded(leafHash);
     // console.log("isReceiptRecorded" + isReceiptRecorded)
-
 
 
 

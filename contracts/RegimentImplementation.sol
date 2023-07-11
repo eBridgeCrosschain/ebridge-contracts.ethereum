@@ -1,7 +1,7 @@
 import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "./Proxy.sol";
-import "hardhat/console.sol";
+
 pragma solidity 0.8.9;
 
 contract RegimentImplementation is ProxyStorage {
@@ -50,6 +50,7 @@ contract RegimentImplementation is ProxyStorage {
         uint256 _regimentLimit,
         uint256 _maximumAdminsCount
     ) external onlyOwner {
+        require(controller == address(0), "already initialized");
         require(
             _memberJoinLimit <= DefaultMemberJoinLimit,
             "Invalid memberJoinLimit"

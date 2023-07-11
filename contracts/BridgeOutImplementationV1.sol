@@ -10,7 +10,7 @@ import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import "./Proxy.sol";
 import "./libraries/BridgeOutLibrary.sol";
-import "hardhat/console.sol";
+
 pragma solidity 0.8.9;
 
 contract BridgeOutImplementationV1 is ProxyStorage {
@@ -279,7 +279,6 @@ contract BridgeOutImplementationV1 is ProxyStorage {
         bytes32[] calldata _ss, //observer signatures->s
         bytes32 _rawVs // signatures->v (Each 1 byte is combined into a 32-byte binder, which means that the maximum number of observer signatures is 32.)
     ) external {
-        console.log("bridge out transmit sender:", msg.sender);
         SwapInfo storage swapInfo = swapInfos[swapHashId];
 
         (uint256 receiptIndex, bytes32 receiptHash) = BridgeOutLibrary

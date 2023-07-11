@@ -8,8 +8,6 @@ import "./Proxy.sol";
 import "./libraries/StringHex.sol";
 import "./interfaces/BridgeOutInterface.sol";
 import "./interfaces/NativeTokenInterface.sol";
-import "@openzeppelin/contracts/governance/TimelockController.sol";
-import "hardhat/console.sol";
 
 contract BridgeInImplementation is ProxyStorage {
     using SafeMath for uint256;
@@ -29,7 +27,7 @@ contract BridgeInImplementation is ProxyStorage {
     EnumerableSet.Bytes32Set private tokenList;
 
     mapping(bytes32 => mapping(uint256 => Receipt)) private receiptIndexMap;
-    mapping(bytes32 => uint256) private tokenReceiptIndex; //from 0
+    mapping(bytes32 => uint256) private tokenReceiptIndex; //from 1
     mapping(bytes32 => uint256) private totalAmountInReceipts;
     mapping(address => mapping(bytes32 => mapping(uint256 => string)))
         private ownerToReceiptIdMap;

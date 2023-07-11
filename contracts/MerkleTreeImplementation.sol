@@ -57,6 +57,7 @@ contract MerkleTreeImplementation is ProxyStorage {
     );
 
     function initialize(address _regimentAddress) external onlyOwner {
+        require(regimentAddress == address(0), "already initialized" );
         require(_regimentAddress != address(0), "invalid input");
         regimentAddress = _regimentAddress;
     }
@@ -220,7 +221,7 @@ contract MerkleTreeImplementation is ProxyStorage {
         uint256 leafCountPerTree = 1 << spaceInfo.pathLength;
         treeIndex = leafNodeIndex.div(leafCountPerTree);
         MerkleTree storage locatedTree = SpaceMerkleTree[spaceId][treeIndex];
-        uint256 index = leafNodeIndex - locatedTree.firstLeafIndex;
+        uint256 index = leafNodeIndex.sub(locatedTree.firstLeafIndex);
         bytes32[] memory path = new bytes32[](spaceInfo.pathLength);
         bool[] memory isLeftNeighbors = new bool[](spaceInfo.pathLength);
 
@@ -336,7 +337,7 @@ contract MerkleTreeImplementation is ProxyStorage {
             merkleTreeIndex,
             firstLeafIndex,
             lastLeafIndex,
-            allNodes[nodeCount - 1],
+            allNodes[nodeCount.sub(1)],
             isFullTree
         );
 
