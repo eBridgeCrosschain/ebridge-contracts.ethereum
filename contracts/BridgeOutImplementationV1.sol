@@ -260,7 +260,8 @@ contract BridgeOutImplementationV1 is ProxyStorage {
             swapInfo.targetToken.token,
             swapInfo.targetToken.fromChainId
         );
-        uint256 receiptIndex = ++receivedReceiptIndex[tokenKey];
+        receivedReceiptIndex[tokenKey] = receivedReceiptIndex[tokenKey].add(1);
+        uint256 receiptIndex = receivedReceiptIndex[tokenKey];
         receivedReceiptsMap[tokenKey][receiptIndex] = ReceivedReceipt(
             swapInfo.targetToken.token,
             receiverAddress,

@@ -196,7 +196,8 @@ contract BridgeInImplementation is ProxyStorage {
     ) internal {
         bytes32 tokenKey = _generateTokenKey(token, targetChainId);
         IBridgeOut(bridgeOut).deposit(tokenKey, token, amount);
-        uint256 receiptIndex = ++tokenReceiptIndex[tokenKey];
+        tokenReceiptIndex[tokenKey] = tokenReceiptIndex[tokenKey].add(1);
+        uint256 receiptIndex = tokenReceiptIndex[tokenKey];
         string memory receiptId = _generateReceiptId(tokenKey, receiptIndex);
         receiptIndexMap[tokenKey][receiptIndex] = Receipt(
             token,
@@ -211,7 +212,8 @@ contract BridgeInImplementation is ProxyStorage {
         totalAmountInReceipts[tokenKey] = totalAmountInReceipts[tokenKey].add(
             amount
         );
-        uint256 index = ownerToReceiptsIndexMap[msg.sender][tokenKey]++;
+        uint256 index = ownerToReceiptsIndexMap[msg.sender][tokenKey];
+        ownerToReceiptsIndexMap[msg.sender][tokenKey] = ownerToReceiptsIndexMap[msg.sender][tokenKey].add(1);
         ownerToReceiptIdMap[msg.sender][tokenKey][index] = receiptId;
         emit NewReceipt(receiptId, token, msg.sender, amount);
     }

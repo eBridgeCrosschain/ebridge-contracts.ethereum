@@ -60,6 +60,7 @@ contract Timelock {
     }
 
     receive() external payable {}
+    fallback() external payable {}
 
     function setDelay(uint delay_) public {
         require(
