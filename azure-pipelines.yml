@@ -24,7 +24,7 @@ jobs:
         inputs:
           command: 'install'
         displayName: npm install
-      - script: npx hardhat coverage
+      - script: npx hardhat coverage --solcoverjs .solcover.js
         displayName: 'test'
       - script: |
           curl -Os https://uploader.codecov.io/latest/linux/codecov

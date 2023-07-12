@@ -51,7 +51,7 @@ library StringHex {
         return
             string(
                 abi.encodePacked(
-                    '0x',
+                    "0x",
                     toHex16(bytes16(data)),
                     toHex16(bytes16(data << 128))
                 )

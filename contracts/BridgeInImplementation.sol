@@ -1,13 +1,13 @@
-import '@openzeppelin/contracts/utils/math/SafeMath.sol';
-import '@openzeppelin/contracts/utils/Strings.sol';
-import '@openzeppelin/contracts/utils/structs/EnumerableSet.sol';
-// import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
-import '@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol';
-import './Proxy.sol';
-import './libraries/StringHex.sol';
-import './interfaces/BridgeOutInterface.sol';
-import './interfaces/NativeTokenInterface.sol';
 pragma solidity 0.8.9;
+
+import "@openzeppelin/contracts/utils/math/SafeMath.sol";
+import "@openzeppelin/contracts/utils/Strings.sol";
+import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
+import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import "./Proxy.sol";
+import "./libraries/StringHex.sol";
+import "./interfaces/BridgeOutInterface.sol";
+import "./interfaces/NativeTokenInterface.sol";
 
 contract BridgeInImplementation is ProxyStorage {
     using SafeMath for uint256;
@@ -16,11 +16,16 @@ contract BridgeInImplementation is ProxyStorage {
     using Strings for uint256;
     using StringHex for bytes32;
 
-    uint256 constant MaxQueryRange = 100;
-
     address public bridgeOut;
-    address public mutiSigWallet;
+    address public multiSigWallet;
+    address public tokenAddress;
+    address public pauseController;
     bool public isPaused;
+    uint256 public constant MaxQueryRange = 100;
+    uint256 public constant MaxTokenCount = 200;
+    uint256 public constant MaxTokenCountPerAddOrRemove = 10;
+    EnumerableSet.Bytes32Set private tokenList;
+
     mapping(bytes32 => mapping(uint256 => Receipt)) private receiptIndexMap;
     mapping(bytes32 => uint256) private tokenReceiptIndex; //from 1
     mapping(bytes32 => uint256) private totalAmountInReceipts;
@@ -28,24 +33,24 @@ contract BridgeInImplementation is ProxyStorage {
         private ownerToReceiptIdMap;
     mapping(address => mapping(bytes32 => uint256))
         private ownerToReceiptsIndexMap; //from 0
-
-    EnumerableSet.Bytes32Set private tokenList;
-    address public tokenAddress;
-    address public pauseController;
     mapping(bytes32 => uint256) public depositAmount;
 
     modifier whenNotPaused() {
-        require(!isPaused, 'paused');
+        require(!isPaused, "BrigeIn:paused");
         _;
     }
     modifier onlyWallet() {
-        require(msg.sender == mutiSigWallet, 'only for Wallet call');
+        require(msg.sender == multiSigWallet, "BridgeIn:only for Wallet call");
         _;
     }
     modifier onlyPauseController() {
-        require(msg.sender == pauseController, 'only for pause controller');
+        require(
+            msg.sender == pauseController,
+            "BrigeIn:only for pause controller"
+        );
         _;
     }
+
     struct Receipt {
         address asset; // ERC20 Token Address
         address owner; // Sender
@@ -55,6 +60,10 @@ contract BridgeInImplementation is ProxyStorage {
         string targetChainId;
         string targetAddress; // User address in aelf
         string receiptId;
+    }
+    struct Token {
+        address tokenAddress;
+        string chainId;
     }
     event TokenAdded(address token, string chainId);
     event TokenRemoved(address token, string chainId);
@@ -66,52 +75,73 @@ contract BridgeInImplementation is ProxyStorage {
     );
 
     function initialize(
-        address _mutiSigWallet,
+        address _multiSigWallet,
         address _tokenAddress,
         address _pauseController
     ) external onlyOwner {
-        require(mutiSigWallet == address(0), 'already initialized');
-        mutiSigWallet = _mutiSigWallet;
+        require(multiSigWallet == address(0), "BrigeIn:already initialized");
+        multiSigWallet = _multiSigWallet;
         tokenAddress = _tokenAddress;
         pauseController = _pauseController;
     }
 
-    function setBridgeOut(address _bridgeOut) external onlyOwner {
-        require(bridgeOut == address(0), 'already set');
+    function changeMultiSignWallet(address _wallet) external onlyOwner {
+        require(_wallet != address(0), "invalid input");
+        multiSigWallet = _wallet;
+    }
+
+    function setBridgeOut(address _bridgeOut) external onlyWallet {
+        require(
+            bridgeOut == address(0) && _bridgeOut != address(0),
+            "invalid bridge out address"
+        );
         bridgeOut = _bridgeOut;
     }
 
     function changePauseController(
         address _pauseController
-    ) external onlyOwner {
+    ) external onlyWallet {
+        require(_pauseController != address(0), "invalid input");
         pauseController = _pauseController;
     }
 
-    function addToken(address token, string calldata chainId) public onlyOwner {
-        bytes32 tokenKey = _generateTokenKey(token, chainId);
-        require(!tokenList.contains(tokenKey), 'tokenKey already added');
-        tokenList.add(tokenKey);
-        emit TokenAdded(token, chainId);
+    function addToken(Token[] calldata tokens) public onlyWallet {
+        require(
+            tokenList.length() <= MaxTokenCount && tokens.length <= MaxTokenCountPerAddOrRemove,
+            "token count exceed"
+        );
+        for (uint256 i = 0; i < tokens.length; i++) {
+            bytes32 tokenKey = _generateTokenKey(
+                tokens[i].tokenAddress,
+                tokens[i].chainId
+            );
+            require(!tokenList.contains(tokenKey), "tokenKey already added");
+            tokenList.add(tokenKey);
+            emit TokenAdded(tokens[i].tokenAddress, tokens[i].chainId);
+        }
     }
 
-    function removeToken(
-        address token,
-        string calldata chainId
-    ) public onlyOwner {
-        bytes32 tokenKey = _generateTokenKey(token, chainId);
-        require(tokenList.contains(tokenKey), 'tokenKey not exist');
-        tokenList.remove(tokenKey);
-        emit TokenRemoved(token, chainId);
+    function removeToken(Token[] calldata tokens) public onlyWallet {
+        require(tokens.length <= MaxTokenCountPerAddOrRemove, "input token count exceed");
+        for (uint256 i = 0; i < tokens.length; i++) {
+            bytes32 tokenKey = _generateTokenKey(
+                tokens[i].tokenAddress,
+                tokens[i].chainId
+            );
+            require(tokenList.contains(tokenKey), "tokenKey not exist");
+            tokenList.remove(tokenKey);
+            emit TokenRemoved(tokens[i].tokenAddress, tokens[i].chainId);
+        }
     }
 
     function pause() external onlyPauseController {
-        require(!isPaused, 'already paused');
+        require(!isPaused, "already paused");
         isPaused = true;
         IBridgeOut(bridgeOut).pause();
     }
 
     function restart() public onlyWallet {
-        require(isPaused == true, 'not paused');
+        require(isPaused == true, "not paused");
         isPaused = false;
         IBridgeOut(bridgeOut).restart();
     }
@@ -131,12 +161,11 @@ contract BridgeInImplementation is ProxyStorage {
         bytes32 tokenKey = _generateTokenKey(tokenAddress, targetChainId);
         require(
             tokenList.contains(tokenKey),
-            'Token is not support in that chain'
+            "Token is not support in that chain"
         );
-        require(msg.value > 0, 'balance is not enough.');
+        require(msg.value > 0, "balance is not enough.");
         INativeToken(tokenAddress).deposit{value: msg.value}();
-        bool success = INativeToken(tokenAddress).approve(bridgeOut, msg.value);
-        require(success, 'failed.');
+        IERC20(tokenAddress).safeApprove(bridgeOut, msg.value);
         generateReceipt(tokenAddress, msg.value, targetChainId, targetAddress);
     }
 
@@ -150,9 +179,9 @@ contract BridgeInImplementation is ProxyStorage {
         bytes32 tokenKey = _generateTokenKey(token, targetChainId);
         require(
             tokenList.contains(tokenKey),
-            'Token is not support in that chain'
+            "Token is not support in that chain"
         );
-        require(amount > 0, 'invalid amount');
+        require(amount > 0, "invalid amount");
         // Deposit token to this contract
         IERC20(token).safeTransferFrom(msg.sender, address(this), amount);
         IERC20(token).safeApprove(bridgeOut, amount);
@@ -167,7 +196,8 @@ contract BridgeInImplementation is ProxyStorage {
     ) internal {
         bytes32 tokenKey = _generateTokenKey(token, targetChainId);
         IBridgeOut(bridgeOut).deposit(tokenKey, token, amount);
-        uint256 receiptIndex = ++tokenReceiptIndex[tokenKey];
+        tokenReceiptIndex[tokenKey] = tokenReceiptIndex[tokenKey].add(1);
+        uint256 receiptIndex = tokenReceiptIndex[tokenKey];
         string memory receiptId = _generateReceiptId(tokenKey, receiptIndex);
         receiptIndexMap[tokenKey][receiptIndex] = Receipt(
             token,
@@ -182,7 +212,8 @@ contract BridgeInImplementation is ProxyStorage {
         totalAmountInReceipts[tokenKey] = totalAmountInReceipts[tokenKey].add(
             amount
         );
-        uint256 index = ownerToReceiptsIndexMap[msg.sender][tokenKey]++;
+        uint256 index = ownerToReceiptsIndexMap[msg.sender][tokenKey];
+        ownerToReceiptsIndexMap[msg.sender][tokenKey] = ownerToReceiptsIndexMap[msg.sender][tokenKey].add(1);
         ownerToReceiptIdMap[msg.sender][tokenKey][index] = receiptId;
         emit NewReceipt(receiptId, token, msg.sender, amount);
     }
@@ -207,7 +238,7 @@ contract BridgeInImplementation is ProxyStorage {
     ) external view returns (uint256[] memory indexes) {
         require(
             tokens.length == targetChainIds.length,
-            'Invalid tokens/targetChainIds input'
+            "Invalid tokens/targetChainIds input"
         );
         indexes = new uint256[](tokens.length);
         for (uint256 i = 0; i < tokens.length; i++) {
@@ -232,13 +263,13 @@ contract BridgeInImplementation is ProxyStorage {
             endIndex <= tokenReceiptIndex[tokenKey] &&
                 fromIndex > 0 &&
                 fromIndex <= endIndex,
-            'Invalid input'
+            "Invalid input"
         );
         uint256 length = endIndex.sub(fromIndex).add(1);
-        require(length <= MaxQueryRange, 'Query range is exceeded');
+        require(length <= MaxQueryRange, "Query range is exceeded");
         _receipts = new Receipt[](length);
         for (uint256 i = 0; i < length; i++) {
-            _receipts[i] = receiptIndexMap[tokenKey][i + fromIndex];
+            _receipts[i] = receiptIndexMap[tokenKey][i.add(fromIndex)];
         }
         return _receipts;
     }
@@ -255,7 +286,7 @@ contract BridgeInImplementation is ProxyStorage {
         uint256 receiptIndex
     ) public pure returns (string memory) {
         string memory prefix = tokenKey.toHex();
-        string memory separator = '.';
+        string memory separator = ".";
         string memory suffix = receiptIndex.toString();
         return string(abi.encodePacked(prefix, separator, suffix));
     }
@@ -268,12 +299,9 @@ contract BridgeInImplementation is ProxyStorage {
         return totalAmountInReceipts[tokenKey];
     }
 
-    function deposit(
-        bytes32 tokenKey, 
-        address token, 
-        uint256 amount) external {
-        require(tokenList.contains(tokenKey), 'not support');
-        depositAmount[tokenKey] += amount;
+    function deposit(bytes32 tokenKey, address token, uint256 amount) external {
+        require(tokenList.contains(tokenKey), "not support");
+        depositAmount[tokenKey] = depositAmount[tokenKey].add(amount);
         IERC20(token).safeTransferFrom(msg.sender, address(this), amount);
         IERC20(token).safeApprove(bridgeOut, amount);
         IBridgeOut(bridgeOut).deposit(tokenKey, token, amount);
@@ -282,12 +310,13 @@ contract BridgeInImplementation is ProxyStorage {
     function withdraw(
         bytes32 tokenKey,
         address token,
-        uint256 amount
+        uint256 amount,
+        address receiverAddress
     ) external onlyOwner {
-        require(tokenList.contains(tokenKey), 'not support');
-        require(depositAmount[tokenKey] >= amount, 'deposit not enough');
-        depositAmount[tokenKey] -= amount;
+        require(tokenList.contains(tokenKey), "not support");
+        require(depositAmount[tokenKey] >= amount, "deposit not enough");
+        depositAmount[tokenKey] = depositAmount[tokenKey].sub(amount);
         IBridgeOut(bridgeOut).withdraw(tokenKey, token, amount);
-        IERC20(token).safeTransfer(msg.sender, amount);
+        IERC20(token).safeTransfer(receiverAddress, amount);
     }
 }

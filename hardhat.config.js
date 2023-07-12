@@ -30,6 +30,9 @@ module.exports = {
       }
     },
     {
+      version: "0.8.10",
+    },
+    {
       version: "0.4.18",
     }
     ]
@@ -56,31 +59,21 @@ module.exports = {
     // bsc_test: {
     //   url: "https://data-seed-prebsc-1-s1.binance.org:8545",
     //   chainId: 97,
-    //   accounts: [process.env.goerli_key0,process.env.goerli_key1,process.env.goerli_key2,process.env.goerli_key3,process.env.goerli_key4,process.env.goerli_key5]
+    //   accounts: [process.env.key0,process.env.keymanager,process.env.key1,process.env.key2,process.env.key3,process.env.key4,process.env.key5,process.env.key6]
     // },
     // sepolia: {
     //   url: "https://sepolia.infura.io/v3/" + API_KEY,
     //   chainId: 11155111,
-    //   accounts: [process.env.goerli_key0,process.env.goerli_key1,process.env.goerli_key2,process.env.goerli_key3,process.env.goerli_key4,process.env.goerli_key5]
+    //   accounts: [process.env.key0,process.env.keymanager,]
     // }
-
 
   },
   etherscan: {
     // apiKey: {
-    //   goerli: process.env.ethsacn_api_key,
     //   sepolia: process.env.ethsacn_api_key,
-    //   bscTestnet: process.env.bscsacn_api_key
+    //   bscTestnet: process.env.bscscan_api_key
     // },
     // customChains: [
-    //   {
-    //     network: "goerli",
-    //     chainId: 5,
-    //     urls: {
-    //       apiURL: "https://api-goerli.etherscan.io/api",
-    //       browserURL: "https://goerli.etherscan.io"
-    //     }
-    //   },
     //   {
     //     network: "sepolia",
     //     chainId: 11155111,

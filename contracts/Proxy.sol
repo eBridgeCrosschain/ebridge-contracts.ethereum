@@ -1,4 +1,4 @@
-import '@openzeppelin/contracts/access/Ownable.sol';
+import "@openzeppelin/contracts/access/Ownable.sol";
 pragma solidity 0.8.9;
 
 contract ProxyStorage is Ownable {
@@ -14,10 +14,10 @@ contract Proxy is ProxyStorage {
     }
 
     function updateImplementation(address _newImplementation) public onlyOwner {
-        require(_newImplementation != address(0x0), 'INVALID_PROXY_ADDRESS');
+        require(_newImplementation != address(0x0), "INVALID_PROXY_ADDRESS");
         require(
             isContract(_newImplementation),
-            'DESTINATION_ADDRESS_IS_NOT_A_CONTRACT'
+            "DESTINATION_ADDRESS_IS_NOT_A_CONTRACT"
         );
         emit ProxyUpdated(_newImplementation, _implementation);
         _implementation = _newImplementation;

@@ -1,13 +1,16 @@
 // SPDX-License-Identifier: MIT
-import './interfaces/MerkleTreeInterface.sol';
-import './interfaces/RegimentInterface.sol';
-import './interfaces/NativeTokenInterface.sol';
-import '@openzeppelin/contracts/utils/math/SafeMath.sol';
-import '@openzeppelin/contracts/utils/Strings.sol';
-import '@openzeppelin/contracts/utils/structs/EnumerableSet.sol';
-import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
-import '@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol';
-import './Proxy.sol';
+import "./interfaces/MerkleTreeInterface.sol";
+import "./interfaces/RegimentInterface.sol";
+import "./interfaces/NativeTokenInterface.sol";
+import "@openzeppelin/contracts/utils/math/SafeMath.sol";
+import "@openzeppelin/contracts/utils/Strings.sol";
+import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
+import "./Proxy.sol";
+import "./libraries/BridgeOutLibrary.sol";
+
 pragma solidity 0.8.9;
 
 contract BridgeOutImplementationV1 is ProxyStorage {
@@ -15,12 +18,19 @@ contract BridgeOutImplementationV1 is ProxyStorage {
     using SafeERC20 for IERC20;
     using EnumerableSet for EnumerableSet.Bytes32Set;
     using EnumerableSet for EnumerableSet.AddressSet;
+
     address private merkleTree;
     address public regiment;
     address public bridgeIn;
-    uint256 private defaultMerkleTreeDepth = 10;
-    uint256 constant MaxQueryRange = 100;
+    uint256 public defaultMerkleTreeDepth = 3;
+    uint256 public constant MaxQueryRange = 100;
+    uint256 public constant MaxTokenKeyCount = 200;
+    bool public isPaused;
+    address public tokenAddress;
+    address public approveController;
+    address public multiSigWallet;
     EnumerableSet.Bytes32Set private targetTokenList;
+
     mapping(bytes32 => SwapInfo) internal swapInfos;
     mapping(bytes32 => bytes32) internal tokenKeyToSwapIdMap;
     mapping(bytes32 => SwapAmounts) internal ledger;
@@ -30,9 +40,6 @@ contract BridgeOutImplementationV1 is ProxyStorage {
     mapping(string => bool) internal receiptApproveMap;
     mapping(address => uint256) public tokenAmountLimit;
     mapping(bytes32 => uint256) internal tokenDepositAmount;
-    bool internal isPaused;
-    address public tokenAddress;
-    address public approveController;
 
     struct ReceivedReceipt {
         address asset; // ERC20 Token Address
@@ -43,15 +50,6 @@ contract BridgeOutImplementationV1 is ProxyStorage {
         string fromChainId;
         string receiptId;
     }
-
-    event SwapPairAdded(bytes32 swapId, address token, string chainId);
-    event TokenSwapEvent(address receiveAddress, address token, uint256 amount);
-    event NewTransmission(
-        bytes32 swapId,
-        address transmiter,
-        uint256 receiptIndex,
-        bytes32 receiptHash
-    );
     struct SwapTargetToken {
         address token;
         string fromChainId;
@@ -70,8 +68,21 @@ contract BridgeOutImplementationV1 is ProxyStorage {
         mapping(address => uint256) receivedAmounts;
     }
 
-    modifier onlyBridgeInContract(){
-        require(msg.sender == bridgeIn,'no permission');
+    event SwapPairAdded(bytes32 swapId, address token, string chainId);
+    event TokenSwapEvent(address receiveAddress, address token, uint256 amount);
+    event NewTransmission(
+        bytes32 swapId,
+        address transmiter,
+        uint256 receiptIndex,
+        bytes32 receiptHash
+    );
+
+    modifier onlyBridgeInContract() {
+        require(msg.sender == bridgeIn, "no permission");
+        _;
+    }
+    modifier onlyWallet() {
+        require(msg.sender == multiSigWallet, "BridgeOut:only for Wallet call");
         _;
     }
 
@@ -80,14 +91,16 @@ contract BridgeOutImplementationV1 is ProxyStorage {
         address _regiment,
         address _bridgeIn,
         address _tokenAddress,
-       address _approveController
+        address _approveController,
+        address _multiSigWallet
     ) external onlyOwner {
-        require(merkleTree == address(0), 'already initialized');
+        require(merkleTree == address(0), "already initialized");
         merkleTree = _merkleTree;
         regiment = _regiment;
         bridgeIn = _bridgeIn;
         tokenAddress = _tokenAddress;
         approveController = _approveController;
+        multiSigWallet = _multiSigWallet;
     }
 
     function pause() external onlyBridgeInContract {
@@ -100,8 +113,17 @@ contract BridgeOutImplementationV1 is ProxyStorage {
 
     function setDefaultMerkleTreeDepth(
         uint256 _defaultMerkleTreeDepth
-    ) external onlyOwner {
+    ) external onlyWallet {
+        require(
+            _defaultMerkleTreeDepth > 0 && _defaultMerkleTreeDepth <= 20,
+            "invalid input"
+        );
         defaultMerkleTreeDepth = _defaultMerkleTreeDepth;
+    }
+
+    function changeMultiSignWallet(address _multiSigWallet) external onlyOwner {
+        require(_multiSigWallet != address(0), "invalid input");
+        multiSigWallet = _multiSigWallet;
     }
 
     //Swap
@@ -111,15 +133,20 @@ contract BridgeOutImplementationV1 is ProxyStorage {
     ) external {
         require(
             IRegiment(regiment).IsRegimentManager(regimentId, msg.sender),
-            'no permission'
+            "no permission"
         );
-        bytes32 tokenKey = _generateTokenKey(
+        require(targetToken.token != address(0), "invalid input");
+        require(
+            targetTokenList.length() < MaxTokenKeyCount,
+            "token list exceed"
+        );
+        bytes32 tokenKey = BridgeOutLibrary.generateTokenKey(
             targetToken.token,
             targetToken.fromChainId
         );
         require(
             !targetTokenList.contains(tokenKey),
-            'target token already exist'
+            "target token already exist"
         );
         bytes32 spaceId = IMerkleTree(merkleTree).createSpace(
             regimentId,
@@ -128,7 +155,7 @@ contract BridgeOutImplementationV1 is ProxyStorage {
         bytes32 swapId = keccak256(msg.data);
         require(
             targetToken.originShare > 0 && targetToken.targetShare > 0,
-            'invalid swap ratio'
+            "invalid swap ratio"
         );
         swapInfos[swapId] = SwapInfo(swapId, regimentId, spaceId, targetToken);
         targetTokenList.add(tokenKey);
@@ -145,20 +172,24 @@ contract BridgeOutImplementationV1 is ProxyStorage {
             amount
         );
         bytes32 swapId = tokenKeyToSwapIdMap[tokenKey];
-        tokenDepositAmount[swapId] += amount;
+        tokenDepositAmount[swapId] = tokenDepositAmount[swapId].add(amount);
     }
 
-    function withdraw(bytes32 tokenKey, address token, uint256 amount) external onlyBridgeInContract{
+    function withdraw(
+        bytes32 tokenKey,
+        address token,
+        uint256 amount
+    ) external onlyBridgeInContract {
         check(token, tokenKey);
         bytes32 swapId = tokenKeyToSwapIdMap[tokenKey];
+        tokenDepositAmount[swapId] = tokenDepositAmount[swapId].sub(amount);
         IERC20(token).safeTransfer(address(msg.sender), amount);
-        tokenDepositAmount[swapId] -= amount;
     }
 
     function check(address token, bytes32 tokenKey) private view {
-        require(targetTokenList.contains(tokenKey), 'target token not exist');
+        require(targetTokenList.contains(tokenKey), "target token not exist");
         bytes32 swapId = tokenKeyToSwapIdMap[tokenKey];
-        require(swapInfos[swapId].targetToken.token == token, 'invalid token');
+        require(swapInfos[swapId].targetToken.token == token, "invalid token");
     }
 
     function swapToken(
@@ -167,38 +198,50 @@ contract BridgeOutImplementationV1 is ProxyStorage {
         uint256 amount,
         address receiverAddress
     ) external {
-        require(!isPaused, 'paused');
-        require(msg.sender == receiverAddress, 'no permission');
+        require(!isPaused, "BridgeOut:paused");
+        require(msg.sender == receiverAddress, "no permission");
         bytes32 spaceId = swapInfos[swapId].spaceId;
-        require(spaceId != bytes32(0), 'swap pair not found');
-        require(amount > 0, 'invalid amount');
+        require(spaceId != bytes32(0), "swap pair not found");
+        require(amount > 0, "invalid amount");
 
         SwapInfo storage swapInfo = swapInfos[swapId];
 
-        bytes32 leafHash = merkleTreeVerify(
-            spaceId,
+        bytes32 leafHash = BridgeOutLibrary.computeLeafHash(
             receiptId,
             amount,
             receiverAddress
         );
+        uint256 leafNodeIndex = ledger[leafHash].leafNodeIndex.sub(1);
+        BridgeOutLibrary.verifyMerkleTree(
+            spaceId,
+            merkleTree,
+            leafNodeIndex,
+            leafHash
+        );
+
         SwapAmounts storage swapAmouts = ledger[leafHash];
-        require(swapAmouts.receiver == address(0), 'already claimed');
+        require(swapAmouts.receiver == address(0), "already claimed");
         swapAmouts.receiver = receiverAddress;
         uint256 targetTokenAmount = amount
             .mul(swapInfo.targetToken.targetShare)
             .div(swapInfo.targetToken.originShare);
         require(
             targetTokenAmount <= tokenDepositAmount[swapId],
-            'deposit not enough'
+            "deposit not enough"
         );
         if (targetTokenAmount >= tokenAmountLimit[swapInfo.targetToken.token]) {
-            require(receiptApproveMap[receiptId], 'should approve');
+            require(receiptApproveMap[receiptId], "should approve");
         }
-        tokenDepositAmount[swapId] -= targetTokenAmount;
-        if(swapInfo.targetToken.token == tokenAddress){
+        tokenDepositAmount[swapId] = tokenDepositAmount[swapId].sub(
+            targetTokenAmount
+        );
+        if (swapInfo.targetToken.token == tokenAddress) {
             INativeToken(tokenAddress).withdraw(targetTokenAmount);
-            payable(receiverAddress).transfer(targetTokenAmount);
-        }else{
+            (bool success, ) = payable(receiverAddress).call{
+                value: targetTokenAmount
+            }("");
+            require(success, "failed");
+        } else {
             IERC20(swapInfo.targetToken.token).safeTransfer(
                 receiverAddress,
                 targetTokenAmount
@@ -213,57 +256,20 @@ contract BridgeOutImplementationV1 is ProxyStorage {
             targetTokenAmount
         );
 
-        bytes32 tokenKey = _generateTokenKey(
+        bytes32 tokenKey = BridgeOutLibrary.generateTokenKey(
             swapInfo.targetToken.token,
             swapInfo.targetToken.fromChainId
         );
-        uint256 receiptIndex = ++receivedReceiptIndex[tokenKey];
+        receivedReceiptIndex[tokenKey] = receivedReceiptIndex[tokenKey].add(1);
+        uint256 receiptIndex = receivedReceiptIndex[tokenKey];
         receivedReceiptsMap[tokenKey][receiptIndex] = ReceivedReceipt(
-            swapInfo.targetToken.token, 
+            swapInfo.targetToken.token,
             receiverAddress,
             amount,
             block.number,
             block.timestamp,
             swapInfo.targetToken.fromChainId,
             receiptId
-        );
-    }
-
-    function merkleTreeVerify(
-        bytes32 spaceId,
-        string calldata receiptId,
-        uint256 amount,
-        address receiverAddress
-    ) public view returns (bytes32) {
-        bytes32[] memory _merkelTreePath;
-        bool[] memory _isLeftNode;
-        bytes32 _leafHash = computeLeafHash(receiptId, amount, receiverAddress);
-        uint256 leafNodeIndex = ledger[_leafHash].leafNodeIndex.sub(1);
-        (, , _merkelTreePath, _isLeftNode) = IMerkleTree(merkleTree)
-            .getMerklePath(spaceId, leafNodeIndex);
-        require(
-            IMerkleTree(merkleTree).merkleProof(
-                spaceId,
-                IMerkleTree(merkleTree).getLeafLocatedMerkleTreeIndex(
-                    spaceId,
-                    leafNodeIndex
-                ),
-                _leafHash,
-                _merkelTreePath,
-                _isLeftNode
-            ),
-            'failed to swap token'
-        );
-
-        return _leafHash;
-    }
-
-    function decodeReport(
-        bytes memory _report
-    ) internal pure returns (uint256 receiptIndex, bytes32 receiptHash) {
-        (, , receiptIndex, receiptHash) = abi.decode(
-            _report,
-            (uint256, uint256, uint256, bytes32)
         );
     }
 
@@ -276,31 +282,18 @@ contract BridgeOutImplementationV1 is ProxyStorage {
     ) external {
         SwapInfo storage swapInfo = swapInfos[swapHashId];
 
-        require(
-            IRegiment(regiment).IsRegimentMember(
+        (uint256 receiptIndex, bytes32 receiptHash) = BridgeOutLibrary
+            .verifySignature(
                 swapInfo.regimentId,
-                msg.sender
-            ),
-            'no permission to transmit'
-        );
-        bytes32 messageDigest = keccak256(_report);
-        address[] memory signers = new address[](_rs.length);
-        for (uint256 i = 0; i < _rs.length; i++) {
-            signers[i] = ecrecover(
-                messageDigest,
-                uint8(_rawVs[i]) + 27,
-                _rs[i],
-                _ss[i]
+                _report,
+                _rs,
+                _ss,
+                _rawVs,
+                regiment
             );
-        }
-        require(
-            IRegiment(regiment).IsRegimentMembers(swapInfo.regimentId, signers),
-            'no permission to sign'
-        );
-        (uint256 receiptIndex, bytes32 receiptHash) = decodeReport(_report);
         bytes32[] memory leafNodes = new bytes32[](1);
         leafNodes[0] = receiptHash;
-        require(ledger[receiptHash].leafNodeIndex == 0, 'already recorded');
+        require(ledger[receiptHash].leafNodeIndex == 0, "already recorded");
         uint256 index = IMerkleTree(merkleTree).recordMerkleTree(
             swapInfo.spaceId,
             leafNodes
@@ -313,24 +306,17 @@ contract BridgeOutImplementationV1 is ProxyStorage {
         return ledger[receiptHash].leafNodeIndex > 0;
     }
 
-    function _generateTokenKey(
-        address token,
-        string memory chainId
-    ) private pure returns (bytes32) {
-        return sha256(abi.encodePacked(token, chainId));
-    }
-
     function getReceiveReceiptIndex(
         address[] memory tokens,
         string[] calldata fromChainIds
     ) external view returns (uint256[] memory) {
-        require(
-            tokens.length == fromChainIds.length,
-            'invalid input'
-        );
+        require(tokens.length == fromChainIds.length, "invalid input");
         uint256[] memory indexs = new uint256[](tokens.length);
         for (uint256 i = 0; i < tokens.length; i++) {
-            bytes32 tokenKey = _generateTokenKey(tokens[i], fromChainIds[i]);
+            bytes32 tokenKey = BridgeOutLibrary.generateTokenKey(
+                tokens[i],
+                fromChainIds[i]
+            );
             indexs[i] = receivedReceiptIndex[tokenKey];
         }
         return indexs;
@@ -340,7 +326,10 @@ contract BridgeOutImplementationV1 is ProxyStorage {
         address token,
         string calldata fromChainId
     ) public view returns (bytes32) {
-        bytes32 tokenKey = _generateTokenKey(token, fromChainId);
+        bytes32 tokenKey = BridgeOutLibrary.generateTokenKey(
+            token,
+            fromChainId
+        );
         return tokenKeyToSwapIdMap[tokenKey];
     }
 
@@ -350,19 +339,19 @@ contract BridgeOutImplementationV1 is ProxyStorage {
         uint256 fromIndex,
         uint256 endIndex
     ) public view returns (ReceivedReceipt[] memory _receipts) {
-        bytes32 tokenKey = _generateTokenKey(token, fromChainId);
+        bytes32 tokenKey = BridgeOutLibrary.generateTokenKey(
+            token,
+            fromChainId
+        );
         require(
             endIndex <= receivedReceiptIndex[tokenKey] && fromIndex > 0,
-            'Invalid input'
+            "Invalid input"
         );
         uint256 length = endIndex.sub(fromIndex).add(1);
-        require(
-            length <= MaxQueryRange,
-            'Query range is exceeded'
-        );
+        require(length <= MaxQueryRange, "Query range is exceeded");
         _receipts = new ReceivedReceipt[](length);
         for (uint256 i = 0; i < length; i++) {
-            _receipts[i] = receivedReceiptsMap[tokenKey][i + fromIndex];
+            _receipts[i] = receivedReceiptsMap[tokenKey][i.add(fromIndex)];
         }
 
         return _receipts;
@@ -390,19 +379,6 @@ contract BridgeOutImplementationV1 is ProxyStorage {
         token = swapInfos[swapId].targetToken.token;
     }
 
-    function computeLeafHash(
-        string memory _receiptId,
-        uint256 _amount,
-        address _receiverAddress
-    ) public pure returns (bytes32 _leafHash) {
-        bytes32 _receiptIdHash = sha256(abi.encodePacked(_receiptId));
-        bytes32 _hashFromAmount = sha256(abi.encodePacked(_amount));
-        bytes32 _hashFromAddress = sha256(abi.encodePacked(_receiverAddress));
-        _leafHash = sha256(
-            abi.encode(_receiptIdHash, _hashFromAmount, _hashFromAddress)
-        );
-    }
-
     function setLimits(
         address[] memory tokens,
         uint256[] memory limits
@@ -413,11 +389,14 @@ contract BridgeOutImplementationV1 is ProxyStorage {
     }
 
     function approve(string calldata receiptId) external {
-        require(msg.sender == approveController,'no permission');
+        require(msg.sender == approveController, "no permission");
         receiptApproveMap[receiptId] = true;
     }
 
-    function changeApproveController(address _approveController) external onlyOwner{
+    function changeApproveController(
+        address _approveController
+    ) external onlyWallet {
+        require(_approveController != address(0), "Invalid input");
         approveController = _approveController;
     }
 }
