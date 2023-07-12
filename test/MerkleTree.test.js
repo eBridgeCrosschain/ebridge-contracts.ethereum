@@ -406,6 +406,40 @@ describe("MerkleTree", function () {
                 expect(lastLeafIndex).to.equal(nodeToAdd - 1);
 
             })
+            it("Should record nodes with two tree ", async function () {
+
+                const { merkleTree, owner, regimentId } = await loadFixture(deployMerkleTreeFixture);
+                var pathLength = 3;
+                var treeLeaveCount = 2 * pathLength;
+                var nodeToAdd = 10
+                var tx = await merkleTree.createSpace(regimentId, pathLength);
+                await tx.wait();
+                var spaceIdList = await merkleTree.getRegimentSpaceIdListMap(regimentId);
+                var actualSpaceId = spaceIdList[0];
+
+                var { leavesNode } = createLeavesNode(nodeToAdd);
+                await merkleTree.recordMerkleTree(actualSpaceId, [leavesNode[0]]);
+                await merkleTree.recordMerkleTree(actualSpaceId, [leavesNode[1]]);
+                await merkleTree.recordMerkleTree(actualSpaceId, [leavesNode[2]]);
+                await merkleTree.recordMerkleTree(actualSpaceId, [leavesNode[3]]);
+                await merkleTree.recordMerkleTree(actualSpaceId, [leavesNode[4]]);
+                await merkleTree.recordMerkleTree(actualSpaceId, [leavesNode[5]]);
+                await merkleTree.recordMerkleTree(actualSpaceId, [leavesNode[6]]);
+                await merkleTree.recordMerkleTree(actualSpaceId, [leavesNode[7]]);
+                await merkleTree.recordMerkleTree(actualSpaceId, [leavesNode[8]]);
+                await merkleTree.recordMerkleTree(actualSpaceId, [leavesNode[9]]);
+
+
+                var remainLeafCountAfter = await merkleTree.getRemainLeafCount(actualSpaceId);
+                expect(remainLeafCountAfter).to.equal(6);
+
+                var treeCount = await merkleTree.getFullTreeCount(actualSpaceId);
+                expect(treeCount).to.equal(1);
+
+                var lastLeafIndex = await merkleTree.getLastLeafIndex(actualSpaceId);
+                expect(lastLeafIndex).to.equal(nodeToAdd - 1);
+
+            })
 
         });
         describe("proof test", function () {
@@ -500,4 +534,5 @@ describe("MerkleTree", function () {
 
         return { leavesNode };
     }
+    
 });
