@@ -3,6 +3,7 @@ const {
     loadFixture,
 } = require("@nomicfoundation/hardhat-network-helpers");
 const { expect } = require("chai");
+const { ethers } = require("hardhat");
 describe("MerkleTree", function () {
     async function deployRegimentFixture() {
         // Contracts are deployed using the first signer/account by default
@@ -11,8 +12,12 @@ describe("MerkleTree", function () {
         const _maximumAdminsCount = 3;
 
         const [owner] = await ethers.getSigners();
+        const RegimentImplementation = await ethers.getContractFactory("RegimentImplementation");
         const Regiment = await ethers.getContractFactory("Regiment");
-        const regiment = await Regiment.deploy(_memberJoinLimit, _regimentLimit, _maximumAdminsCount);
+        const regimentImplementation = await RegimentImplementation.deploy();
+        const regimentProxy = await Regiment.deploy(_memberJoinLimit, _regimentLimit, _maximumAdminsCount,regimentImplementation.address);
+        const regiment = RegimentImplementation.attach(regimentProxy.address);
+        
         const _manager = owner.address;
         const _initialMemberList = [owner.address];
 
@@ -33,8 +38,12 @@ describe("MerkleTree", function () {
         // Contracts are deployed using the first signer/account by default
 
         const { regiment, owner, regimentId } = await loadFixture(deployRegimentFixture);
-        const MerkleTree = await ethers.getContractFactory("Merkle");
-        const merkleTree = await MerkleTree.deploy(regiment.address);
+        const MerkleTreeImplementation = await ethers.getContractFactory("MerkleTreeImplementation");
+        const MerkleTree = await ethers.getContractFactory("MerkleTree");
+        const merkleTreeImplementation = await MerkleTreeImplementation.deploy();
+        const merkleTreeProxy = await MerkleTree.deploy(regiment.address,merkleTreeImplementation.address);
+        const merkleTree = MerkleTreeImplementation.attach(merkleTreeProxy.address);
+
         return { merkleTree, owner, regimentId, regiment };
     }
     describe("action function test", function () {
@@ -171,7 +180,9 @@ describe("MerkleTree", function () {
                 var remainLeafCountAfter = await merkleTree.getRemainLeafCount(actualSpaceId);
 
                 expect(remainLeafCountBefore).to.equal(remainLeafCountAfter.add(nodeToAdd));
-                var rootExpect = ethers.utils.sha256(ethers.utils.defaultAbiCoder.encode(["bytes32", "bytes32"], [mockLeafNode0, mockLeafNode0]));
+                var node = ethers.utils.formatBytes32String(0);
+                console.log("node",node);
+                var rootExpect = ethers.utils.sha256(ethers.utils.defaultAbiCoder.encode(["bytes32", "bytes32"], [mockLeafNode0,node]));
                 var tree = await merkleTree.getMerkleTreeByIndex(actualSpaceId, 0);
 
                 expect(tree.merkleTreeRoot).to.equal(rootExpect);
@@ -395,6 +406,40 @@ describe("MerkleTree", function () {
                 expect(lastLeafIndex).to.equal(nodeToAdd - 1);
 
             })
+            it("Should record nodes with two tree ", async function () {
+
+                const { merkleTree, owner, regimentId } = await loadFixture(deployMerkleTreeFixture);
+                var pathLength = 3;
+                var treeLeaveCount = 2 * pathLength;
+                var nodeToAdd = 10
+                var tx = await merkleTree.createSpace(regimentId, pathLength);
+                await tx.wait();
+                var spaceIdList = await merkleTree.getRegimentSpaceIdListMap(regimentId);
+                var actualSpaceId = spaceIdList[0];
+
+                var { leavesNode } = createLeavesNode(nodeToAdd);
+                await merkleTree.recordMerkleTree(actualSpaceId, [leavesNode[0]]);
+                await merkleTree.recordMerkleTree(actualSpaceId, [leavesNode[1]]);
+                await merkleTree.recordMerkleTree(actualSpaceId, [leavesNode[2]]);
+                await merkleTree.recordMerkleTree(actualSpaceId, [leavesNode[3]]);
+                await merkleTree.recordMerkleTree(actualSpaceId, [leavesNode[4]]);
+                await merkleTree.recordMerkleTree(actualSpaceId, [leavesNode[5]]);
+                await merkleTree.recordMerkleTree(actualSpaceId, [leavesNode[6]]);
+                await merkleTree.recordMerkleTree(actualSpaceId, [leavesNode[7]]);
+                await merkleTree.recordMerkleTree(actualSpaceId, [leavesNode[8]]);
+                await merkleTree.recordMerkleTree(actualSpaceId, [leavesNode[9]]);
+
+
+                var remainLeafCountAfter = await merkleTree.getRemainLeafCount(actualSpaceId);
+                expect(remainLeafCountAfter).to.equal(6);
+
+                var treeCount = await merkleTree.getFullTreeCount(actualSpaceId);
+                expect(treeCount).to.equal(1);
+
+                var lastLeafIndex = await merkleTree.getLastLeafIndex(actualSpaceId);
+                expect(lastLeafIndex).to.equal(nodeToAdd - 1);
+
+            })
 
         });
         describe("proof test", function () {
@@ -489,4 +534,5 @@ describe("MerkleTree", function () {
 
         return { leavesNode };
     }
+    
 });
