@@ -52,18 +52,18 @@ describe("MultiSigWallet", function () {
 
         describe("submitTransaction test", function () {
             it("Should submitTransaction success", async function () {
-                const { bridgeIn, multiSigWallet, owner } = await loadFixture(deployMultiSigWalletFixture);
+                const { bridgeIn, multiSigWallet, owner, account, account1, account2 } = await loadFixture(deployMultiSigWalletFixture);
                 let ABI = [
                     "function restart()"
                 ];
                 let iface = new ethers.utils.Interface(ABI);
                 var data = iface.encodeFunctionData("restart")
-                await multiSigWallet.submitTransaction(bridgeIn.address, 0, data);
+                await multiSigWallet.connect(account1).submitTransaction(bridgeIn.address, 0, data);
                 var count = await multiSigWallet.getTransactionCount(true, false);
                 expect(count).to.equal(1);
             });
 
-            it("Should revert when caller is not the owner", async function () {
+            it("Should revert when caller is not the member", async function () {
                 const { bridgeIn, multiSigWallet, owner, account1 } = await loadFixture(deployMultiSigWalletFixture);
                 let ABI = [
                     "function restart()"
@@ -71,9 +71,10 @@ describe("MultiSigWallet", function () {
                 let iface = new ethers.utils.Interface(ABI);
                 var data = iface.encodeFunctionData("restart")
 
-                error = "Ownable: caller is not the owner"
-                await expect(multiSigWallet.connect(account1).submitTransaction(bridgeIn.address, 0, data))
-                .to.be.revertedWith(error);
+                 //revert 
+                 error = "member not exist"
+                 await expect(multiSigWallet.submitTransaction(bridgeIn.address, 0, data))
+                 .to.be.revertedWith(error);
             })
         })
 
@@ -85,7 +86,7 @@ describe("MultiSigWallet", function () {
                 ];
                 let iface = new ethers.utils.Interface(ABI);
                 var data = iface.encodeFunctionData("restart")
-                await multiSigWallet.submitTransaction(bridgeIn.address, 0, data);
+                await multiSigWallet.connect(account1).submitTransaction(bridgeIn.address, 0, data);
                 var transactionId = 0;
 
                 //revert 
@@ -113,7 +114,7 @@ describe("MultiSigWallet", function () {
                 ];
                 let iface = new ethers.utils.Interface(ABI);
                 var data = iface.encodeFunctionData("restart")
-                await multiSigWallet.submitTransaction(bridgeIn.address, 0, data);
+                await multiSigWallet.connect(account1).submitTransaction(bridgeIn.address, 0, data);
                 var transactionId = 0;
                 await multiSigWallet.connect(account).confirmTransaction(transactionId);
                 var confirmations = await multiSigWallet.getConfirmations(transactionId);
@@ -138,7 +139,7 @@ describe("MultiSigWallet", function () {
                 ];
                 let iface1 = new ethers.utils.Interface(ABI1);
                 var data1 = iface1.encodeFunctionData("setBridgeOut",[bridgeOutMock.address]);
-                await multiSigWallet.submitTransaction(bridgeIn.address, 0, data1);
+                await multiSigWallet.connect(account1).submitTransaction(bridgeIn.address, 0, data1);
                 var transactionId = 0;
                 await multiSigWallet.connect(account).confirmTransaction(transactionId);
                 await multiSigWallet.connect(account1).confirmTransaction(transactionId);
@@ -153,7 +154,7 @@ describe("MultiSigWallet", function () {
                 ];
                 let iface = new ethers.utils.Interface(ABI);
                 var data = iface.encodeFunctionData("restart")
-                await multiSigWallet.submitTransaction(bridgeIn.address, 0, data);
+                await multiSigWallet.connect(account1).submitTransaction(bridgeIn.address, 0, data);
                 var transactionId = 1;
                 await multiSigWallet.connect(account).confirmTransaction(transactionId);
                 await multiSigWallet.connect(account1).confirmTransaction(transactionId);
@@ -185,7 +186,7 @@ describe("MultiSigWallet", function () {
                 let iface1 = new ethers.utils.Interface(ABI1);
                 var data1 = iface1.encodeFunctionData("addToken",[tokens]);
                 console.log(data1);
-                await multiSigWallet.submitTransaction(bridgeIn.address, 0, data1);
+                await multiSigWallet.connect(account1).submitTransaction(bridgeIn.address, 0, data1);
                 var transactionId = 0;
                 await multiSigWallet.connect(account).confirmTransaction(transactionId);
                 await multiSigWallet.connect(account1).confirmTransaction(transactionId);
@@ -193,7 +194,7 @@ describe("MultiSigWallet", function () {
                 var isSupport = await bridgeIn.isSupported("0x3791e375c5D7Ec6Cc5C95feD772F448065083160","MainChain_AELF");
                 expect(isSupport).to.equal(true);
 
-                await multiSigWallet.submitTransaction(bridgeIn.address, 0, data1);
+                await multiSigWallet.connect(account1).submitTransaction(bridgeIn.address, 0, data1);
                 var transactionId = 1;
                 await multiSigWallet.connect(account).confirmTransaction(transactionId);
                 await multiSigWallet.connect(account1).confirmTransaction(transactionId);
@@ -225,7 +226,7 @@ describe("MultiSigWallet", function () {
                 let iface1 = new ethers.utils.Interface(ABI1);
                 let data1 = iface1.encodeFunctionData("CreateRegiment",[manager, _initialMemberList]);
                 console.log(data1);
-                var tx = await multiSigWallet.submitTransaction(regiment.address, 0, data1);
+                var tx = await multiSigWallet.connect(account1).submitTransaction(regiment.address, 0, data1);
                 console.log(tx);
                 var transactionId = 0;
                 await multiSigWallet.connect(account).confirmTransaction(transactionId);
@@ -249,7 +250,7 @@ describe("MultiSigWallet", function () {
                 var newRequired = 2;
                 var data = iface.encodeFunctionData("changeRequirement", [newRequired])
 
-                await multiSigWallet.submitTransaction(multiSigWallet.address, 0, data);
+                await multiSigWallet.connect(account1).submitTransaction(multiSigWallet.address, 0, data);
 
                 var transactionId = 0;
                 await multiSigWallet.connect(account).confirmTransaction(transactionId);
@@ -282,7 +283,7 @@ describe("MultiSigWallet", function () {
                 let iface = new ethers.utils.Interface(ABI);
                 var data = iface.encodeFunctionData("removeMember", [account4.address])
 
-                await multiSigWallet.submitTransaction(multiSigWallet.address, 0, data);
+                await multiSigWallet.connect(account1).submitTransaction(multiSigWallet.address, 0, data);
 
                 var isMember = await multiSigWallet.isMember(account4.address);
                 expect(isMember).to.equal(true);
@@ -308,7 +309,7 @@ describe("MultiSigWallet", function () {
                 let iface = new ethers.utils.Interface(ABI);
                 var data = iface.encodeFunctionData("removeMember", [account2.address])
 
-                await multiSigWallet.submitTransaction(multiSigWallet.address, 0, data);
+                await multiSigWallet.connect(account1).submitTransaction(multiSigWallet.address, 0, data);
 
                 var isMember = await multiSigWallet.isMember(account2.address);
                 expect(isMember).to.equal(true);
@@ -335,7 +336,7 @@ describe("MultiSigWallet", function () {
                 let iface = new ethers.utils.Interface(ABI);
                 var data = iface.encodeFunctionData("removeMember", [owner.address])
 
-                await multiSigWallet.submitTransaction(multiSigWallet.address, 0, data);
+                await multiSigWallet.connect(account1).submitTransaction(multiSigWallet.address, 0, data);
 
                 var isMember = await multiSigWallet.isMember(account4.address);
                 expect(isMember).to.equal(true);
@@ -361,7 +362,7 @@ describe("MultiSigWallet", function () {
                 let iface = new ethers.utils.Interface(ABI);
                 var data = iface.encodeFunctionData("addMember", [account1.address])
 
-                await multiSigWallet.submitTransaction(multiSigWallet.address, 0, data);
+                await multiSigWallet.connect(account1).submitTransaction(multiSigWallet.address, 0, data);
 
                 var isMember = await multiSigWallet.isMember(account1.address);
                 expect(isMember).to.equal(true);
@@ -387,7 +388,7 @@ describe("MultiSigWallet", function () {
                 let iface = new ethers.utils.Interface(ABI);
                 var data = iface.encodeFunctionData("addMember", [owner.address])
 
-                await multiSigWallet.submitTransaction(multiSigWallet.address, 0, data);
+                await multiSigWallet.connect(account1).submitTransaction(multiSigWallet.address, 0, data);
 
                 var isMember = await multiSigWallet.isMember(owner.address);
                 expect(isMember).to.equal(false);

@@ -172,7 +172,7 @@ contract MultiSigWallet is Ownable {
         address destination,
         uint256 value,
         bytes memory data
-    ) public onlyOwner returns (uint256 transactionId) {
+    ) public memberExists(msg.sender) returns (uint256 transactionId) {
         transactionId = addTransaction(destination, value, data);
         // confirmTransaction(transactionId);
     }
