@@ -17,16 +17,19 @@ async function main() {
     const bridgeOutAddress = '0x276A12Bd934cb9753AdB89DFe88CA1442c5B1B47';
     
     //deploy regiment implementation
-    // console.log("Start to deploy regiment implementation contract.");
-    // const RegimentImplementation = await ethers.getContractFactory("RegimentImplementation");
-    // const regimentImplementation = await RegimentImplementation.deploy();
-    // console.log("Regiment implementation address:", regimentImplementation.address);
+    console.log("Start to deploy regiment implementation contract.");
+    const RegimentImplementation = await ethers.getContractFactory("RegimentImplementation");
+    const regimentImplementation = await RegimentImplementation.deploy();
+    console.log("Regiment implementation address:", regimentImplementation.address);
+    regimentImplementationAddress = regimentImplementation.address;
 
-    const _memberJoinLimit = 10;
-    const _regimentLimit = 20;
-    const _maximumAdminsCount = 3;
+    // await run("verify:verify", {
+    //     address: "0x3EAfbF03DBbfaB20553beF4ff75A62a2329983a9",
+    //     constructorArguments: [],
+    //     contract: "contracts/RegimentImplementation.sol:RegimentImplementation"
+    //   })
 
-    // //regiment contract
+    // // //regiment contract
     // console.log("Start to deploy regiment contract.");
     const regimentImplementationAddress = '0x44846e35FbAd298c286575daCE76A8b03449c24b';
     // const Regiment = await ethers.getContractFactory("Regiment");
@@ -110,6 +113,14 @@ async function main() {
     // const BridgeOut = await ethers.getContractFactory("BridgeOut");
     // const bridgeOutProxy = await BridgeOut.deploy(merkleTreeAddress, regimentAddress, bridgeInAddress, approveController ,mockMultiSigWalletAddress, wethAddress, bridgeOutImplementationAddress);
     // console.log("BridgeOut address:", bridgeOutProxy.address);
+    // bridgeOutAddress = bridgeOutProxy.address;
+
+        // await run("verify:verify", {
+        // address: bridgeOutAddress,
+        // constructorArguments: [merkleTreeAddress, regimentAddress, bridgeInAddress, approveController, mockMultiSigWalletAddress,wethAddress,bridgeOutImplementationAddress],
+        // contract: "contracts/BridgeOut.sol:BridgeOut"
+        //   })
+
    
 
     //TimeLock

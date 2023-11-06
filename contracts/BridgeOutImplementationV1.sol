@@ -10,6 +10,7 @@ import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import "./Proxy.sol";
 import "./libraries/BridgeOutLibrary.sol";
+import "./interfaces/LimiterInterface.sol";
 
 pragma solidity 0.8.9;
 
@@ -40,6 +41,7 @@ contract BridgeOutImplementationV1 is ProxyStorage {
     mapping(string => bool) internal receiptApproveMap;
     mapping(address => uint256) public tokenAmountLimit;
     mapping(bytes32 => uint256) internal tokenDepositAmount;
+    address public limiter;
 
     struct ReceivedReceipt {
         address asset; // ERC20 Token Address
@@ -119,6 +121,14 @@ contract BridgeOutImplementationV1 is ProxyStorage {
             "invalid input"
         );
         defaultMerkleTreeDepth = _defaultMerkleTreeDepth;
+    }
+
+    function setLimiter(address _limiter) external onlyWallet {
+        require(
+            limiter == address(0) && _limiter != address(0),
+            "invalid limiter address"
+        );
+        limiter = _limiter;
     }
 
     function changeMultiSignWallet(address _multiSigWallet) external onlyOwner {
@@ -203,8 +213,10 @@ contract BridgeOutImplementationV1 is ProxyStorage {
         bytes32 spaceId = swapInfos[swapId].spaceId;
         require(spaceId != bytes32(0), "swap pair not found");
         require(amount > 0, "invalid amount");
-
+        
         SwapInfo storage swapInfo = swapInfos[swapId];
+        ILimiter(limiter).consumeDailyLimit(swapId,tokenAddress,amount);
+        ILimiter(limiter).consumeTokenBucket(swapId,tokenAddress,amount);
 
         bytes32 leafHash = BridgeOutLibrary.computeLeafHash(
             receiptId,

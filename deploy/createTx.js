@@ -8,21 +8,21 @@ async function main() {
     // console.log("Sending tx with the account:", sender.address);
     // console.log("Sender account balance:", (await sender.getBalance()).toString());
 
-    // // const RegimentAddress = '0x9D5a36b132C3bE5F7F55DedBF5361fF405f35A5B';
-    // // const MerkleTreeAddress = '0x18cE1AFF5cdc8bAB0017b42d22a71265E82Ce606';
-    // // const MultiSigWalletAddress = '0x5e3c4c00aC600B00030a667D44bD96d299cdE2dc';
-    // // const BridgeInAddress = '0xf9Ab39c7A0A925BAf94f9C1c1d1CE8bFc9F9b2b3';
-    // // const BridgeOutAddress = '0x276A12Bd934cb9753AdB89DFe88CA1442c5B1B47';
-    // // const RegimentImplementationAddress = '0x44846e35FbAd298c286575daCE76A8b03449c24b';
-    // // const MerkleTreeImplementationAddress = '0x551424aCa6961aF8dB63b0b0492ED5BA5083d8Df';
-    // // const BridgeInImplementationAddress = '0x5B1992aC3903E6b6b56e1B718CaFCF4e7Ae7da38';
-    // // const BridgeOutLib = '0x3052ce9e1bf0C15EB963F6a73c9b5c42bAE23EbE';
-    // // const BridgeOutImplementationAddress = '0xE8Ef9c4CD625fcEB03d4F3e9EA94c84Bb7Ee9dA9';
-    // // const Timelock = '0xcbEd324b624bB1B17A7842595B5295E249c44Abb';
+    const RegimentAddress = '0xB260654F2e1b8A4bC1768B4e20f2e4a66EeB85f2';
+    const MerkleTreeAddress = '0x0C255bE6f8735355FA3725aadB3168B7C248523e';
+    const MultiSigWalletAddress = '';
+    const BridgeInAddress = '0xdDc1099e6CBB54e24FAB7Aa589CBA4A394178282';
+    const BridgeOutAddress = '0xf1Ddf5962c4e0F6567670258fF9A0b315183Af21';
+    const RegimentImplementationAddress = '0x3EAfbF03DBbfaB20553beF4ff75A62a2329983a9';
+    const MerkleTreeImplementationAddress = '0x474AB98ebd47494CEd23a8794346fd9d809a24C0';
+    const BridgeInImplementationAddress = '0x36EEf811E813aAE2CA94FD11143471DB1F509d5b';
+    const BridgeOutLib = '0xA3E3dFDF0C332C28756883505b64E1B35D269a1c';
+    const BridgeOutImplementationAddress = '0xb1fa03DdA60130700d181C527052F42c06c13EA1';
+    const TimelockAddress = '';
 
-    // // elfAddress = "0x8adD57b8aD6C291BC3E3ffF89F767fcA08e0E7Ab";
-    // // usdtAddress = "0x60eeCc4d19f65B9EaDe628F2711C543eD1cE6679";
-    // // wethAddress = "0x035900292c309d8beCBCAFb3227238bec0EBa253";
+    elfAddress = "0x8adD57b8aD6C291BC3E3ffF89F767fcA08e0E7Ab";
+    usdtAddress = "0x60eeCc4d19f65B9EaDe628F2711C543eD1cE6679";
+    wethAddress = "0x035900292c309d8beCBCAFb3227238bec0EBa253";
 
     const RegimentAddress = '0x282BA3b79B47Bcbcf56d4C729ebe82b0E3Ed2e16';
     const MerkleTreeAddress = '0x1B74aFb1d664597Fcd39301B0Eee43fc605E7FC0';
@@ -85,14 +85,14 @@ async function main() {
 
 
 
-    // //create regiment
-    // var _initialMemberList = [
-    //     "0x00378D56583235ECc92E7157A8BdaC1483094223",
-    //     "0xEA7Dfc13498E2Ca99a3a74e144F4Afa4dD28b3fc",
-    //     "0x2B5BD5995D6AAeC027c2f6d6a80ae2D792b52aFA",
-    //     "0xA36FF0f2cB7A35E597Bf862C5618c201bD44Dd29",
-    //     "0xE91839Cb35e0c67B5179B31d7A9DE4fde269aBD4"];
-    // var manager = "0x1Aa5C9C754BA10a20418f04d218Db59AA7ce74c4";
+    //create regiment
+    // var _initialMemberList = [	
+    //     "0xb90775c8Ab4403876794cBdf944bDb435621004f",
+    //     "0xdF77e0639b3ebE12C918E58E2607bdB83D489e4c",
+    //     "0xf70fC23d6fa60bBb6cc95985714488850511Ce84",
+    //     "0xe406f76e88270C38bD8b31058fEf1BA1DD74f949",
+    //     "0x9e2081eE5ea3edFD5d19859C60447a827b48faB8"];
+    // var manager = "0xE87B310867E77B5f303e655668019137cc839dCD";
     // var tx = await regimentImplementation.CreateRegiment(manager,_initialMemberList);
     // const receipt = await tx.wait();
     // const data = receipt.logs[0].data;
@@ -102,10 +102,7 @@ async function main() {
     // var regimentId = event.regimentId;
     // console.log("regiment id:",regimentId);
 
-    // var regimentId = '0xf7296bf942ea75763b3ffffd0133a94558c87477c0a7e595bf9543cd7540602f';
-
-    // var oldAdmins = ['0x3B0b21708acB3604C49f9d40d366f024b5366378'];    
-    // await regimentImplementation.connect(managerAddress).DeleteAdmins(regimentId, oldAdmins);
+    var regimentId = '0xffadeaac9572c82a3e1af073f21e8418d403a1fdc52f22f380dd3ed20d3962c9';
 
     // var _newAdmins = [bridgeOutImplementation.address];
     // console.log("admin address:",_newAdmins[0]);
@@ -128,35 +125,52 @@ async function main() {
     // console.log("weth address:",wethToken);
 
     // var chainId = "MainChain_AELF";
-    // var chainId = "SideChain_tDVW";
-    // var targetTokenElf = {
-    //     token: elfToken,
-    //     fromChainId: chainId,
-    //     originShare: 1,
-    //     targetShare: 100_00000000
-    // }
-    // var targetTokenUsdt = {
-    //     token: usdtToken,
+    var chainId = "SideChain_tDVV";
+    var targetTokenElf = {
+        token: elfAddress,
+        fromChainId: chainId,
+        originShare: 1,
+        targetShare: 10000000000
+    }
+    var targetTokenUsdt = {
+        token: usdtAddress,
+        fromChainId: chainId,
+        originShare: 1,
+        targetShare: 1
+    }
+    // var targetTokenUsdc = {
+    //     token: usdcAddress,
     //     fromChainId: chainId,
     //     originShare: 1,
     //     targetShare: 1
     // }
-    // // var targetTokenWeth = {
-    // //     token: wethAddress,
-    // //     fromChainId: chainId,
-    // //     originShare: 1,
-    // //     targetShare: 100_00000000
-    // // }
+    // var targetTokenDai = {
+    //     token: daiAddress,
+    //     fromChainId: chainId,
+    //     originShare: 1,
+    //     targetShare: 10000000000
+    // }
+    var targetTokenWeth = {
+        token: wethAddress,
+        fromChainId: chainId,
+        originShare: 1,
+        targetShare: 10000000000
+    }
     // var targetTokenWbnb = {
     //     token: wbnbAddress,
     //     fromChainId: chainId,
     //     originShare: 1,
     //     targetShare: 100_00000000
     // }
+    // console.log("Start to create elf swap.");
     // await bridgeOutImplementation.connect(managerAddress).createSwap(targetTokenElf,regimentId);
+    // console.log("Start to create usdt swap.");
     // await bridgeOutImplementation.connect(managerAddress).createSwap(targetTokenUsdt,regimentId);
-    // // await bridgeOutImplementation.connect(managerAddress).createSwap(targetTokenWeth,regimentId);
-    // await bridgeOutImplementation.connect(managerAddress).createSwap(targetTokenWbnb,regimentId);
+    // // await bridgeOutImplementation.createSwap(targetTokenUsdc,regimentId);
+    // // await bridgeOutImplementation.createSwap(targetTokenDai,regimentId);
+    // console.log("Start to create weth swap.");
+    // await bridgeOutImplementation.connect(managerAddress).createSwap(targetTokenWeth,regimentId);
+    // await bridgeOutImplementation.createSwap(targetTokenWbnb,regimentId);
 
     // var swapIdElf = await bridgeOutImplementation.getSwapId(elfToken, chainId);
     // console.log("elf swap id:",swapIdElf);
@@ -211,9 +225,9 @@ async function main() {
     // var tokenKey = _generateTokenKey(wbnbAddress,chainId);
     // console.log("token key:",tokenKey);
 
-    // console.log("Start to set token limit.");
-    // var tokens = [usdtToken];
-    // var limits = ['100000000000'];
+    // // console.log("Start to set token limit.");
+    // var tokens = [usdtAddress,usdcAddress,elfAddress,daiAddress,wbnbAddress];
+    // var limits = ['1000000000000000000000000','1000000000000000000000000','3500000000000000000000000','1000000000000000000000000','4000000000000000000000'];
     // await bridgeOutImplementation.setLimits(tokens,limits);
 
 
@@ -294,19 +308,27 @@ async function main() {
     // -> MainChain_AELF
     // await bridgeInImplementation.setBridgeOut(bridgeOutImplementation.address);
 
-    // var chainId = "MainChain_AELF";
-    // var chainId = "SideChain_tDVW";
-    var chainId = "SideChain_tDVV";
+    // var chainIdMain = "MainChain_AELF";
+    // var chainIdSide = "SideChain_tDVV";
 
     // var tokens = [{
-    //     tokenAddress:elf.address,
-    //     chainId:chainId
+    //     tokenAddress:elfAddress,
+    //     chainId:chainIdMain
     // },{
-    //     tokenAddress:usdt.address,
-    //     chainId:chainId
+    //     tokenAddress:usdtAddress,
+    //     chainId:chainIdMain
     // },{
-    //     tokenAddress:wbnb.address,
-    //     chainId:chainId
+    //     tokenAddress:wethAddress,
+    //     chainId:chainIdMain
+    // },{
+    //     tokenAddress:elfAddress,
+    //     chainId:chainIdSide
+    // },{
+    //     tokenAddress:usdtAddress,
+    //     chainId:chainIdSide
+    // },{
+    //     tokenAddress:wethAddress,
+    //     chainId:chainIdSide
     // }]
     // await bridgeInImplementation.addToken(tokens);
     // var tokens = [{
