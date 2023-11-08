@@ -5,6 +5,7 @@ import {DailyLimiter} from './libraries/DailyLimiter.sol';
 import './libraries/BridgeInLibrary.sol';
 import './Proxy.sol';
 import '@openzeppelin/contracts/utils/math/SafeMath.sol';
+import './interfaces/BridgeOutInterface.sol';
 
 contract LimiterImplementation is ProxyStorage {
   using DailyLimiter for DailyLimiter.DailyLimitTokenInfo;
@@ -60,10 +61,10 @@ contract LimiterImplementation is ProxyStorage {
   }
 
   function getReceiptDailyLimit(
-    address _token,
-    string memory _targetChainId
+    address token,
+    string memory targetChainId
   ) public view returns (DailyLimiter.DailyLimitTokenInfo memory) {
-    bytes32 dailyLimitId = BridgeInLibrary._generateTokenKey(_token, _targetChainId);
+    bytes32 dailyLimitId = BridgeInLibrary._generateTokenKey(token, targetChainId);
     return dailyLimit[dailyLimitId];
   }
 
@@ -81,25 +82,27 @@ contract LimiterImplementation is ProxyStorage {
   }
 
   function GetCurrentReceiptTokenBucketState(
-    address _token,
-    string memory _targetChainId
+    address token,
+    string memory targetChainId
   ) public view returns (RateLimiter.TokenBucket memory) {
-    bytes32 bucketId = BridgeInLibrary._generateTokenKey(_token, _targetChainId);
+    bytes32 bucketId = BridgeInLibrary._generateTokenKey(token, targetChainId);
     return tokenBucket[bucketId]._currentTokenBucketState();
   }
 
   function GetCurrentSwapTokenBucketState(
-    bytes32 swapId
+    address token,
+    string memory fromChainId
   ) public view returns (RateLimiter.TokenBucket memory) {
+    bytes32 swapId = IBridgeOut(bridgeOut).getSwapId(token, fromChainId);
     return tokenBucket[swapId]._currentTokenBucketState();
   }
 
   function GetReceiptBucketMinWaitSeconds(
     uint256 amount,
-    address _token,
-    string memory _targetChainId
+    address token,
+    string memory targetChainId
   ) public view returns (uint256) {
-    bytes32 bucketId = BridgeInLibrary._generateTokenKey(_token, _targetChainId);
+    bytes32 bucketId = BridgeInLibrary._generateTokenKey(token, targetChainId);
     RateLimiter.TokenBucket memory bucket = tokenBucket[bucketId]._currentTokenBucketState();
     if (amount > bucket.currentTokenAmount) {
       return
@@ -113,8 +116,10 @@ contract LimiterImplementation is ProxyStorage {
 
   function GetSwapBucketMinWaitSeconds(
     uint256 amount,
-    bytes32 swapId
+    address token,
+    string memory fromChainId
   ) public view returns (uint256) {
+    bytes32 swapId = IBridgeOut(bridgeOut).getSwapId(token, fromChainId);
     RateLimiter.TokenBucket memory bucket = tokenBucket[swapId]._currentTokenBucketState();
     if (amount > bucket.currentTokenAmount) {
       return
