@@ -2,18 +2,19 @@ pragma solidity 0.8.9;
 
 
 import {RateLimiter} from "./libraries/RateLimiter.sol";
-import {DailyLimit} from "./libraries/DailyLimit.sol";
+import {DailyLimiter} from "./libraries/DailyLimiter.sol";
 import './libraries/BridgeInLibrary.sol';
 import "./Proxy.sol";
+import "hardhat/console.sol";
 
 
-contract Limiter is ProxyStorage {
-    using DailyLimit for DailyLimit.DailyLimitTokenInfo;
+contract LimiterImplementation is ProxyStorage {
+    using DailyLimiter for DailyLimiter.DailyLimitTokenInfo;
     using RateLimiter for RateLimiter.TokenBucket;
 
     // key: tokenKey / swapId
     mapping(bytes32 => RateLimiter.TokenBucket) private tokenBucket;
-    mapping(bytes32 => DailyLimit.DailyLimitTokenInfo) private dailyLimit;
+    mapping(bytes32 => DailyLimiter.DailyLimitTokenInfo) private dailyLimit;
     address public admin;
     address public bridgeIn;
     address public bridgeOut;
@@ -46,24 +47,24 @@ contract Limiter is ProxyStorage {
     } 
 
     function setDailyLimit(
-        DailyLimit.DailyLimitConfig[] memory dailyLimitConfigs
+        DailyLimiter.DailyLimitConfig[] memory dailyLimitConfigs
     )external onlyAdmin {
         for (uint i = 0; i < dailyLimitConfigs.length; i++) {
-            DailyLimit.DailyLimitConfig memory dailyLimitConfig = dailyLimitConfigs[i];
+            DailyLimiter.DailyLimitConfig memory dailyLimitConfig = dailyLimitConfigs[i];
             dailyLimit[dailyLimitConfig.dailyLimitId]._setDailyLimit(dailyLimitConfig);
         }
     }
 
     function getReceiptDailyLimit(
         address _token, string memory _targetChainId
-    ) public view returns (DailyLimit.DailyLimitTokenInfo memory){
+    ) public view returns (DailyLimiter.DailyLimitTokenInfo memory){
         bytes32 dailyLimitId = BridgeInLibrary._generateTokenKey(_token,_targetChainId);
         return dailyLimit[dailyLimitId];
     }
 
     function getSwapDailyLimit(
         bytes32 swapId
-    ) public view returns (DailyLimit.DailyLimitTokenInfo memory){
+    ) public view returns (DailyLimiter.DailyLimitTokenInfo memory){
         return dailyLimit[swapId];
     }
 

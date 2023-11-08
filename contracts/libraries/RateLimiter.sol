@@ -1,4 +1,5 @@
 pragma solidity 0.8.9;
+import "hardhat/console.sol";
 
 library RateLimiter{
     error BucketOverfilled();
@@ -24,6 +25,9 @@ library RateLimiter{
     }
 
     function _consume(TokenBucket storage _tokenBucket, address _tokenAddress, uint256 _amount) internal {
+        console.log("_consume");
+        console.log(block.timestamp);
+        console.log(_tokenBucket.lastUpdatedTime);
         if (!_tokenBucket.isEnabled){
             return;
         }
@@ -51,13 +55,16 @@ library RateLimiter{
     }
 
     function _configTokenBucket(TokenBucket storage _tokenBucket,TokenBucketConfig memory _config) internal {
-        uint256 timeDiff = block.timestamp - _tokenBucket.lastUpdatedTime;
-        if (timeDiff != 0) {
-            _tokenBucket.currentTokenAmount = uint128(_calculateTokenRefill(_tokenBucket.tokenCapacity, _tokenBucket.currentTokenAmount, _tokenBucket.rate, timeDiff));
-            _tokenBucket.lastUpdatedTime = uint32(block.timestamp);
+        if(_tokenBucket.lastUpdatedTime != 0){
+            uint256 timeDiff = block.timestamp - _tokenBucket.lastUpdatedTime;
+            if (timeDiff != 0) {
+                _tokenBucket.currentTokenAmount = uint128(_calculateTokenRefill(_tokenBucket.tokenCapacity, _tokenBucket.currentTokenAmount, _tokenBucket.rate, timeDiff));
+                _tokenBucket.lastUpdatedTime = uint32(block.timestamp);
+            }
+            _tokenBucket.currentTokenAmount = uint128(_min(_config.tokenCapacity, _tokenBucket.currentTokenAmount));
+        }else{
+            _tokenBucket.currentTokenAmount = _config.tokenCapacity;
         }
-
-        _tokenBucket.currentTokenAmount = uint128(_min(_config.tokenCapacity, _tokenBucket.currentTokenAmount));
         _tokenBucket.tokenCapacity = _config.tokenCapacity;
         _tokenBucket.isEnabled = _config.isEnabled;
         _tokenBucket.rate = _config.rate;
@@ -65,12 +72,16 @@ library RateLimiter{
     }
 
     function _currentTokenBucketState(TokenBucket memory _tokenBucket) internal view returns (TokenBucket memory){
+        console.log("_currentTokenBucketState");
+        console.log(block.timestamp);
+        console.log(_tokenBucket.lastUpdatedTime);
         _tokenBucket.currentTokenAmount = uint128(_calculateTokenRefill(
             _tokenBucket.tokenCapacity,
             _tokenBucket.currentTokenAmount,
             _tokenBucket.rate,
             block.timestamp - _tokenBucket.lastUpdatedTime
         ));
+                console.log(_tokenBucket.currentTokenAmount);
         _tokenBucket.lastUpdatedTime = uint32(block.timestamp);
         return _tokenBucket;
 

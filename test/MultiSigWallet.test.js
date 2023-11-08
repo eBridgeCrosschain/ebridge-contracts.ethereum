@@ -11,10 +11,17 @@ describe("MultiSigWallet", function () {
         const weth = await WETH.deploy();
 
         const [owner, account, account1, account2, account3, account4] = await ethers.getSigners();
-        const BridgeInImplementation = await ethers.getContractFactory("BridgeInImplementation");
+        const BridgeInLib = await ethers.getContractFactory("BridgeInLibrary");
+        const lib = await BridgeInLib.deploy();
+        const BridgeInImplementation = await ethers.getContractFactory("BridgeInImplementation",{
+            libraries : {
+                BridgeInLibrary:lib.address
+            }
+        });
         const BridgeOutMock = await ethers.getContractFactory("MockBridgeOut");
         const BridgeIn = await ethers.getContractFactory("BridgeIn");
         const MultiSigWallet = await ethers.getContractFactory("MultiSigWallet");
+
 
         var members = [account.address, account1.address, account2.address, account3.address, account4.address];
         var required = 3;

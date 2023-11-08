@@ -64,15 +64,26 @@ module.exports = {
     // sepolia: {
     //   url: "https://sepolia.infura.io/v3/" + API_KEY,
     //   chainId: 11155111,
-    //   accounts: [process.env.key0,process.env.keymanager,]
+    //   accounts: [process.env.key0,process.env.key1]
+    // }
+    // bsc: {
+    //   url: "https://bsc-dataseed2.binance.org",
+    //   chainId: 56,
+    //   accounts: [process.env.key0]
+    // },
+    // ethereum: {
+    //   url: "https://mainnet.infura.io/v3/" + API_KEY,
+    //   chainId: 1,
+    //   accounts: [process.env.key0]
     // }
 
   },
   etherscan: {
-    // apiKey: {
-    //   sepolia: process.env.ethsacn_api_key,
-    //   bscTestnet: process.env.bscscan_api_key
-    // },
+    apiKey: {
+      // ethereum: process.env.ethsacn_api_key,
+      // bscscan: process.env.bscscan_api_key
+      // sepolia: process.env.ethsacn_api_key
+    },
     // customChains: [
     //   {
     //     network: "sepolia",

@@ -1,6 +1,7 @@
 pragma solidity 0.8.9;
 import "hardhat/console.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import "../interfaces/LimiterInterface.sol";
 
 contract MockBridgeOut {
     using SafeERC20 for IERC20;
@@ -41,5 +42,9 @@ contract MockBridgeOut {
         for (uint256 i = 0; i < tokens.length; i++) {
             tokenAmountLimit[tokens[i]] = limits[i];
         }
+    }
+
+    function consumeLimit(address limiter,bytes32 id,address token,uint256 amount) external {
+        ILimiter(limiter).consumeTokenBucket(id,token,amount);
     }
 }

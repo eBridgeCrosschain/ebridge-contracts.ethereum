@@ -241,9 +241,6 @@ contract BridgeOutImplementationV1 is ProxyStorage {
             targetTokenAmount <= tokenDepositAmount[swapId],
             "deposit not enough"
         );
-        if (targetTokenAmount >= tokenAmountLimit[swapInfo.targetToken.token]) {
-            require(receiptApproveMap[receiptId], "should approve");
-        }
         tokenDepositAmount[swapId] = tokenDepositAmount[swapId].sub(
             targetTokenAmount
         );
@@ -389,15 +386,6 @@ contract BridgeOutImplementationV1 is ProxyStorage {
         regimentId = swapInfos[swapId].regimentId;
         spaceId = swapInfos[swapId].spaceId;
         token = swapInfos[swapId].targetToken.token;
-    }
-
-    function setLimits(
-        address[] memory tokens,
-        uint256[] memory limits
-    ) external onlyOwner {
-        for (uint256 i = 0; i < tokens.length; i++) {
-            tokenAmountLimit[tokens[i]] = limits[i];
-        }
     }
 
     function approve(string calldata receiptId) external {
