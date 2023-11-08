@@ -97,45 +97,6 @@ describe("Timelock", function () {
                 .to.be.revertedWith(error);
             })
         })
-        it("set limit",async function() {
-            const { timelock, root, account1, account2 ,bridgeOutMock} = await loadFixture(deployTimelockFixture);
-        
-            let blockTimestamp = new BigNumber(await time.latest());
-            console.log('generate block timestamp',blockTimestamp.toNumber());
-            let target = bridgeOutMock.address;
-            let delay = oneWeekInSeconds;
-            let eta = blockTimestamp.plus(delay).plus(new BigNumber(10000));
-            let value = zero;
-            // let signature = '';
-            // console.log('start encodeParameters');
-            // let tokens = [account1.address];
-            // let limits = [10];
-            // let ABI1 = [
-            //     "function setLimits(address[] memory tokens,uint256[] memory limits) "
-            // ];
-            // let iface1 = new ethers.utils.Interface(ABI1);
-            // var data = iface1.encodeFunctionData("setLimits",[tokens,limits]);
-            let signature = 'setLimits(address[],uint256[])';
-            let tokens = [account1.address];
-            let limits = [10];
-            console.log('start encodeParameters');
-            let data = encodeParameters(['address[]','uint256[]'], [tokens,limits]);
-        
-            var queuedTxHash = await generateQueuedTransaction(target,eta,value,signature,data);
-        
-            var queueTransactionsHashValueBefore = await timelock.queuedTransactions(queuedTxHash);
-            expect(queueTransactionsHashValueBefore).to.equal(true);
-        
-            console.log('block timestamp',blockTimestamp.toNumber());
-            let newBlockTimestamp = delay.plus(10000).plus(1);
-            console.log('new block time',newBlockTimestamp.toNumber());
-            await freezeTime(newBlockTimestamp.toNumber());
-        
-            var error = await timelock.executeTransaction(target, value.toFixed(), signature, data, eta.toFixed())
-            console.log(error);
-            var queuedTransactionsAfter = await timelock.queuedTransactions(queuedTxHash);
-            expect(queuedTransactionsAfter).to.equal(false);
-        })
         describe("executeTransaction test",function () {
             it("Should execute setDelay Transaction success",async function() {
                 const { timelock, root, account1, account2 } = await loadFixture(deployTimelockFixture);

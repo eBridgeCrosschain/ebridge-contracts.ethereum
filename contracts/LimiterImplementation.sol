@@ -5,12 +5,12 @@ import {RateLimiter} from "./libraries/RateLimiter.sol";
 import {DailyLimiter} from "./libraries/DailyLimiter.sol";
 import './libraries/BridgeInLibrary.sol';
 import "./Proxy.sol";
-import "hardhat/console.sol";
-
+import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 
 contract LimiterImplementation is ProxyStorage {
     using DailyLimiter for DailyLimiter.DailyLimitTokenInfo;
     using RateLimiter for RateLimiter.TokenBucket;
+    using SafeMath for uint256;
 
     // key: tokenKey / swapId
     mapping(bytes32 => RateLimiter.TokenBucket) private tokenBucket;
@@ -88,7 +88,7 @@ contract LimiterImplementation is ProxyStorage {
         bytes32 bucketId = BridgeInLibrary._generateTokenKey(_token,_targetChainId);
         RateLimiter.TokenBucket memory bucket = tokenBucket[bucketId]._currentTokenBucketState();
         if (amount > bucket.currentTokenAmount) {
-            return ((amount - bucket.currentTokenAmount) + (bucket.rate - 1)) / bucket.rate;
+            return ((amount.sub(bucket.currentTokenAmount)).add(((uint256)(bucket.rate).sub(1)))).div(bucket.rate);
         }else{
             return 0;
         }
@@ -97,7 +97,7 @@ contract LimiterImplementation is ProxyStorage {
     function GetSwapBucketMinWaitSeconds(uint256 amount,bytes32 swapId) public view returns (uint256){
         RateLimiter.TokenBucket memory bucket = tokenBucket[swapId]._currentTokenBucketState();
         if (amount > bucket.currentTokenAmount) {
-            return ((amount - bucket.currentTokenAmount) + (bucket.rate - 1)) / bucket.rate;
+            return ((amount.sub(bucket.currentTokenAmount)).add(((uint256)(bucket.rate).sub(1)))).div(bucket.rate);
         }else{
             return 0;
         }
