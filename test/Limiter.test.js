@@ -286,7 +286,7 @@ describe("Limiter", function () {
         
                 await limiter.connect(admin).SetTokenBucketConfig(configs);
 
-                var receiptRateLimitInfo = await limiter.GetCurrentReceiptTokenBucketConfig(elf.address,"MainChain");
+                var receiptRateLimitInfo = await limiter.GetCurrentReceiptTokenBucketState(elf.address,"MainChain");
                 expect(receiptRateLimitInfo.currentTokenAmount).to.equal("1000000000000");
                 expect(receiptRateLimitInfo.lastUpdatedTime).to.equal(new BigNumber(await time.latest()));
                 expect(receiptRateLimitInfo.isEnabled).to.equal(true);
@@ -317,7 +317,7 @@ describe("Limiter", function () {
         
                 await limiter.connect(admin).SetTokenBucketConfig(configs);
 
-                var receiptRateLimitInfo = await limiter.GetCurrentReceiptTokenBucketConfig(elf.address,"MainChain");
+                var receiptRateLimitInfo = await limiter.GetCurrentReceiptTokenBucketState(elf.address,"MainChain");
                 expect(receiptRateLimitInfo.currentTokenAmount).to.equal("1000000000000");
                 expect(receiptRateLimitInfo.lastUpdatedTime).to.equal(new BigNumber(await time.latest()));
                 expect(receiptRateLimitInfo.isEnabled).to.equal(true);
@@ -341,7 +341,7 @@ describe("Limiter", function () {
         
                 await limiter.connect(admin).SetTokenBucketConfig(configs);
 
-                var receiptRateLimitInfo = await limiter.GetCurrentReceiptTokenBucketConfig(elf.address,"MainChain");
+                var receiptRateLimitInfo = await limiter.GetCurrentReceiptTokenBucketState(elf.address,"MainChain");
                 expect(receiptRateLimitInfo.currentTokenAmount).to.equal("200000000000");
                 expect(receiptRateLimitInfo.lastUpdatedTime).to.equal(new BigNumber(await time.latest()));
                 expect(receiptRateLimitInfo.isEnabled).to.equal(true);
@@ -373,7 +373,7 @@ describe("Limiter", function () {
                 }]
                 await limiter.connect(admin).SetTokenBucketConfig(configs);
 
-                var receiptRateLimitInfo = await limiter.GetCurrentSwapTokenBucketConfig(swapId1);
+                var receiptRateLimitInfo = await limiter.GetCurrentSwapTokenBucketState(swapId1);
                 expect(receiptRateLimitInfo.currentTokenAmount).to.equal("300000000000");
                 expect(receiptRateLimitInfo.lastUpdatedTime).to.equal(new BigNumber(await time.latest()));
                 expect(receiptRateLimitInfo.isEnabled).to.equal(true);
@@ -406,7 +406,7 @@ describe("Limiter", function () {
 
                 let blockTimestamp1 = new BigNumber(4);
                 await freezeTime(blockTimestamp1.toNumber());
-                var receiptTokenBucket = await limiter.GetCurrentReceiptTokenBucketConfig(elf.address,'MainChain');
+                var receiptTokenBucket = await limiter.GetCurrentReceiptTokenBucketState(elf.address,'MainChain');
                 expect(receiptTokenBucket.tokenCapacity).to.equal("1000");
                 expect(receiptTokenBucket.rate).to.equal("10");
                 expect(receiptTokenBucket.currentTokenAmount).to.equal(1000-100+50);
@@ -417,7 +417,7 @@ describe("Limiter", function () {
 
                 let blockTimestamp2 = new BigNumber(4);
                 await freezeTime(blockTimestamp2.toNumber());
-                var receiptTokenBucket = await limiter.GetCurrentReceiptTokenBucketConfig(elf.address,'MainChain');
+                var receiptTokenBucket = await limiter.GetCurrentReceiptTokenBucketState(elf.address,'MainChain');
                 expect(receiptTokenBucket.tokenCapacity).to.equal("1000");
                 expect(receiptTokenBucket.rate).to.equal("10");
                 expect(receiptTokenBucket.currentTokenAmount).to.equal(1000-100+50+10-200+50);
@@ -425,7 +425,7 @@ describe("Limiter", function () {
                 
                 let blockTimestamp3 = new BigNumber(20);
                 await freezeTime(blockTimestamp3.toNumber());
-                var receiptTokenBucket = await limiter.GetCurrentReceiptTokenBucketConfig(elf.address,'MainChain');
+                var receiptTokenBucket = await limiter.GetCurrentReceiptTokenBucketState(elf.address,'MainChain');
                 expect(receiptTokenBucket.tokenCapacity).to.equal("1000");
                 expect(receiptTokenBucket.rate).to.equal("10");
                 expect(receiptTokenBucket.currentTokenAmount).to.equal(1000);
@@ -458,7 +458,7 @@ describe("Limiter", function () {
 
                 let blockTimestamp1 = new BigNumber(4);
                 await freezeTime(blockTimestamp1.toNumber());
-                var swapTokenBucket = await limiter.GetCurrentSwapTokenBucketConfig(swapId1);
+                var swapTokenBucket = await limiter.GetCurrentSwapTokenBucketState(swapId1);
                 expect(swapTokenBucket.tokenCapacity).to.equal("1000");
                 expect(swapTokenBucket.rate).to.equal("10");
                 expect(swapTokenBucket.currentTokenAmount).to.equal(1000-100+50);

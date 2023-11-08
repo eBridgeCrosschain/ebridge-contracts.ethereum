@@ -191,7 +191,7 @@ describe("BridgeIn", function () {
                     expect(receiptDailyLimitInfo.defaultTokenAmount).to.equal("100000000000000000000");
                 }
                 {
-                    var receiptRateLimitInfo = await limiter.GetCurrentReceiptTokenBucketConfig(weth.address,chainId);
+                    var receiptRateLimitInfo = await limiter.GetCurrentReceiptTokenBucketState(weth.address,chainId);
                     expect(receiptRateLimitInfo.currentTokenAmount).to.equal("9000000000000000000");
                     expect(receiptRateLimitInfo.lastUpdatedTime).to.equal(new BigNumber(await time.latest()));
                     expect(receiptRateLimitInfo.isEnabled).to.equal(true);

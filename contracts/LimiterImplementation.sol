@@ -80,7 +80,7 @@ contract LimiterImplementation is ProxyStorage {
     }
   }
 
-  function GetCurrentReceiptTokenBucketConfig(
+  function GetCurrentReceiptTokenBucketState(
     address _token,
     string memory _targetChainId
   ) public view returns (RateLimiter.TokenBucket memory) {
@@ -88,7 +88,7 @@ contract LimiterImplementation is ProxyStorage {
     return tokenBucket[bucketId]._currentTokenBucketState();
   }
 
-  function GetCurrentSwapTokenBucketConfig(
+  function GetCurrentSwapTokenBucketState(
     bytes32 swapId
   ) public view returns (RateLimiter.TokenBucket memory) {
     return tokenBucket[swapId]._currentTokenBucketState();
