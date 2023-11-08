@@ -82,6 +82,7 @@ library RateLimiter {
       );
     } else {
       _tokenBucket.currentTokenAmount = _config.tokenCapacity;
+      _tokenBucket.lastUpdatedTime = uint32(block.timestamp);
     }
     _tokenBucket.tokenCapacity = _config.tokenCapacity;
     _tokenBucket.isEnabled = _config.isEnabled;
