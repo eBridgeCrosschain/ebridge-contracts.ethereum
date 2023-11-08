@@ -349,17 +349,17 @@ describe("Limiter", function () {
                 expect(receiptRateLimitInfo.rate).to.equal(114);
             });
             it("set swap success", async function () {
-                const { owner, admin, limiter } = await loadFixture(deployLimiterFixture);
+                const { owner, admin, limiter,bridgeInMock, bridgeOutMock } = await loadFixture(deployLimiterFixture);
                 const { elf, usdt } = await loadFixture(deployTokensFixture);
             
                 const date = new Date();
                 const timestamp = Date.UTC(date.getFullYear(), date.getMonth(), date.getDate(), 0, 0, 0, 0);
                 var refreshTime = timestamp / 1000;
                 console.log(refreshTime);
-                var data1 = ethers.utils.solidityPack(["address"], [elf.address]);
-                var swapId1 = ethers.utils.sha256(data1);
-                var data2 = ethers.utils.solidityPack(["address"], [usdt.address]);
-                var swapId2 = ethers.utils.sha256(data2);
+                await bridgeOutMock.createSwap(elf.address,"tdvv");
+                var swapId1 = await bridgeOutMock.getSwapId(elf.address,"tdvv");
+                await bridgeOutMock.createSwap(usdt.address,"tdvv");
+                var swapId2 = await bridgeOutMock.getSwapId(usdt.address,"tdvv");
                 var configs = [{
                     bucketId:swapId1,
                     isEnabled:true,
@@ -373,14 +373,14 @@ describe("Limiter", function () {
                 }]
                 await limiter.connect(admin).SetTokenBucketConfig(configs);
 
-                var receiptRateLimitInfo = await limiter.GetCurrentSwapTokenBucketState(swapId1);
+                var receiptRateLimitInfo = await limiter.GetCurrentSwapTokenBucketState(elf.address,"tdvv");
                 expect(receiptRateLimitInfo.currentTokenAmount).to.equal("300000000000");
                 expect(receiptRateLimitInfo.lastUpdatedTime).to.equal(new BigNumber(await time.latest()));
                 expect(receiptRateLimitInfo.isEnabled).to.equal(true);
                 expect(receiptRateLimitInfo.tokenCapacity).to.equal("300000000000");
                 expect(receiptRateLimitInfo.rate).to.equal(200);
 
-                var minWaitSeconds = await limiter.GetSwapBucketMinWaitSeconds("100",swapId1);
+                var minWaitSeconds = await limiter.GetSwapBucketMinWaitSeconds("100",elf.address,"tdvv");
                 expect(minWaitSeconds).to.equal(0);
             });
             it("consume rate limit", async function () {
@@ -436,10 +436,10 @@ describe("Limiter", function () {
                 const { owner, admin, limiter, bridgeInMock, bridgeOutMock } = await loadFixture(deployLimiterFixture);
                 const { elf, usdt } = await loadFixture(deployTokensFixture);
 
-                var data1 = ethers.utils.solidityPack(["address"], [elf.address]);
-                var swapId1 = ethers.utils.sha256(data1);
-                var data2 = ethers.utils.solidityPack(["address"], [usdt.address]);
-                var swapId2 = ethers.utils.sha256(data2);
+                await bridgeOutMock.createSwap(elf.address,"tdvv");
+                var swapId1 = await bridgeOutMock.getSwapId(elf.address,"tdvv");
+                await bridgeOutMock.createSwap(usdt.address,"tdvv");
+                var swapId2 = await bridgeOutMock.getSwapId(usdt.address,"tdvv");
 
                 var configs = [{
                     bucketId:swapId1,
@@ -458,7 +458,7 @@ describe("Limiter", function () {
 
                 let blockTimestamp1 = new BigNumber(4);
                 await freezeTime(blockTimestamp1.toNumber());
-                var swapTokenBucket = await limiter.GetCurrentSwapTokenBucketState(swapId1);
+                var swapTokenBucket = await limiter.GetCurrentSwapTokenBucketState(elf.address,"tdvv");
                 expect(swapTokenBucket.tokenCapacity).to.equal("1000");
                 expect(swapTokenBucket.rate).to.equal("10");
                 expect(swapTokenBucket.currentTokenAmount).to.equal(1000-100+50);
