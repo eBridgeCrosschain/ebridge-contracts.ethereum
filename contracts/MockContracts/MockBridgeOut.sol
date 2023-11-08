@@ -33,15 +33,6 @@ contract MockBridgeOut {
         require(!isPaused, "BridgeOut:paused");
         IERC20(token).safeTransfer(address(msg.sender), amount);
     }
-    function setLimits(
-        address[] memory tokens,
-        uint256[] memory limits
-    ) external{
-        console.log("set");
-        for (uint256 i = 0; i < tokens.length; i++) {
-            tokenAmountLimit[tokens[i]] = limits[i];
-        }
-    }
 
     function consumeLimit(address limiter,bytes32 id,address token,uint256 amount) external {
         ILimiter(limiter).consumeTokenBucket(id,token,amount);
