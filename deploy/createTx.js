@@ -1,9 +1,10 @@
 const { checkResultErrors } = require("@ethersproject/abi");
+const { config } = require("dotenv");
 const { logger,providers } = require("ethers");
 const { ethers } = require("hardhat");
 const { string } = require("hardhat/internal/core/params/argumentTypes");
 async function main() {
-    const [sender,managerAddress,receiver1, account1, account2, account3, account4, account5] = await ethers.getSigners();
+    const [sender,admin] = await ethers.getSigners();
     //initailize
     // console.log("Sending tx with the account:", sender.address);
     // console.log("Sender account balance:", (await sender.getBalance()).toString());
@@ -12,6 +13,7 @@ async function main() {
     const MerkleTreeAddress = '0x0C255bE6f8735355FA3725aadB3168B7C248523e';
     const MultiSigWalletAddress = '';
     const BridgeInAddress = '0xdDc1099e6CBB54e24FAB7Aa589CBA4A394178282';
+    const BridgeInLib = '0xC1A2ec883D9Dd8F8918c8EE66B1e24dd3d38c394';
     const BridgeOutAddress = '0xf1Ddf5962c4e0F6567670258fF9A0b315183Af21';
     const RegimentImplementationAddress = '0x3EAfbF03DBbfaB20553beF4ff75A62a2329983a9';
     const MerkleTreeImplementationAddress = '0x474AB98ebd47494CEd23a8794346fd9d809a24C0';
@@ -19,28 +21,34 @@ async function main() {
     const BridgeOutLib = '0xA3E3dFDF0C332C28756883505b64E1B35D269a1c';
     const BridgeOutImplementationAddress = '0xb1fa03DdA60130700d181C527052F42c06c13EA1';
     const TimelockAddress = '';
+    const LimiterAddress = '0x88D3df6d482046c8c538B9c9B7f7342e83811b83';
+    const LimiterImplementationAddress = '0x6A2c0253Cad82aC5e0459013ccF9BdfCeb557330';
 
     elfAddress = "0x8adD57b8aD6C291BC3E3ffF89F767fcA08e0E7Ab";
     usdtAddress = "0x60eeCc4d19f65B9EaDe628F2711C543eD1cE6679";
     wethAddress = "0x035900292c309d8beCBCAFb3227238bec0EBa253";
 
-    const RegimentAddress = '0x282BA3b79B47Bcbcf56d4C729ebe82b0E3Ed2e16';
-    const MerkleTreeAddress = '0x1B74aFb1d664597Fcd39301B0Eee43fc605E7FC0';
-    const MultiSigWalletAddress = '0xcDEA4ba71a873D2e4A702219644751a235e0a495';
-    const BridgeInAddress = '0xD032D743A87586039056E3d35894D9F0560E26Be';
-    const BridgeOutAddress = '0x4C6720dec7C7dcdE1c7B5E9dd2b327370AC9F834';
-    const RegimentImplementationAddress = '0xC109d3298F6fbcb18c5890e91fa4b3E9Ee3FbE20';
-    const MerkleTreeImplementationAddress = '0x3B380dD87a41Ab01dd64fAd9c311ceBa9B12EA60';
-    const BridgeInImplementationAddress = '0xA91017D77cF6E77Eb38b1779E36fD7E05530b57D';
-    const BridgeOutLib = '0x2D40b32bB098d28566EC68B02DFe6f5eD46931de';
-    const BridgeOutImplementationAddress = '0x5493B2CFdc533cCbc097a8D615a054eB94f0C1B5';
+    // const RegimentAddress = '0x282BA3b79B47Bcbcf56d4C729ebe82b0E3Ed2e16';
+    // const MerkleTreeAddress = '0x1B74aFb1d664597Fcd39301B0Eee43fc605E7FC0';
+    // const MultiSigWalletAddress = '0xcDEA4ba71a873D2e4A702219644751a235e0a495';
+    // const BridgeInAddress = '0xD032D743A87586039056E3d35894D9F0560E26Be';
+    // const BridgeOutAddress = '0x4C6720dec7C7dcdE1c7B5E9dd2b327370AC9F834';
+    // const RegimentImplementationAddress = '0xC109d3298F6fbcb18c5890e91fa4b3E9Ee3FbE20';
+    // const MerkleTreeImplementationAddress = '0x3B380dD87a41Ab01dd64fAd9c311ceBa9B12EA60';
+    // const BridgeInImplementationAddress = '0xA91017D77cF6E77Eb38b1779E36fD7E05530b57D';
+    // const BridgeOutLib = '0x2D40b32bB098d28566EC68B02DFe6f5eD46931de';
+    // const BridgeOutImplementationAddress = '0x5493B2CFdc533cCbc097a8D615a054eB94f0C1B5';
 
     elfAddress = "0xd1CD51a8d28ab58464839ba840E16950A6a635ad";
     usdtAddress = "0x3F280eE5876CE8B15081947E0f189E336bb740A5";
     wbnbAddress = "0x0CBAb7E71f969Bfb3eF5b13542E9087a73244F02";
     newElfAddress = "0x3791e375c5D7Ec6Cc5C95feD772F448065083160";
 
-    const BridgeInImplementation = await ethers.getContractFactory("BridgeInImplementation");
+    const BridgeInImplementation = await ethers.getContractFactory("BridgeInImplementation",{
+        libraries:{
+            BridgeInLibrary : BridgeInLib
+        }
+    });
     const bridgeInImplementation = await BridgeInImplementation.attach(BridgeInAddress);
 
     const BridgeIn = await ethers.getContractFactory("BridgeIn");
@@ -71,6 +79,13 @@ async function main() {
     const BridgeOut = await ethers.getContractFactory("BridgeOut");
     const bridgeOut = await BridgeOut.attach(BridgeOutAddress);
 
+    const LimiterImplementation = await ethers.getContractFactory("LimiterImplementation",{
+        libraries:{
+            BridgeInLibrary : BridgeInLib
+        }
+    });
+    const limiterImplementation = await LimiterImplementation.attach(LimiterAddress);
+
     // const ELF = await ethers.getContractFactory("ELF");
     // const elf = await ELF.attach(newElfAddress);
 
@@ -83,6 +98,16 @@ async function main() {
     // const WBNB = await ethers.getContractFactory("WBNB");
     // const wbnb = await WBNB.attach(wbnbAddress);
 
+
+    var configs = [{
+        bucketId:"0x985437ac8419a449edb553436fabc4e38c4183aa5d5ab800bd92deb5dd5376f5",
+        isEnabled:true,
+        tokenCapacity:"10000000000000000000000",
+        rate:"16700000000000000000"
+    }
+    ];
+
+    await limiterImplementation.connect(admin).SetTokenBucketConfig(configs);
 
 
     //create regiment
