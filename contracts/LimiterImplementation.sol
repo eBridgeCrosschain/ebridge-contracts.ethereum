@@ -65,13 +65,13 @@ contract LimiterImplementation is ProxyStorage {
     string memory targetChainId
   ) public view returns (DailyLimiter.DailyLimitTokenInfo memory) {
     bytes32 dailyLimitId = BridgeInLibrary._generateTokenKey(token, targetChainId);
-    return dailyLimit[dailyLimitId];
+    return dailyLimit[dailyLimitId]._currentDailyLimit();
   }
 
   function getSwapDailyLimit(
     bytes32 swapId
   ) public view returns (DailyLimiter.DailyLimitTokenInfo memory) {
-    return dailyLimit[swapId];
+        return dailyLimit[swapId]._currentDailyLimit();
   }
 
   function SetTokenBucketConfig(RateLimiter.TokenBucketConfig[] memory configs) external onlyAdmin {
@@ -89,12 +89,36 @@ contract LimiterImplementation is ProxyStorage {
     return tokenBucket[bucketId]._currentTokenBucketState();
   }
 
+  function GetCurrentReceiptTokenBucketStates(
+    address[] memory tokens,
+    string[] memory targetChainIds
+  ) public view returns (RateLimiter.TokenBucket[] memory _tokenBuckets) {
+    _tokenBuckets = new RateLimiter.TokenBucket[](tokens.length);
+    for (uint i = 0; i < tokens.length; i++) {
+      bytes32 bucketId = BridgeInLibrary._generateTokenKey(tokens[i], targetChainIds[i]);
+      _tokenBuckets[i] = tokenBucket[bucketId]._currentTokenBucketState();
+    }
+    return _tokenBuckets;
+  }
+
   function GetCurrentSwapTokenBucketState(
     address token,
     string memory fromChainId
   ) public view returns (RateLimiter.TokenBucket memory) {
     bytes32 swapId = IBridgeOut(bridgeOut).getSwapId(token, fromChainId);
     return tokenBucket[swapId]._currentTokenBucketState();
+  }
+
+    function GetCurrentSwapTokenBucketStates(
+    address[] memory tokens,
+    string[] memory fromChainIds
+  ) public view returns (RateLimiter.TokenBucket[] memory _tokenBuckets) {
+    _tokenBuckets = new RateLimiter.TokenBucket[](tokens.length);
+    for (uint i = 0; i < tokens.length; i++) {
+      bytes32 swapId = IBridgeOut(bridgeOut).getSwapId(tokens[i], fromChainIds[i]);
+      _tokenBuckets[i] = tokenBucket[swapId]._currentTokenBucketState();
+    }
+    return _tokenBuckets;
   }
 
   function GetReceiptBucketMinWaitSeconds(

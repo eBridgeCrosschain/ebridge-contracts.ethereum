@@ -293,6 +293,22 @@ describe("Limiter", function () {
                 expect(receiptRateLimitInfo.tokenCapacity).to.equal("1000000000000");
                 expect(receiptRateLimitInfo.rate).to.equal(167);
 
+                var tokens = [elf.address,usdt.address];
+                var fromChainIds = ["MainChain","MainChain"];
+
+                var receiptRateLimitInfos = await limiter.GetCurrentReceiptTokenBucketStates(tokens,fromChainIds);
+                expect(receiptRateLimitInfos[0].currentTokenAmount).to.equal("1000000000000");
+                expect(receiptRateLimitInfos[0].lastUpdatedTime).to.equal(new BigNumber(await time.latest()));
+                expect(receiptRateLimitInfos[0].isEnabled).to.equal(true);
+                expect(receiptRateLimitInfos[0].tokenCapacity).to.equal("1000000000000");
+                expect(receiptRateLimitInfos[0].rate).to.equal(167);
+
+                expect(receiptRateLimitInfos[1].currentTokenAmount).to.equal("2000000000000");
+                expect(receiptRateLimitInfos[1].lastUpdatedTime).to.equal(new BigNumber(await time.latest()));
+                expect(receiptRateLimitInfos[1].isEnabled).to.equal(true);
+                expect(receiptRateLimitInfos[1].tokenCapacity).to.equal("2000000000000");
+                expect(receiptRateLimitInfos[1].rate).to.equal(167);
+
 
                 var minWaitSeconds = await limiter.GetReceiptBucketMinWaitSeconds("100",usdt.address,"MainChain");
                 expect(minWaitSeconds).to.equal(0);
@@ -379,6 +395,22 @@ describe("Limiter", function () {
                 expect(receiptRateLimitInfo.isEnabled).to.equal(true);
                 expect(receiptRateLimitInfo.tokenCapacity).to.equal("300000000000");
                 expect(receiptRateLimitInfo.rate).to.equal(200);
+
+                var tokens = [elf.address,usdt.address];
+                var fromChainIds = ["tdvv","tdvv"];
+
+                var receiptRateLimitInfos = await limiter.GetCurrentSwapTokenBucketStates(tokens,fromChainIds);
+                expect(receiptRateLimitInfos[0].currentTokenAmount).to.equal("300000000000");
+                expect(receiptRateLimitInfos[0].lastUpdatedTime).to.equal(new BigNumber(await time.latest()));
+                expect(receiptRateLimitInfos[0].isEnabled).to.equal(true);
+                expect(receiptRateLimitInfos[0].tokenCapacity).to.equal("300000000000");
+                expect(receiptRateLimitInfos[0].rate).to.equal(200);
+
+                expect(receiptRateLimitInfos[1].currentTokenAmount).to.equal("2000000000000");
+                expect(receiptRateLimitInfos[1].lastUpdatedTime).to.equal(new BigNumber(await time.latest()));
+                expect(receiptRateLimitInfos[1].isEnabled).to.equal(true);
+                expect(receiptRateLimitInfos[1].tokenCapacity).to.equal("2000000000000");
+                expect(receiptRateLimitInfos[1].rate).to.equal(167);
 
                 var minWaitSeconds = await limiter.GetSwapBucketMinWaitSeconds("100",elf.address,"tdvv");
                 expect(minWaitSeconds).to.equal(0);

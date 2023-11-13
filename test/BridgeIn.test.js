@@ -1,6 +1,7 @@
 const {
     time,
     loadFixture,
+    mine
 } = require("@nomicfoundation/hardhat-network-helpers");
 const { anyValue } = require("@nomicfoundation/hardhat-chai-matchers/withArgs");
 const { ethers } = require("hardhat");
@@ -185,18 +186,29 @@ describe("BridgeIn", function () {
                 expect(await weth.balanceOf(bridgeOutMock.address)).to.equal('1000000000000000000');
 
                 {
+                    console.log(await time.latest());
                     var receiptDailyLimitInfo = await limiter.getReceiptDailyLimit(weth.address,chainId);
                     expect(receiptDailyLimitInfo.tokenAmount).to.equal("99000000000000000000");
                     expect(receiptDailyLimitInfo.refreshTime).to.equal(refreshTime);
                     expect(receiptDailyLimitInfo.defaultTokenAmount).to.equal("100000000000000000000");
                 }
                 {
+                    console.log("token bucket.");
                     var receiptRateLimitInfo = await limiter.GetCurrentReceiptTokenBucketState(weth.address,chainId);
                     expect(receiptRateLimitInfo.currentTokenAmount).to.equal("9000000000000000000");
                     expect(receiptRateLimitInfo.lastUpdatedTime).to.equal(new BigNumber(await time.latest()));
                     expect(receiptRateLimitInfo.isEnabled).to.equal(true);
                     expect(receiptRateLimitInfo.tokenCapacity).to.equal("10000000000000000000");
                     expect(receiptRateLimitInfo.rate).to.equal("1000000000000000000");
+                }
+                {
+                    let blockTimestamp1 = new BigNumber(86400*2);
+                    await freezeTime(blockTimestamp1.toNumber());
+                    console.log(await time.latest());
+                    var receiptDailyLimitInfo = await limiter.getReceiptDailyLimit(weth.address,chainId);
+                    expect(receiptDailyLimitInfo.tokenAmount).to.equal("100000000000000000000");
+                    expect(receiptDailyLimitInfo.refreshTime).to.equal(refreshTime+86400*2);
+                    expect(receiptDailyLimitInfo.defaultTokenAmount).to.equal("100000000000000000000");
                 }
                 
             })
@@ -826,7 +838,9 @@ describe("BridgeIn", function () {
             var data = ethers.utils.solidityPack(["address", "string"], [token, chainId]);
             return ethers.utils.sha256(data);
         }
-
-
+        async function freezeTime(seconds) {
+            await time.increase(seconds);
+            await mine();
+        }
     })
 });

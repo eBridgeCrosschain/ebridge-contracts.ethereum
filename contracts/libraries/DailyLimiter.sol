@@ -65,4 +65,14 @@ library DailyLimiter {
     _dailyLimitTokenInfo.tokenAmount = _dailyLimitTokenInfo.tokenAmount.sub(_amount);
     emit TokenDailyLimitConsumed(_tokenAddress, _amount);
   }
+
+  function _currentDailyLimit(DailyLimitTokenInfo memory _dailyLimitTokenInfo) internal view returns (DailyLimitTokenInfo memory){
+    uint256 lastRefreshTime = _dailyLimitTokenInfo.refreshTime;
+    uint256 count = (block.timestamp.sub(lastRefreshTime)).div(DefaultRefreshTime);
+    if (count > 0) {
+      _dailyLimitTokenInfo.refreshTime = uint32(lastRefreshTime.add((uint256)(DefaultRefreshTime).mul(count)));
+      _dailyLimitTokenInfo.tokenAmount = _dailyLimitTokenInfo.defaultTokenAmount;
+    }
+    return _dailyLimitTokenInfo;
+  }
 }
