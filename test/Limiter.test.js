@@ -123,6 +123,29 @@ describe("Limiter", function () {
                 expect(receiptDailyLimitInfo.defaultTokenAmount).to.equal("500000000000");
 
             });
+            it("Only daily limits are supported within the contract", async function () {
+                const { owner, admin, limiter } = await loadFixture(deployLimiterFixture);
+                const { elf, usdt } = await loadFixture(deployTokensFixture);
+            
+                const date = new Date();
+                const timestamp = Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()+2, 0, 0, 0, 0);
+                var refreshTime = timestamp / 1000;
+                console.log(refreshTime);
+                var configs = [{
+                    dailyLimitId : _generateTokenKey(elf.address,"MainChain"),
+                    refreshTime : refreshTime,
+                    defaultTokenAmount : "1000000000000"
+                },
+                {
+                    dailyLimitId : _generateTokenKey(usdt.address,"MainChain"),
+                    refreshTime : refreshTime,
+                    defaultTokenAmount : "2000000000000"
+                }]
+                await expect(limiter.connect(admin).setDailyLimit(configs))
+                .to.be.revertedWith("Only daily limits are supported within the contract.");
+
+            
+            });
             it("set swap success", async function () {
                 const { owner, admin, limiter } = await loadFixture(deployLimiterFixture);
                 const { elf, usdt } = await loadFixture(deployTokensFixture);

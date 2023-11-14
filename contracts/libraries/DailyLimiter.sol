@@ -27,18 +27,15 @@ library DailyLimiter {
     DailyLimitConfig memory _config
   ) internal {
     require((uint256)(_config.refreshTime).mod(DefaultRefreshTime) == 0, 'Invalid refresh time.');
+    require(block.timestamp >= _config.refreshTime && (block.timestamp.sub(_config.refreshTime)) <= DefaultRefreshTime, 'Only daily limits are supported within the contract.');
     if (
       _dailyLimitTokenInfo.refreshTime != 0 &&
-      (block.timestamp.sub(_dailyLimitTokenInfo.refreshTime)).div(DefaultRefreshTime) <= 0
+      (block.timestamp.sub(_dailyLimitTokenInfo.refreshTime)).div(DefaultRefreshTime) < 1
     ) {
       uint256 defaultTokenAmount = _dailyLimitTokenInfo.defaultTokenAmount;
       uint256 currentTokenAmount = _dailyLimitTokenInfo.tokenAmount;
       uint256 useAmount = defaultTokenAmount.sub(currentTokenAmount);
-      if (_config.defaultTokenAmount.sub(useAmount) < 0) {
-        _dailyLimitTokenInfo.tokenAmount = 0;
-      } else {
-        _dailyLimitTokenInfo.tokenAmount = _config.defaultTokenAmount.sub(useAmount);
-      }
+      _dailyLimitTokenInfo.tokenAmount = _config.defaultTokenAmount.sub(useAmount) < 0 ? 0 : _config.defaultTokenAmount.sub(useAmount);
     } else {
       _dailyLimitTokenInfo.tokenAmount = _config.defaultTokenAmount;
     }

@@ -215,8 +215,12 @@ contract BridgeOutImplementationV1 is ProxyStorage {
         require(amount > 0, "invalid amount");
         
         SwapInfo storage swapInfo = swapInfos[swapId];
-        ILimiter(limiter).consumeDailyLimit(swapId,tokenAddress,amount);
-        ILimiter(limiter).consumeTokenBucket(swapId,tokenAddress,amount);
+        uint256 targetTokenAmount = amount
+            .mul(swapInfo.targetToken.targetShare)
+            .div(swapInfo.targetToken.originShare);
+
+        ILimiter(limiter).consumeDailyLimit(swapId, tokenAddress, targetTokenAmount);
+        ILimiter(limiter).consumeTokenBucket(swapId, tokenAddress, targetTokenAmount);
 
         bytes32 leafHash = BridgeOutLibrary.computeLeafHash(
             receiptId,
@@ -234,9 +238,7 @@ contract BridgeOutImplementationV1 is ProxyStorage {
         SwapAmounts storage swapAmouts = ledger[leafHash];
         require(swapAmouts.receiver == address(0), "already claimed");
         swapAmouts.receiver = receiverAddress;
-        uint256 targetTokenAmount = amount
-            .mul(swapInfo.targetToken.targetShare)
-            .div(swapInfo.targetToken.originShare);
+        
         require(
             targetTokenAmount <= tokenDepositAmount[swapId],
             "deposit not enough"
