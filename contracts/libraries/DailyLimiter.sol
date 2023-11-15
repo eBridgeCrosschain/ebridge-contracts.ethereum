@@ -6,7 +6,7 @@ library DailyLimiter {
 
   error DailyLimitExceeded(uint256 dailyLimit, uint256 amount);
   event DailyLimitSet(DailyLimitConfig config);
-  event TokenDailyLimitConsumed(address tokenAddress, uint256 tokens);
+  event TokenDailyLimitConsumed(address tokenAddress, uint256 amount);
 
   struct DailyLimitTokenInfo {
     uint256 tokenAmount;
@@ -27,7 +27,11 @@ library DailyLimiter {
     DailyLimitConfig memory _config
   ) internal {
     require((uint256)(_config.refreshTime).mod(DefaultRefreshTime) == 0, 'Invalid refresh time.');
-    require(block.timestamp >= _config.refreshTime && (block.timestamp.sub(_config.refreshTime)) <= DefaultRefreshTime, 'Only daily limits are supported within the contract.');
+    require(
+      block.timestamp >= _config.refreshTime &&
+        (block.timestamp.sub(_config.refreshTime)) <= DefaultRefreshTime,
+      'Only daily limits are supported within the contract.'
+    );
     if (
       _dailyLimitTokenInfo.refreshTime != 0 &&
       (block.timestamp.sub(_dailyLimitTokenInfo.refreshTime)).div(DefaultRefreshTime) < 1
@@ -35,7 +39,9 @@ library DailyLimiter {
       uint256 defaultTokenAmount = _dailyLimitTokenInfo.defaultTokenAmount;
       uint256 currentTokenAmount = _dailyLimitTokenInfo.tokenAmount;
       uint256 useAmount = defaultTokenAmount.sub(currentTokenAmount);
-      _dailyLimitTokenInfo.tokenAmount = _config.defaultTokenAmount.sub(useAmount) < 0 ? 0 : _config.defaultTokenAmount.sub(useAmount);
+      _dailyLimitTokenInfo.tokenAmount = _config.defaultTokenAmount <= useAmount
+        ? 0
+        : _config.defaultTokenAmount.sub(useAmount);
     } else {
       _dailyLimitTokenInfo.tokenAmount = _config.defaultTokenAmount;
     }
@@ -49,27 +55,45 @@ library DailyLimiter {
     address _tokenAddress,
     uint256 _amount
   ) internal {
-    uint256 lastRefreshTime = _dailyLimitTokenInfo.refreshTime;
-    uint256 count = (block.timestamp.sub(lastRefreshTime)).div(DefaultRefreshTime);
-    if (count > 0) {
-      lastRefreshTime = lastRefreshTime.add((uint256)(DefaultRefreshTime).mul(count));
-      _dailyLimitTokenInfo.refreshTime = uint32(lastRefreshTime);
-      _dailyLimitTokenInfo.tokenAmount = _dailyLimitTokenInfo.defaultTokenAmount;
+    (uint32 _refreshTime, uint256 _tokenAmount) = _refreshCurrentTokenAmount(
+      _dailyLimitTokenInfo.refreshTime,
+      _dailyLimitTokenInfo.tokenAmount,
+      _dailyLimitTokenInfo.defaultTokenAmount
+    );
+    _dailyLimitTokenInfo.refreshTime = _refreshTime;
+    if (_amount > _tokenAmount) {
+      revert DailyLimitExceeded(_tokenAmount, _amount);
     }
-    if (_amount > _dailyLimitTokenInfo.tokenAmount) {
-      revert DailyLimitExceeded(_dailyLimitTokenInfo.tokenAmount, _amount);
-    }
-    _dailyLimitTokenInfo.tokenAmount = _dailyLimitTokenInfo.tokenAmount.sub(_amount);
+    _tokenAmount = _tokenAmount.sub(_amount);
+    _dailyLimitTokenInfo.tokenAmount = _tokenAmount;
     emit TokenDailyLimitConsumed(_tokenAddress, _amount);
   }
 
-  function _currentDailyLimit(DailyLimitTokenInfo memory _dailyLimitTokenInfo) internal view returns (DailyLimitTokenInfo memory){
-    uint256 lastRefreshTime = _dailyLimitTokenInfo.refreshTime;
-    uint256 count = (block.timestamp.sub(lastRefreshTime)).div(DefaultRefreshTime);
-    if (count > 0) {
-      _dailyLimitTokenInfo.refreshTime = uint32(lastRefreshTime.add((uint256)(DefaultRefreshTime).mul(count)));
-      _dailyLimitTokenInfo.tokenAmount = _dailyLimitTokenInfo.defaultTokenAmount;
-    }
+  function _currentDailyLimit(
+    DailyLimitTokenInfo memory _dailyLimitTokenInfo
+  ) internal view returns (DailyLimitTokenInfo memory) {
+    (uint32 _refreshTime, uint256 _tokenAmount) = _refreshCurrentTokenAmount(
+      _dailyLimitTokenInfo.refreshTime,
+      _dailyLimitTokenInfo.tokenAmount,
+      _dailyLimitTokenInfo.defaultTokenAmount
+    );
+    _dailyLimitTokenInfo.refreshTime = _refreshTime;
+    _dailyLimitTokenInfo.tokenAmount = _tokenAmount;
     return _dailyLimitTokenInfo;
+  }
+
+  function _refreshCurrentTokenAmount(
+    uint256 _lastRefreshTime,
+    uint256 _tokenAmount,
+    uint256 _defaultAmount
+  ) private view returns (uint32, uint256) {
+    uint256 count = (block.timestamp.sub(_lastRefreshTime)).div(DefaultRefreshTime);
+    uint32 lastRefreshTime = uint32(_lastRefreshTime);
+    uint256 tokenAmount = _tokenAmount;
+    if (count > 0) {
+      lastRefreshTime = uint32(_lastRefreshTime.add((uint256)(DefaultRefreshTime).mul(count)));
+      tokenAmount = _defaultAmount;
+    }
+    return (lastRefreshTime, tokenAmount);
   }
 }

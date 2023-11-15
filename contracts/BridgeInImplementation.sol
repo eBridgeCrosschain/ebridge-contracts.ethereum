@@ -169,7 +169,7 @@ contract BridgeInImplementation is ProxyStorage {
         string calldata targetChainId,
         string calldata targetAddress
     ) external payable whenNotPaused {
-        assertReceiptInfo(tokenAddress,msg.value,targetChainId);
+        consumeReceiptLimit(tokenAddress,msg.value,targetChainId);
         INativeToken(tokenAddress).deposit{value: msg.value}();
         IERC20(tokenAddress).safeApprove(bridgeOut, msg.value);
         generateReceipt(tokenAddress, msg.value, targetChainId, targetAddress);
@@ -182,14 +182,14 @@ contract BridgeInImplementation is ProxyStorage {
         string calldata targetChainId,
         string calldata targetAddress
     ) external whenNotPaused {
-        assertReceiptInfo(token,amount,targetChainId);
+        consumeReceiptLimit(token,amount,targetChainId);
         // Deposit token to this contract
         IERC20(token).safeTransferFrom(msg.sender, address(this), amount);
         IERC20(token).safeApprove(bridgeOut, amount);
         generateReceipt(token, amount, targetChainId, targetAddress);
     }
 
-    function assertReceiptInfo(
+    function consumeReceiptLimit(
         address token,
         uint256 amount,
         string calldata targetChainId

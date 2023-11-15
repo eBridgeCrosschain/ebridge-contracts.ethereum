@@ -7,7 +7,7 @@ library RateLimiter {
   error BucketOverfilled();
   error TokenRateLimitReached(uint256 minWaitInSeconds, uint256 available, address tokenAddress);
   error MaxCapacityExceeded(uint256 capacity, uint256 amount);
-  event TokensConsumed(address tokenAddress, uint256 tokens);
+  event TokensConsumed(address tokenAddress, uint256 amount);
   event ConfigChanged(TokenBucketConfig config);
 
   struct TokenBucket {
