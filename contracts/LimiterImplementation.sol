@@ -127,15 +127,7 @@ contract LimiterImplementation is ProxyStorage {
     string memory targetChainId
   ) public view returns (uint256) {
     bytes32 bucketId = BridgeInLibrary._generateTokenKey(token, targetChainId);
-    RateLimiter.TokenBucket memory bucket = tokenBucket[bucketId]._currentTokenBucketState();
-    if (amount > bucket.currentTokenAmount) {
-      return
-        ((amount.sub(bucket.currentTokenAmount)).add(((uint256)(bucket.rate).sub(1)))).div(
-          bucket.rate
-        );
-    } else {
-      return 0;
-    }
+    return GetMinWaitSeconds(bucketId,amount);
   }
 
   function GetSwapBucketMinWaitSeconds(
@@ -144,7 +136,11 @@ contract LimiterImplementation is ProxyStorage {
     string memory fromChainId
   ) public view returns (uint256) {
     bytes32 swapId = IBridgeOut(bridgeOut).getSwapId(token, fromChainId);
-    RateLimiter.TokenBucket memory bucket = tokenBucket[swapId]._currentTokenBucketState();
+    return GetMinWaitSeconds(swapId,amount);
+  }
+
+  function GetMinWaitSeconds(bytes32 bucketId,uint256 amount) private view returns (uint256) {
+     RateLimiter.TokenBucket memory bucket = tokenBucket[bucketId]._currentTokenBucketState();
     if (amount > bucket.currentTokenAmount) {
       return
         ((amount.sub(bucket.currentTokenAmount)).add(((uint256)(bucket.rate).sub(1)))).div(
