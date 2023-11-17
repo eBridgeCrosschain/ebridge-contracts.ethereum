@@ -8,7 +8,4 @@ interface ILimiter {
 
   function consumeTokenBucket(bytes32 bucketId, address tokenAddress, uint256 amount) external;
 
-  function setDailyLimit(DailyLimiter.DailyLimitConfig[] memory dailyLimitConfigs) external;
-
-  function SetTokenBucketConfig(RateLimiter.TokenBucketConfig[] memory configs) external;
 }

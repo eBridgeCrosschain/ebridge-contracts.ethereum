@@ -166,7 +166,7 @@ describe("BridgeIn", function () {
                     rate:"1000000000000000000"
                 }]
         
-                await limiter.connect(admin).SetTokenBucketConfig(bucketConfigs);
+                await limiter.connect(admin).setTokenBucketConfig(bucketConfigs);
 
                 await bridgeIn.createNativeTokenReceipt(chainId,targetAddress,{value:'1000000000000000000'});
 
@@ -194,7 +194,7 @@ describe("BridgeIn", function () {
                 }
                 {
                     console.log("token bucket.");
-                    var receiptRateLimitInfo = await limiter.GetCurrentReceiptTokenBucketState(weth.address,chainId);
+                    var receiptRateLimitInfo = await limiter.getCurrentReceiptTokenBucketState(weth.address,chainId);
                     expect(receiptRateLimitInfo.currentTokenAmount).to.equal("9000000000000000000");
                     expect(receiptRateLimitInfo.lastUpdatedTime).to.equal(new BigNumber(await time.latest()));
                     expect(receiptRateLimitInfo.isEnabled).to.equal(true);

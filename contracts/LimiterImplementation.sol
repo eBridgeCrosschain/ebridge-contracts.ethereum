@@ -74,14 +74,14 @@ contract LimiterImplementation is ProxyStorage {
         return dailyLimit[swapId]._currentDailyLimit();
   }
 
-  function SetTokenBucketConfig(RateLimiter.TokenBucketConfig[] memory configs) external onlyAdmin {
+  function setTokenBucketConfig(RateLimiter.TokenBucketConfig[] memory configs) external onlyAdmin {
     for (uint i = 0; i < configs.length; i++) {
       RateLimiter.TokenBucketConfig memory config = configs[i];
       tokenBucket[config.bucketId]._configTokenBucket(configs[i]);
     }
   }
 
-  function GetCurrentReceiptTokenBucketState(
+  function getCurrentReceiptTokenBucketState(
     address token,
     string memory targetChainId
   ) public view returns (RateLimiter.TokenBucket memory) {
@@ -89,7 +89,7 @@ contract LimiterImplementation is ProxyStorage {
     return tokenBucket[bucketId]._currentTokenBucketState();
   }
 
-  function GetCurrentReceiptTokenBucketStates(
+  function getCurrentReceiptTokenBucketStates(
     address[] memory tokens,
     string[] memory targetChainIds
   ) public view returns (RateLimiter.TokenBucket[] memory _tokenBuckets) {
@@ -101,7 +101,7 @@ contract LimiterImplementation is ProxyStorage {
     return _tokenBuckets;
   }
 
-  function GetCurrentSwapTokenBucketState(
+  function getCurrentSwapTokenBucketState(
     address token,
     string memory fromChainId
   ) public view returns (RateLimiter.TokenBucket memory) {
@@ -109,7 +109,7 @@ contract LimiterImplementation is ProxyStorage {
     return tokenBucket[swapId]._currentTokenBucketState();
   }
 
-    function GetCurrentSwapTokenBucketStates(
+    function getCurrentSwapTokenBucketStates(
     address[] memory tokens,
     string[] memory fromChainIds
   ) public view returns (RateLimiter.TokenBucket[] memory _tokenBuckets) {
@@ -121,25 +121,25 @@ contract LimiterImplementation is ProxyStorage {
     return _tokenBuckets;
   }
 
-  function GetReceiptBucketMinWaitSeconds(
+  function getReceiptBucketMinWaitSeconds(
     uint256 amount,
     address token,
     string memory targetChainId
   ) public view returns (uint256) {
     bytes32 bucketId = BridgeInLibrary._generateTokenKey(token, targetChainId);
-    return GetMinWaitSeconds(bucketId,amount);
+    return getMinWaitSeconds(bucketId,amount);
   }
 
-  function GetSwapBucketMinWaitSeconds(
+  function getSwapBucketMinWaitSeconds(
     uint256 amount,
     address token,
     string memory fromChainId
   ) public view returns (uint256) {
     bytes32 swapId = IBridgeOut(bridgeOut).getSwapId(token, fromChainId);
-    return GetMinWaitSeconds(swapId,amount);
+    return getMinWaitSeconds(swapId,amount);
   }
 
-  function GetMinWaitSeconds(bytes32 bucketId,uint256 amount) private view returns (uint256) {
+  function getMinWaitSeconds(bytes32 bucketId,uint256 amount) private view returns (uint256) {
      RateLimiter.TokenBucket memory bucket = tokenBucket[bucketId]._currentTokenBucketState();
     if (amount > bucket.currentTokenAmount) {
       return
