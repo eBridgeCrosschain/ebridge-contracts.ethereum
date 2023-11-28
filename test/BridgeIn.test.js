@@ -155,7 +155,7 @@ describe("BridgeIn", function () {
                 var configs = [{
                     dailyLimitId : _generateTokenKey(weth.address,chainId),
                     refreshTime : refreshTime,
-                    defaultTokenAmount : "100000000000000000000"
+                    dailyLimit : "100000000000000000000"
                 }]
                 await limiter.connect(admin).setDailyLimit(configs);
 
@@ -188,9 +188,9 @@ describe("BridgeIn", function () {
                 {
                     console.log(await time.latest());
                     var receiptDailyLimitInfo = await limiter.getReceiptDailyLimit(weth.address,chainId);
-                    expect(receiptDailyLimitInfo.tokenAmount).to.equal("99000000000000000000");
-                    expect(receiptDailyLimitInfo.refreshTime).to.equal(refreshTime);
-                    expect(receiptDailyLimitInfo.defaultTokenAmount).to.equal("100000000000000000000");
+                    expect(receiptDailyLimitInfo.remainingTokenAmount).to.equal("99000000000000000000");
+                    expect(receiptDailyLimitInfo.lastRefreshTime).to.equal(refreshTime);
+                    expect(receiptDailyLimitInfo.dailyLimit).to.equal("100000000000000000000");
                 }
                 {
                     console.log("token bucket.");
@@ -206,9 +206,9 @@ describe("BridgeIn", function () {
                     await freezeTime(blockTimestamp1.toNumber());
                     console.log(await time.latest());
                     var receiptDailyLimitInfo = await limiter.getReceiptDailyLimit(weth.address,chainId);
-                    expect(receiptDailyLimitInfo.tokenAmount).to.equal("100000000000000000000");
-                    expect(receiptDailyLimitInfo.refreshTime).to.equal(refreshTime+86400*2);
-                    expect(receiptDailyLimitInfo.defaultTokenAmount).to.equal("100000000000000000000");
+                    expect(receiptDailyLimitInfo.remainingTokenAmount).to.equal("100000000000000000000");
+                    expect(receiptDailyLimitInfo.lastRefreshTime).to.equal(refreshTime+86400*2);
+                    expect(receiptDailyLimitInfo.dailyLimit).to.equal("100000000000000000000");
                 }
                 
             })
@@ -233,12 +233,12 @@ describe("BridgeIn", function () {
                 var configs = [{
                     dailyLimitId : _generateTokenKey(elf.address,chainId),
                     refreshTime : refreshTime,
-                    defaultTokenAmount : "1000000"
+                    dailyLimit : "1000000"
                 },
                 {
                     dailyLimitId : _generateTokenKey(usdt.address,chainId),
                     refreshTime : refreshTime,
-                    defaultTokenAmount : "1000000"
+                    dailyLimit : "1000000"
                 }]
                 await limiter.connect(admin).setDailyLimit(configs);
 
@@ -279,12 +279,12 @@ describe("BridgeIn", function () {
                 var configs = [{
                     dailyLimitId : _generateTokenKey(elf.address,chainId),
                     refreshTime : refreshTime,
-                    defaultTokenAmount : "1000000"
+                    dailyLimit : "1000000"
                 },
                 {
                     dailyLimitId : _generateTokenKey(usdt.address,chainId),
                     refreshTime : refreshTime,
-                    defaultTokenAmount : "1000000"
+                    dailyLimit : "1000000"
                 }]
                 await limiter.connect(admin).setDailyLimit(configs);
 
@@ -337,12 +337,12 @@ describe("BridgeIn", function () {
                 var configs = [{
                     dailyLimitId : _generateTokenKey(elf.address,chainId),
                     refreshTime : refreshTime,
-                    defaultTokenAmount : "1000000"
+                    dailyLimit : "1000000"
                 },
                 {
                     dailyLimitId : _generateTokenKey(usdt.address,chainId),
                     refreshTime : refreshTime,
-                    defaultTokenAmount : "1000000"
+                    dailyLimit : "1000000"
                 }]
                 await limiter.connect(admin).setDailyLimit(configs);
 
@@ -420,12 +420,12 @@ describe("BridgeIn", function () {
                 var configs = [{
                     dailyLimitId : _generateTokenKey(elf.address,chainId),
                     refreshTime : refreshTime,
-                    defaultTokenAmount : "1000000"
+                    dailyLimit : "1000000"
                 },
                 {
                     dailyLimitId : _generateTokenKey(usdt.address,chainId),
                     refreshTime : refreshTime,
-                    defaultTokenAmount : "1000000"
+                    dailyLimit : "1000000"
                 }]
                 await limiter.connect(admin).setDailyLimit(configs);
 
@@ -507,12 +507,12 @@ describe("BridgeIn", function () {
                 var configs = [{
                     dailyLimitId : _generateTokenKey(elf.address,chainId),
                     refreshTime : refreshTime,
-                    defaultTokenAmount : "1000000"
+                    dailyLimit : "1000000"
                 },
                 {
                     dailyLimitId : _generateTokenKey(usdt.address,chainId),
                     refreshTime : refreshTime,
-                    defaultTokenAmount : "1000000"
+                    dailyLimit : "1000000"
                 }]
                 await limiter.connect(admin).setDailyLimit(configs);
 
@@ -581,12 +581,12 @@ describe("BridgeIn", function () {
                 var configs = [{
                     dailyLimitId : _generateTokenKey(elf.address,chainId),
                     refreshTime : refreshTime,
-                    defaultTokenAmount : "1000000"
+                    dailyLimit : "1000000"
                 },
                 {
                     dailyLimitId : _generateTokenKey(usdt.address,chainId),
                     refreshTime : refreshTime,
-                    defaultTokenAmount : "1000000"
+                    dailyLimit : "1000000"
                 }]
                 await limiter.connect(admin).setDailyLimit(configs);
 
@@ -632,12 +632,12 @@ describe("BridgeIn", function () {
                 var configs = [{
                     dailyLimitId : _generateTokenKey(elf.address,chainId),
                     refreshTime : refreshTime,
-                    defaultTokenAmount : "1000000"
+                    dailyLimit : "1000000"
                 },
                 {
                     dailyLimitId : _generateTokenKey(usdt.address,chainId),
                     refreshTime : refreshTime,
-                    defaultTokenAmount : "1000000"
+                    dailyLimit : "1000000"
                 }]
                 await limiter.connect(admin).setDailyLimit(configs);
 
@@ -699,12 +699,12 @@ describe("BridgeIn", function () {
                 var configs = [{
                     dailyLimitId : _generateTokenKey(elf.address,chainId),
                     refreshTime : refreshTime,
-                    defaultTokenAmount : "1000000"
+                    dailyLimit : "1000000"
                 },
                 {
                     dailyLimitId : _generateTokenKey(usdt.address,chainId),
                     refreshTime : refreshTime,
-                    defaultTokenAmount : "1000000"
+                    dailyLimit : "1000000"
                 }]
                 await limiter.connect(admin).setDailyLimit(configs);
 

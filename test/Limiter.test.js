@@ -62,24 +62,24 @@ describe("Limiter", function () {
                 var configs = [{
                     dailyLimitId : _generateTokenKey(elf.address,"MainChain"),
                     refreshTime : refreshTime,
-                    defaultTokenAmount : "1000000000000"
+                    dailyLimit : "1000000000000"
                 },
                 {
                     dailyLimitId : _generateTokenKey(usdt.address,"MainChain"),
                     refreshTime : refreshTime,
-                    defaultTokenAmount : "2000000000000"
+                    dailyLimit : "2000000000000"
                 }]
                 await limiter.connect(admin).setDailyLimit(configs);
 
                 var receiptDailyLimitInfo = await limiter.getReceiptDailyLimit(elf.address,"MainChain");
-                expect(receiptDailyLimitInfo.tokenAmount).to.equal("1000000000000");
-                expect(receiptDailyLimitInfo.refreshTime).to.equal(refreshTime);
-                expect(receiptDailyLimitInfo.defaultTokenAmount).to.equal("1000000000000");
+                expect(receiptDailyLimitInfo.remainingTokenAmount).to.equal("1000000000000");
+                expect(receiptDailyLimitInfo.lastRefreshTime).to.equal(refreshTime);
+                expect(receiptDailyLimitInfo.dailyLimit).to.equal("1000000000000");
 
                 receiptDailyLimitInfo = await limiter.getReceiptDailyLimit(usdt.address,"MainChain");
-                expect(receiptDailyLimitInfo.tokenAmount).to.equal("2000000000000");
-                expect(receiptDailyLimitInfo.refreshTime).to.equal(refreshTime);
-                expect(receiptDailyLimitInfo.defaultTokenAmount).to.equal("2000000000000");
+                expect(receiptDailyLimitInfo.remainingTokenAmount).to.equal("2000000000000");
+                expect(receiptDailyLimitInfo.lastRefreshTime).to.equal(refreshTime);
+                expect(receiptDailyLimitInfo.dailyLimit).to.equal("2000000000000");
             });
             it("reset success", async function () {
                 const { owner, admin, limiter } = await loadFixture(deployLimiterFixture);
@@ -92,35 +92,35 @@ describe("Limiter", function () {
                 var configs = [{
                     dailyLimitId : _generateTokenKey(elf.address,"MainChain"),
                     refreshTime : refreshTime,
-                    defaultTokenAmount : "1000000000000"
+                    dailyLimit : "1000000000000"
                 },
                 {
                     dailyLimitId : _generateTokenKey(usdt.address,"MainChain"),
                     refreshTime : refreshTime,
-                    defaultTokenAmount : "2000000000000"
+                    dailyLimit : "2000000000000"
                 }]
                 await limiter.connect(admin).setDailyLimit(configs);
 
                 var receiptDailyLimitInfo = await limiter.getReceiptDailyLimit(elf.address,"MainChain");
-                expect(receiptDailyLimitInfo.tokenAmount).to.equal("1000000000000");
-                expect(receiptDailyLimitInfo.refreshTime).to.equal(refreshTime);
-                expect(receiptDailyLimitInfo.defaultTokenAmount).to.equal("1000000000000");
+                expect(receiptDailyLimitInfo.remainingTokenAmount).to.equal("1000000000000");
+                expect(receiptDailyLimitInfo.lastRefreshTime).to.equal(refreshTime);
+                expect(receiptDailyLimitInfo.dailyLimit).to.equal("1000000000000");
 
                 receiptDailyLimitInfo = await limiter.getReceiptDailyLimit(usdt.address,"MainChain");
-                expect(receiptDailyLimitInfo.tokenAmount).to.equal("2000000000000");
-                expect(receiptDailyLimitInfo.refreshTime).to.equal(refreshTime);
-                expect(receiptDailyLimitInfo.defaultTokenAmount).to.equal("2000000000000");
+                expect(receiptDailyLimitInfo.remainingTokenAmount).to.equal("2000000000000");
+                expect(receiptDailyLimitInfo.lastRefreshTime).to.equal(refreshTime);
+                expect(receiptDailyLimitInfo.dailyLimit).to.equal("2000000000000");
 
                 var configs = [{
                     dailyLimitId : _generateTokenKey(elf.address,"MainChain"),
                     refreshTime : refreshTime,
-                    defaultTokenAmount : "500000000000"
+                    dailyLimit : "500000000000"
                 }]
                 await limiter.connect(admin).setDailyLimit(configs);
                 var receiptDailyLimitInfo = await limiter.getReceiptDailyLimit(elf.address,"MainChain");
-                expect(receiptDailyLimitInfo.tokenAmount).to.equal("500000000000");
-                expect(receiptDailyLimitInfo.refreshTime).to.equal(refreshTime);
-                expect(receiptDailyLimitInfo.defaultTokenAmount).to.equal("500000000000");
+                expect(receiptDailyLimitInfo.remainingTokenAmount).to.equal("500000000000");
+                expect(receiptDailyLimitInfo.lastRefreshTime).to.equal(refreshTime);
+                expect(receiptDailyLimitInfo.dailyLimit).to.equal("500000000000");
 
             });
             it("Only daily limits are supported within the contract", async function () {
@@ -134,15 +134,15 @@ describe("Limiter", function () {
                 var configs = [{
                     dailyLimitId : _generateTokenKey(elf.address,"MainChain"),
                     refreshTime : refreshTime,
-                    defaultTokenAmount : "1000000000000"
+                    dailyLimit : "1000000000000"
                 },
                 {
                     dailyLimitId : _generateTokenKey(usdt.address,"MainChain"),
                     refreshTime : refreshTime,
-                    defaultTokenAmount : "2000000000000"
+                    dailyLimit : "2000000000000"
                 }]
                 await expect(limiter.connect(admin).setDailyLimit(configs))
-                .to.be.revertedWith("Only daily limits are supported within the contract.");
+                .to.be.revertedWithCustomError(limiter,"InvalidRefreshTime");
 
             
             });
@@ -161,24 +161,24 @@ describe("Limiter", function () {
                 var configs = [{
                     dailyLimitId : swapId1,
                     refreshTime : refreshTime,
-                    defaultTokenAmount : "3000000000000"
+                    dailyLimit : "3000000000000"
                 },
                 {
                     dailyLimitId : swapId2,
                     refreshTime : refreshTime,
-                    defaultTokenAmount : "4000000000000"
+                    dailyLimit : "4000000000000"
                 }]
                 await limiter.connect(admin).setDailyLimit(configs);
 
                 var swapDailyLimitInfo = await limiter.getSwapDailyLimit(swapId1);
-                expect(swapDailyLimitInfo.tokenAmount).to.equal("3000000000000");
-                expect(swapDailyLimitInfo.refreshTime).to.equal(refreshTime);
-                expect(swapDailyLimitInfo.defaultTokenAmount).to.equal("3000000000000");
+                expect(swapDailyLimitInfo.remainingTokenAmount).to.equal("3000000000000");
+                expect(swapDailyLimitInfo.lastRefreshTime).to.equal(refreshTime);
+                expect(swapDailyLimitInfo.dailyLimit).to.equal("3000000000000");
 
                 swapDailyLimitInfo = await limiter.getSwapDailyLimit(swapId2);
-                expect(swapDailyLimitInfo.tokenAmount).to.equal("4000000000000");
-                expect(swapDailyLimitInfo.refreshTime).to.equal(refreshTime);
-                expect(swapDailyLimitInfo.defaultTokenAmount).to.equal("4000000000000");
+                expect(swapDailyLimitInfo.remainingTokenAmount).to.equal("4000000000000");
+                expect(swapDailyLimitInfo.lastRefreshTime).to.equal(refreshTime);
+                expect(swapDailyLimitInfo.dailyLimit).to.equal("4000000000000");
             });
             it("consume daily limit", async function () {
                 const { owner, admin, limiter, bridgeInMock, bridgeOutMock } = await loadFixture(deployLimiterFixture);
@@ -193,41 +193,41 @@ describe("Limiter", function () {
                 var configs = [{
                     dailyLimitId : elfTokenKey,
                     refreshTime : refreshTime,
-                    defaultTokenAmount : "1000000000000"
+                    dailyLimit : "1000000000000"
                 },
                 {
                     dailyLimitId : usdtTokenKey,
                     refreshTime : refreshTime,
-                    defaultTokenAmount : "2000000000000"
+                    dailyLimit : "2000000000000"
                 }]
                 await limiter.connect(admin).setDailyLimit(configs);
                 
                 await bridgeInMock.consumeLimit(limiter.address, elfTokenKey, elf.address, '10000000000');
                 
                 var receiptDailyLimitInfo = await limiter.getReceiptDailyLimit(elf.address,"MainChain");
-                expect(receiptDailyLimitInfo.tokenAmount).to.equal("990000000000");
-                expect(receiptDailyLimitInfo.refreshTime).to.equal(refreshTime);
-                expect(receiptDailyLimitInfo.defaultTokenAmount).to.equal("1000000000000");
+                expect(receiptDailyLimitInfo.remainingTokenAmount).to.equal("990000000000");
+                expect(receiptDailyLimitInfo.lastRefreshTime).to.equal(refreshTime);
+                expect(receiptDailyLimitInfo.dailyLimit).to.equal("1000000000000");
 
                 let blockTimestamp = new BigNumber(86500);
                 await freezeTime(blockTimestamp.toNumber());
                 await bridgeInMock.consumeLimit(limiter.address, elfTokenKey, elf.address, '20000000000');
                 
                 var receiptDailyLimitInfo = await limiter.getReceiptDailyLimit(elf.address,"MainChain");
-                expect(receiptDailyLimitInfo.tokenAmount).to.equal("980000000000");
+                expect(receiptDailyLimitInfo.remainingTokenAmount).to.equal("980000000000");
                 const timestamp1 = Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()+1, 0, 0, 0, 0);
-                expect(receiptDailyLimitInfo.refreshTime).to.equal(timestamp1 / 1000);
-                expect(receiptDailyLimitInfo.defaultTokenAmount).to.equal("1000000000000");
+                expect(receiptDailyLimitInfo.lastRefreshTime).to.equal(timestamp1 / 1000);
+                expect(receiptDailyLimitInfo.dailyLimit).to.equal("1000000000000");
 
                 let blockTimestamp1 = new BigNumber(173000);
                 await freezeTime(blockTimestamp1.toNumber());
                 await bridgeInMock.consumeLimit(limiter.address, elfTokenKey, elf.address, '30000000000');
                 
                 var receiptDailyLimitInfo = await limiter.getReceiptDailyLimit(elf.address,"MainChain");
-                expect(receiptDailyLimitInfo.tokenAmount).to.equal("970000000000");
+                expect(receiptDailyLimitInfo.remainingTokenAmount).to.equal("970000000000");
                 const timestamp2 = Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()+3, 0, 0, 0, 0);
-                expect(receiptDailyLimitInfo.refreshTime).to.equal(timestamp2 / 1000);
-                expect(receiptDailyLimitInfo.defaultTokenAmount).to.equal("1000000000000");
+                expect(receiptDailyLimitInfo.lastRefreshTime).to.equal(timestamp2 / 1000);
+                expect(receiptDailyLimitInfo.dailyLimit).to.equal("1000000000000");
             });
             it("should revert when consume daily limit", async function () {
                 const { owner, admin, limiter, bridgeInMock, bridgeOutMock } = await loadFixture(deployLimiterFixture);
@@ -242,12 +242,12 @@ describe("Limiter", function () {
                 var configs = [{
                     dailyLimitId : elfTokenKey,
                     refreshTime : refreshTime,
-                    defaultTokenAmount : "1000000000000"
+                    dailyLimit : "1000000000000"
                 },
                 {
                     dailyLimitId : usdtTokenKey,
                     refreshTime : refreshTime,
-                    defaultTokenAmount : "2000000000000"
+                    dailyLimit : "2000000000000"
                 }]
                 await limiter.connect(admin).setDailyLimit(configs);
                 
@@ -270,21 +270,21 @@ describe("Limiter", function () {
                 var configs = [{
                     dailyLimitId : swapId1,
                     refreshTime : refreshTime,
-                    defaultTokenAmount : "1000000000000"
+                    dailyLimit : "1000000000000"
                 },
                 {
                     dailyLimitId : swapId2,
                     refreshTime : refreshTime,
-                    defaultTokenAmount : "2000000000000"
+                    dailyLimit : "2000000000000"
                 }]
                 await limiter.connect(admin).setDailyLimit(configs);
                 
                 await bridgeInMock.consumeLimit(limiter.address, swapId1, elf.address, '10000000000');
                 
                 var swapDailyLimitInfo = await limiter.getSwapDailyLimit(swapId1);
-                expect(swapDailyLimitInfo.tokenAmount).to.equal("990000000000");
-                expect(swapDailyLimitInfo.refreshTime).to.equal(refreshTime);
-                expect(swapDailyLimitInfo.defaultTokenAmount).to.equal("1000000000000");
+                expect(swapDailyLimitInfo.remainingTokenAmount).to.equal("990000000000");
+                expect(swapDailyLimitInfo.lastRefreshTime).to.equal(refreshTime);
+                expect(swapDailyLimitInfo.dailyLimit).to.equal("1000000000000");
 
             });
         });
