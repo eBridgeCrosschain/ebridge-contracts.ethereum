@@ -10,7 +10,7 @@ library DailyLimiter {
     event TokenDailyLimitConsumed(address tokenAddress, uint256 amount);
 
     struct DailyLimitTokenInfo {
-        uint256 remainingTokenAmount; // Renamed from 'tokensRemaining'
+        uint256 remainingTokenAmount;
         uint32 lastRefreshTime;
         uint256 dailyLimit;
     }
@@ -57,7 +57,7 @@ library DailyLimiter {
         address _tokenAddress,
         uint256 _amount
     ) internal {
-        (uint32 refreshTime, uint256 tokenAmount) = _refreshRemainingTokenAmount(
+        (uint32 refreshTime, uint256 remainingTokenAmount) = _refreshRemainingTokenAmount(
             _dailyLimitTokenInfo.lastRefreshTime,
             _dailyLimitTokenInfo.remainingTokenAmount,
             _dailyLimitTokenInfo.dailyLimit
@@ -65,11 +65,11 @@ library DailyLimiter {
 
         _dailyLimitTokenInfo.lastRefreshTime = refreshTime;
 
-        if (_amount > tokenAmount) {
-            revert DailyLimitExceeded(tokenAmount, _amount);
+        if (_amount > remainingTokenAmount) {
+            revert DailyLimitExceeded(remainingTokenAmount, _amount);
         }
 
-        _dailyLimitTokenInfo.remainingTokenAmount = tokenAmount - _amount;
+        _dailyLimitTokenInfo.remainingTokenAmount = remainingTokenAmount - _amount;
         emit TokenDailyLimitConsumed(_tokenAddress, _amount);
     }
 
