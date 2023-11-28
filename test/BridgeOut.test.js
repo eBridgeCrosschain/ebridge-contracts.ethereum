@@ -549,7 +549,7 @@ describe("BridgeOut", function () {
                 var configs = [{
                     dailyLimitId : swapId,
                     refreshTime : refreshTime,
-                    defaultTokenAmount : "3000000000000"
+                    dailyLimit : "3000000000000"
                 }]
                 await limiter.connect(admin).setDailyLimit(configs);
 
@@ -628,7 +628,7 @@ describe("BridgeOut", function () {
                 var configs = [{
                     dailyLimitId : swapId,
                     refreshTime : refreshTime,
-                    defaultTokenAmount : "3000000000000"
+                    dailyLimit : "3000000000000"
                 }]
                 await limiter.connect(admin).setDailyLimit(configs);
 
@@ -706,7 +706,7 @@ describe("BridgeOut", function () {
                 var configs = [{
                     dailyLimitId : swapId,
                     refreshTime : refreshTime,
-                    defaultTokenAmount : "3000000000000"
+                    dailyLimit : "3000000000000"
                 }]
                 await limiter.connect(admin).setDailyLimit(configs);
 
@@ -772,7 +772,7 @@ describe("BridgeOut", function () {
                 var configs = [{
                     dailyLimitId : swapId,
                     refreshTime : refreshTime,
-                    defaultTokenAmount : "3000000000000000000"
+                    dailyLimit : "3000000000000000000"
                 }]
                 await limiter.connect(admin).setDailyLimit(configs);
 
@@ -827,7 +827,7 @@ describe("BridgeOut", function () {
                 var configs = [{
                     dailyLimitId : swapId,
                     refreshTime : refreshTime,
-                    defaultTokenAmount : "3000000000000000000"
+                    dailyLimit : "3000000000000000000"
                 }]
                 await limiter.connect(admin).setDailyLimit(configs);
 
@@ -881,7 +881,7 @@ describe("BridgeOut", function () {
                 var configs = [{
                     dailyLimitId : swapId,
                     refreshTime : refreshTime,
-                    defaultTokenAmount : "3000000000000000000"
+                    dailyLimit : "3000000000000000000"
                 }]
                 await limiter.connect(admin).setDailyLimit(configs);
 
@@ -953,7 +953,7 @@ describe("BridgeOut", function () {
                 var configs = [{
                     dailyLimitId : swapId,
                     refreshTime : refreshTime,
-                    defaultTokenAmount : "50"
+                    dailyLimit : "50"
                 }]
                 await limiter.connect(admin).setDailyLimit(configs);
 
@@ -994,7 +994,7 @@ describe("BridgeOut", function () {
                 var configs = [{
                     dailyLimitId : swapId,
                     refreshTime : refreshTime,
-                    defaultTokenAmount : "200"
+                    dailyLimit : "200"
                 }]
                 await limiter.connect(admin).setDailyLimit(configs);
 
@@ -1035,7 +1035,7 @@ describe("BridgeOut", function () {
                 var configs = [{
                     dailyLimitId : swapId,
                     refreshTime : refreshTime,
-                    defaultTokenAmount : "3000000000000"
+                    dailyLimit : "3000000000000"
                 }]
                 await limiter.connect(admin).setDailyLimit(configs);
 
