@@ -11,7 +11,7 @@ describe("Limiter", function () {
     async function deployLimiterFixture() {
         // Contracts are deployed using the first signer/account by default
 
-        const [owner, admin, otherAccount1, otherAccount2] = await ethers.getSigners();
+        const [owner, admin, account1, otherAccount2] = await ethers.getSigners();
         const BridgeInLibrary = await ethers.getContractFactory("BridgeInLibrary");
         const bridgeInLibrary = await BridgeInLibrary.deploy();
         const MockBridgeIn = await ethers.getContractFactory("MockBridgeIn");
@@ -28,8 +28,8 @@ describe("Limiter", function () {
         const limiterImplementation = await LimiterImplementation.deploy();
         const LimiterProxy = await Limiter.deploy(bridgeInMock.address,bridgeOutMock.address,admin.address,limiterImplementation.address);
         const limiter = LimiterImplementation.attach(LimiterProxy.address);
-        
-        return { owner, admin, limiter, bridgeInMock, bridgeOutMock };
+
+        return { owner, admin, limiter, bridgeInMock, bridgeOutMock,account1 };
     }
     async function deployTokensFixture() {
         const ELF = await ethers.getContractFactory("ELF");
@@ -48,6 +48,24 @@ describe("Limiter", function () {
                 expect(await limiter.owner()).to.equal(owner.address);
             });
         })
+        describe("admin test", function () {
+            it("change admin success", async function () {
+                const { owner, admin, limiter,bridgeInMock,bridgeOutMock,account1 } = await loadFixture(deployLimiterFixture);
+                await limiter.connect(admin).changeAdmin(account1.address);
+                var adminAddress = await limiter.admin();
+                expect(adminAddress).to.equal(account1.address);
+                await expect(limiter.connect(admin).changeAdmin(account1.address))
+                .to.be.revertedWith("no permission");
+            });
+            it("change admin fail", async function () {
+                const { owner, admin, limiter,bridgeInMock,bridgeOutMock,account1 } = await loadFixture(deployLimiterFixture);     
+                await expect(limiter.changeAdmin(account1.address))
+                .to.be.revertedWith("no permission");
+                var adminAddress = await limiter.admin();
+                expect(adminAddress).to.equal(admin.address);
+            });
+        })
+        
     });
     describe("Action fuctionTest", function () {
         describe("daily limit",async function () {
