@@ -28,6 +28,11 @@ contract LimiterImplementation is ProxyStorage {
     _;
   }
 
+  function changeAdmin(address _admin) external onlyAdmin{
+    require(_admin != address(0), "invalid input");
+    admin = _admin;
+  }
+
   function initialize(address _bridgeIn, address _bridgeOut, address _admin) external onlyOwner {
     require(bridgeIn == address(0), 'already initialized');
     bridgeIn = _bridgeIn;
