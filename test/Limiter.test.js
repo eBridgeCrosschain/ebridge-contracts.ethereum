@@ -74,7 +74,7 @@ describe("Limiter", function () {
                 const { elf, usdt } = await loadFixture(deployTokensFixture);
             
                 const date = new Date();
-                const timestamp = Date.UTC(date.getFullYear(), date.getMonth(), date.getDate(), 0, 0, 0, 0);
+                const timestamp = Date.UTC(date.getFullYear(), date.getMonth(), date.getUTCDate(), 0, 0, 0, 0);
                 var refreshTime = timestamp / 1000;
                 console.log(refreshTime);
                 var configs = [{
@@ -104,7 +104,7 @@ describe("Limiter", function () {
                 const { elf, usdt } = await loadFixture(deployTokensFixture);
             
                 const date = new Date();
-                const timestamp = Date.UTC(date.getFullYear(), date.getMonth(), date.getDate(), 0, 0, 0, 0);
+                const timestamp = Date.UTC(date.getFullYear(), date.getMonth(), date.getUTCDate(), 0, 0, 0, 0);
                 var refreshTime = timestamp  / 1000;
                 console.log(refreshTime);
                 var configs = [{
@@ -146,7 +146,7 @@ describe("Limiter", function () {
                 const { elf, usdt } = await loadFixture(deployTokensFixture);
             
                 const date = new Date();
-                const timestamp = Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()+2, 0, 0, 0, 0);
+                const timestamp = Date.UTC(date.getFullYear(), date.getMonth(), date.getUTCDate()+2, 0, 0, 0, 0);
                 var refreshTime = timestamp / 1000;
                 console.log(refreshTime);
                 var configs = [{
@@ -169,7 +169,7 @@ describe("Limiter", function () {
                 const { elf, usdt } = await loadFixture(deployTokensFixture);
             
                 const date = new Date();
-                const timestamp = Date.UTC(date.getFullYear(), date.getMonth(), date.getDate(), 0, 0, 0, 0);
+                const timestamp = Date.UTC(date.getFullYear(), date.getMonth(), date.getUTCDate(), 0, 0, 0, 0);
                 var refreshTime = timestamp / 1000;
                 console.log(refreshTime);
                 var data1 = ethers.utils.solidityPack(["address"], [elf.address]);
@@ -203,7 +203,7 @@ describe("Limiter", function () {
                 const { elf, usdt } = await loadFixture(deployTokensFixture);
 
                 const date = new Date();
-                const timestamp = Date.UTC(date.getFullYear(), date.getMonth(), date.getDate(), 0, 0, 0, 0);
+                const timestamp = Date.UTC(date.getFullYear(), date.getMonth(), date.getUTCDate(), 0, 0, 0, 0);
                 var refreshTime = timestamp / 1000;
                 console.log(refreshTime);
                 var elfTokenKey = _generateTokenKey(elf.address,"MainChain");
@@ -233,7 +233,7 @@ describe("Limiter", function () {
                 
                 var receiptDailyLimitInfo = await limiter.getReceiptDailyLimit(elf.address,"MainChain");
                 expect(receiptDailyLimitInfo.tokenAmount).to.equal("980000000000");
-                const timestamp1 = Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()+1, 0, 0, 0, 0);
+                const timestamp1 = Date.UTC(date.getFullYear(), date.getMonth(), date.getUTCDate()+1, 0, 0, 0, 0);
                 expect(receiptDailyLimitInfo.refreshTime).to.equal(timestamp1 / 1000);
                 expect(receiptDailyLimitInfo.defaultTokenAmount).to.equal("1000000000000");
 
@@ -243,7 +243,7 @@ describe("Limiter", function () {
                 
                 var receiptDailyLimitInfo = await limiter.getReceiptDailyLimit(elf.address,"MainChain");
                 expect(receiptDailyLimitInfo.tokenAmount).to.equal("970000000000");
-                const timestamp2 = Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()+3, 0, 0, 0, 0);
+                const timestamp2 = Date.UTC(date.getFullYear(), date.getMonth(), date.getUTCDate()+3, 0, 0, 0, 0);
                 expect(receiptDailyLimitInfo.refreshTime).to.equal(timestamp2 / 1000);
                 expect(receiptDailyLimitInfo.defaultTokenAmount).to.equal("1000000000000");
             });
@@ -252,7 +252,7 @@ describe("Limiter", function () {
                 const { elf, usdt } = await loadFixture(deployTokensFixture);
 
                 const date = new Date();
-                const timestamp = Date.UTC(date.getFullYear(), date.getMonth(), date.getDate(), 0, 0, 0, 0);
+                const timestamp = Date.UTC(date.getFullYear(), date.getMonth(), date.getUTCDate(), 0, 0, 0, 0);
                 var refreshTime = timestamp / 1000;
                 console.log(refreshTime);
                 var elfTokenKey = _generateTokenKey(elf.address,"MainChain");
@@ -278,7 +278,7 @@ describe("Limiter", function () {
                 const { elf, usdt } = await loadFixture(deployTokensFixture);
 
                 const date = new Date();
-                const timestamp = Date.UTC(date.getFullYear(), date.getMonth(), date.getDate(), 0, 0, 0, 0);
+                const timestamp = Date.UTC(date.getFullYear(), date.getMonth(), date.getUTCDate(), 0, 0, 0, 0);
                 var refreshTime = timestamp / 1000;
                 console.log(refreshTime);
                 var data1 = ethers.utils.solidityPack(["address"], [elf.address]);
@@ -410,7 +410,7 @@ describe("Limiter", function () {
                 const { elf, usdt } = await loadFixture(deployTokensFixture);
             
                 const date = new Date();
-                const timestamp = Date.UTC(date.getFullYear(), date.getMonth(), date.getDate(), 0, 0, 0, 0);
+                const timestamp = Date.UTC(date.getFullYear(), date.getMonth(), date.getUTCDate(), 0, 0, 0, 0);
                 var refreshTime = timestamp / 1000;
                 console.log(refreshTime);
                 await bridgeOutMock.createSwap(elf.address,"tdvv");

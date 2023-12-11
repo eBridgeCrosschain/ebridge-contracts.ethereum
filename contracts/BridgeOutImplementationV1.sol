@@ -217,7 +217,8 @@ contract BridgeOutImplementationV1 is ProxyStorage {
         require(!isPaused, "BridgeOut:paused");
         require(msg.sender == receiverAddress, "no permission");
         bytes32 spaceId = swapInfos[swapId].spaceId;
-        require(spaceId != bytes32(0) && amount > 0, "invalid input");
+        require(spaceId != bytes32(0), "swap pair not found");
+        require(amount > 0, "invalid amount");
         
         SwapInfo storage swapInfo = swapInfos[swapId];
         uint256 targetTokenAmount = amount
@@ -306,7 +307,7 @@ contract BridgeOutImplementationV1 is ProxyStorage {
                 regiment
             );
         (uint256 receiptIndex, bytes32 receiptHash) = 
-            BridgeOutLibrary.checkSignersThresholdAndDecodeReport(signersCount,threshold,_report);
+            BridgeOutLibrary.checkSignersThresholdAndDecodeReport(signersCount,signatureThreshold,_report);
         bytes32[] memory leafNodes = new bytes32[](1);
         leafNodes[0] = receiptHash;
         require(ledger[receiptHash].leafNodeIndex == 0, "already recorded");

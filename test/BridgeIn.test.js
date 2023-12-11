@@ -149,7 +149,7 @@ describe("BridgeIn", function () {
                 console.log("before balance:",beforeBalance);
 
                 const date = new Date();
-                const timestamp = Date.UTC(date.getFullYear(), date.getMonth(), date.getDate(), 0, 0, 0, 0);
+                const timestamp = Date.UTC(date.getFullYear(), date.getMonth(), date.getUTCDate(), 0, 0, 0, 0);
                 var refreshTime = timestamp / 1000;
                 console.log(refreshTime);
                 var configs = [{
@@ -227,7 +227,7 @@ describe("BridgeIn", function () {
                 await bridgeIn.connect(otherAccount0).addToken(tokens);
 
                 const date = new Date();
-                const timestamp = Date.UTC(date.getFullYear(), date.getMonth(), date.getDate(), 0, 0, 0, 0);
+                const timestamp = Date.UTC(date.getFullYear(), date.getMonth(), date.getUTCDate(), 0, 0, 0, 0);
                 var refreshTime = timestamp / 1000;
                 console.log(refreshTime);
                 var configs = [{
@@ -273,7 +273,7 @@ describe("BridgeIn", function () {
                 await bridgeIn.connect(otherAccount0).addToken(tokens);
 
                 const date = new Date();
-                const timestamp = Date.UTC(date.getFullYear(), date.getMonth(), date.getDate(), 0, 0, 0, 0);
+                const timestamp = Date.UTC(date.getFullYear(), date.getMonth(), date.getUTCDate(), 0, 0, 0, 0);
                 var refreshTime = timestamp / 1000;
                 console.log(refreshTime);
                 var configs = [{
@@ -331,7 +331,7 @@ describe("BridgeIn", function () {
                 await bridgeIn.connect(otherAccount0).addToken(tokens1);
 
                 const date = new Date();
-                const timestamp = Date.UTC(date.getFullYear(), date.getMonth(), date.getDate(), 0, 0, 0, 0);
+                const timestamp = Date.UTC(date.getFullYear(), date.getMonth(), date.getUTCDate(), 0, 0, 0, 0);
                 var refreshTime = timestamp / 1000;
                 console.log(refreshTime);
                 var configs = [{
@@ -414,7 +414,7 @@ describe("BridgeIn", function () {
                 await bridgeIn.connect(otherAccount0).addToken(tokens1);
 
                 const date = new Date();
-                const timestamp = Date.UTC(date.getFullYear(), date.getMonth(), date.getDate(), 0, 0, 0, 0);
+                const timestamp = Date.UTC(date.getFullYear(), date.getMonth(), date.getUTCDate(), 0, 0, 0, 0);
                 var refreshTime = timestamp / 1000;
                 console.log(refreshTime);
                 var configs = [{
@@ -501,7 +501,7 @@ describe("BridgeIn", function () {
                 var targetAddress = "AELF_123";
 
                 const date = new Date();
-                const timestamp = Date.UTC(date.getFullYear(), date.getMonth(), date.getDate(), 0, 0, 0, 0);
+                const timestamp = Date.UTC(date.getFullYear(), date.getMonth(), date.getUTCDate(), 0, 0, 0, 0);
                 var refreshTime = timestamp / 1000;
                 console.log(refreshTime);
                 var configs = [{
@@ -575,7 +575,7 @@ describe("BridgeIn", function () {
                 await bridgeIn.connect(otherAccount0).addToken(tokens);
 
                 const date = new Date();
-                const timestamp = Date.UTC(date.getFullYear(), date.getMonth(), date.getDate(), 0, 0, 0, 0);
+                const timestamp = Date.UTC(date.getFullYear(), date.getMonth(), date.getUTCDate(), 0, 0, 0, 0);
                 var refreshTime = timestamp / 1000;
                 console.log(refreshTime);
                 var configs = [{
@@ -626,7 +626,7 @@ describe("BridgeIn", function () {
                 await bridgeIn.connect(otherAccount0).addToken(tokens);
 
                 const date = new Date();
-                const timestamp = Date.UTC(date.getFullYear(), date.getMonth(), date.getDate(), 0, 0, 0, 0);
+                const timestamp = Date.UTC(date.getFullYear(), date.getMonth(), date.getUTCDate(), 0, 0, 0, 0);
                 var refreshTime = timestamp / 1000;
                 console.log(refreshTime);
                 var configs = [{
@@ -693,7 +693,7 @@ describe("BridgeIn", function () {
                 await bridgeIn.connect(otherAccount0).addToken(tokens);
 
                 const date = new Date();
-                const timestamp = Date.UTC(date.getFullYear(), date.getMonth(), date.getDate(), 0, 0, 0, 0);
+                const timestamp = Date.UTC(date.getFullYear(), date.getMonth(), date.getUTCDate(), 0, 0, 0, 0);
                 var refreshTime = timestamp / 1000;
                 console.log(refreshTime);
                 var configs = [{

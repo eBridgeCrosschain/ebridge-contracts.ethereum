@@ -109,9 +109,9 @@ library BridgeOutLibrary {
     function _contains(address[] memory array, address target) internal pure returns(bool) {
         for (uint i = 0; i < array.length; i++) {
             if (target == array[i]) {
-                return false;
+                return true;
             }
         }
-        return true;
+        return false;
     }
 }
