@@ -3,12 +3,14 @@ pragma solidity 0.8.9;
 import "../interfaces/MerkleTreeInterface.sol";
 import "../interfaces/RegimentInterface.sol";
 import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
+import '@openzeppelin/contracts/utils/math/SafeMath.sol';
 
 /**
  * @dev String operations.
  */
 library BridgeOutLibrary {
     using ECDSA for bytes32;
+    using SafeMath for uint256;
 
     function verifyMerkleTree(
         bytes32 spaceId,
@@ -37,30 +39,41 @@ library BridgeOutLibrary {
 
     function verifySignature(
         bytes32 regimentId,
-        bytes calldata _report,
-        bytes32[] calldata _rs,
-        bytes32[] calldata _ss,
-        bytes32 _rawVs,
+        bytes calldata report,
+        bytes32[] calldata rs,
+        bytes32[] calldata ss,
+        bytes32 rawVs,
         address regiment
-    ) external view returns (uint256, bytes32) {
+    ) external view returns (uint8) {
         require(
             IRegiment(regiment).IsRegimentMember(regimentId, msg.sender),
             "no permission to transmit"
         );
-        bytes32 messageDigest = keccak256(_report);
-        address[] memory signers = new address[](_rs.length);
-        for (uint256 i = 0; i < _rs.length; i++) {
-            signers[i] = messageDigest.recover(
-                uint8(_rawVs[i]) + 27,
-                _rs[i],
-                _ss[i]
+        uint8 signersCount = 0;
+        bytes32 messageDigest = keccak256(report);
+        address[] memory signers = new address[](rs.length);
+        for (uint256 i = 0; i < rs.length; i++) {
+            address signer = messageDigest.recover(
+                uint8(rawVs[i]) + 27,
+                rs[i],
+                ss[i]
             );
+            require(!_contains(signers,signer),"non-unique signature");
+            signers[i] = signer;
+            signersCount = uint8(uint256(signersCount).add(1));
         }
         require(
             IRegiment(regiment).IsRegimentMembers(regimentId, signers),
             "no permission to sign"
+        );   
+        return signersCount;
+    }
+
+    function checkSignersThresholdAndDecodeReport(uint8 signersCount, uint8 threshold, bytes calldata report) external pure returns (uint256, bytes32){
+        require(
+            signersCount >= threshold,"not enough signers"
         );
-        (uint256 receiptIndex, bytes32 receiptHash) = decodeReport(_report);
+        (uint256 receiptIndex, bytes32 receiptHash) = decodeReport(report);
         return (receiptIndex, receiptHash);
     }
 
@@ -91,5 +104,14 @@ library BridgeOutLibrary {
         _leafHash = sha256(
             abi.encode(_receiptIdHash, _hashFromAmount, _hashFromAddress)
         );
+    }
+
+    function _contains(address[] memory array, address target) internal pure returns(bool) {
+        for (uint i = 0; i < array.length; i++) {
+            if (target == array[i]) {
+                return false;
+            }
+        }
+        return true;
     }
 }
