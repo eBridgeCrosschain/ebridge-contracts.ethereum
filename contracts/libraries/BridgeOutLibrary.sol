@@ -58,7 +58,7 @@ library BridgeOutLibrary {
                 rs[i],
                 ss[i]
             );
-            require(!_contains(signers,signer),"non-unique signature");
+            require(!_contains(signers,signer), "non-unique signature");
             signers[i] = signer;
             signersCount = uint8(uint256(signersCount).add(1));
         }
@@ -71,7 +71,7 @@ library BridgeOutLibrary {
 
     function checkSignersThresholdAndDecodeReport(uint8 signersCount, uint8 threshold, bytes calldata report) external pure returns (uint256, bytes32){
         require(
-            signersCount >= threshold,"not enough signers"
+            signersCount >= threshold, "not enough signers"
         );
         (uint256 receiptIndex, bytes32 receiptHash) = decodeReport(report);
         return (receiptIndex, receiptHash);

@@ -307,7 +307,7 @@ contract BridgeOutImplementationV1 is ProxyStorage {
                 regiment
             );
         (uint256 receiptIndex, bytes32 receiptHash) = 
-            BridgeOutLibrary.checkSignersThresholdAndDecodeReport(signersCount,signatureThreshold,_report);
+            BridgeOutLibrary.checkSignersThresholdAndDecodeReport(signersCount, signatureThreshold, _report);
         bytes32[] memory leafNodes = new bytes32[](1);
         leafNodes[0] = receiptHash;
         require(ledger[receiptHash].leafNodeIndex == 0, "already recorded");
