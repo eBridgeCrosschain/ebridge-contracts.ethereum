@@ -407,7 +407,7 @@ describe("BridgeOut", function () {
 
         describe("transmit test", function () {
             it("Should tramsmit failed when trigger error", async function () {
-                const { merkleTree, regimentId, regiment, bridgeOut, owner, otherAccount0, otherAccount1,lib } = await loadFixture(deployBridgeOutFixture);
+                const { merkleTree, regimentId, regiment, bridgeOut, owner, otherAccount0, otherAccount1,lib, otherAccount2, admin, limiter } = await loadFixture(deployBridgeOutFixture);
                 const { elf, usdt } = await deployTokensFixture()
                 var chainId = "AELF_MAINNET";
                 _newAdmins = [bridgeOut.address];
@@ -423,6 +423,8 @@ describe("BridgeOut", function () {
 
                 await bridgeOut.createSwap(targetToken, regimentId);
                 var swapId = await bridgeOut.getSwapId(elf.address, chainId);
+
+                await bridgeOut.connect(otherAccount2).setSignatureThreshold(1);
 
                 amount = 100;
                 tokens = token;
@@ -444,6 +446,9 @@ describe("BridgeOut", function () {
 
                 let mnemonic = "test test test test test test test test test test test junk";
                 let mnemonicWallet = ethers.Wallet.fromMnemonic(mnemonic);
+                // let privateKey = "21859b44d5870f5b4ead724b4e82416999ca00106ea843e291b03ef46d412d32";
+                // let wallet = new ethers.Wallet(signer2);
+                mnemonicWallet.address
                 let signKey = new ethers.utils.SigningKey(mnemonicWallet.privateKey);
                 var Signature = signKey.signDigest(hashMessage);
                 var v = Signature.v == 27 ? "0x0000000000000000000000000000000000000000000000000000000000000000" : "0x0100000000000000000000000000000000000000000000000000000000000000"
@@ -475,9 +480,8 @@ describe("BridgeOut", function () {
                     .to.be.revertedWith(error);
 
             })
-            it("Should tramsmit correctly", async function () {
-
-                const { merkleTree, regimentId, regiment, bridgeOut, owner, otherAccount0, otherAccount1, lib } = await loadFixture(deployBridgeOutFixture);
+            it("Should tramsmit failed when threshold > 0",async function (){
+                const { merkleTree, regimentId, regiment, bridgeOut, owner, otherAccount0, otherAccount1, lib, otherAccount2, admin, limiter } = await loadFixture(deployBridgeOutFixture);
                 const { elf, usdt } = await deployTokensFixture()
                 var chainId = "AELF_MAINNET";
                 _newAdmins = [bridgeOut.address];
@@ -490,6 +494,9 @@ describe("BridgeOut", function () {
                     originShare: "100",
                     targetShare: "100"
                 }
+
+
+                await bridgeOut.connect(otherAccount2).setSignatureThreshold(4);
 
                 await bridgeOut.createSwap(targetToken, regimentId);
                 var swapId = await bridgeOut.getSwapId(elf.address, chainId);
@@ -512,12 +519,141 @@ describe("BridgeOut", function () {
                 hashMessage = ethers.utils.keccak256(message.message)
                 await regiment.AddRegimentMember(regimentId, bridgeOut.address);
 
-                let mnemonic = "test test test test test test test test test test test junk";
-                let mnemonicWallet = ethers.Wallet.fromMnemonic(mnemonic);
-                let signKey = new ethers.utils.SigningKey(mnemonicWallet.privateKey);
+                console.log("construct signature.")
+                var privateKeys = _constructSignature()[0];
+                var addresses = _constructSignature()[1];
+                console.log("privateKeys list",privateKeys)
+
+
+                addresses.forEach(async element => {
+                    await regiment.AddRegimentMember(regimentId, element);
+                });
+
+                var memberList = await regiment.GetRegimentMemberList(regimentId);
+                console.log(memberList);
+            
+                var signaturesR = [];
+                var signaturesV = [];
+                let buffer = new Array(32);
+                let buffer1 = new Array(32);
+                for(var i = 0;i<privateKeys.length-1;i++){
+                    let signKey = new ethers.utils.SigningKey(privateKeys[i]);
+                    var Signature = signKey.signDigest(hashMessage);
+                    signaturesR.push(Signature.r);
+                    signaturesV.push(Signature.s);
+                    var vv = Signature.v == 27 ? "00" : "01";
+                    buffer[i] = vv;
+                    buffer1[i] = vv;
+                }
+
+                console.log(buffer);
+                buffer.fill(0,privateKeys.length);
+                var v = Buffer.from(buffer);
+                const bufferAsString = v.toString('hex');
+                const signatureV = "0x"+bufferAsString;
+                console.log("signature V:",signatureV)
+
+                error = "not enough signers"
+                await expect(bridgeOut.transmit(swapId, message.message, signaturesR, signaturesV, signatureV))
+                    .to.be.revertedWith(error);
+
+                let signKey = new ethers.utils.SigningKey(privateKeys[0]);
                 var Signature = signKey.signDigest(hashMessage);
-                var v = Signature.v == 27 ? "0x0000000000000000000000000000000000000000000000000000000000000000" : "0x0100000000000000000000000000000000000000000000000000000000000000"
-                await bridgeOut.transmit(swapId, message.message, [Signature.r], [Signature.s], v);
+                signaturesR.push(Signature.r);
+                signaturesV.push(Signature.s);
+                var vv = Signature.v == 27 ? "00" : "01";
+                buffer1[3] = vv;
+                console.log(buffer1);
+                buffer1.fill(0,privateKeys.length);
+                var v1 = Buffer.from(buffer1);
+                const bufferAsString1 = v1.toString('hex');
+                const signatureV1 = "0x"+bufferAsString1;
+                console.log("signature V:",signatureV1)
+                error = "non-unique signature"
+                await expect(bridgeOut.transmit(swapId, message.message, signaturesR, signaturesV, signatureV1))
+                    .to.be.revertedWith(error);
+
+
+            })
+            it("Should tramsmit correctly", async function () {
+
+                const { merkleTree, regimentId, regiment, bridgeOut, owner, otherAccount0, otherAccount1, lib, otherAccount2, admin, limiter } = await loadFixture(deployBridgeOutFixture);
+                const { elf, usdt } = await deployTokensFixture()
+                var chainId = "AELF_MAINNET";
+                _newAdmins = [bridgeOut.address];
+                await regiment.AddAdmins(regimentId, _newAdmins);
+                var token = elf.address;
+
+                var targetToken = {
+                    token,
+                    fromChainId: chainId,
+                    originShare: "100",
+                    targetShare: "100"
+                }
+
+
+                await bridgeOut.connect(otherAccount2).setSignatureThreshold(4);
+
+                await bridgeOut.createSwap(targetToken, regimentId);
+                var swapId = await bridgeOut.getSwapId(elf.address, chainId);
+
+                amount = 100;
+                tokens = token;
+                amounts = amount;
+
+                await elf.mint(owner.address, amount);
+                await elf.approve(bridgeOut.address, amount);
+                var tokenKey = _generateTokenKey(token, chainId);
+                await bridgeOut.deposit(tokenKey, tokens, amounts);
+
+                var index = "1234";
+                var receiptId = tokenKey.toString() + "." + index;
+                var amount = "100";
+                var targetAddress = owner.address;
+                var leafHash = await lib.computeLeafHash(receiptId, amount, targetAddress);
+                var message = createMessage("0", leafHash);
+                hashMessage = ethers.utils.keccak256(message.message)
+                await regiment.AddRegimentMember(regimentId, bridgeOut.address);
+
+                console.log("construct signature.")
+                var privateKeys = _constructSignature()[0];
+                var addresses = _constructSignature()[1];
+                console.log("privateKeys list",privateKeys)
+
+
+                addresses.forEach(async element => {
+                    await regiment.AddRegimentMember(regimentId, element);
+                });
+
+                var memberList = await regiment.GetRegimentMemberList(regimentId);
+                console.log(memberList);
+            
+                var signaturesR = [];
+                var signaturesV = [];
+                let buffer = new Array(32);
+
+                privateKeys.forEach((element,i) => {
+                    console.log("private key",element);
+                    let signKey = new ethers.utils.SigningKey(element);
+                    console.log("sign digest",element);
+                    var Signature = signKey.signDigest(hashMessage);
+                    console.log("signature r",Signature.r);
+                    signaturesR.push(Signature.r);
+                    signaturesV.push(Signature.s);
+                    var vv = Signature.v == 27 ? "00" : "01";
+                    buffer[i] = vv;
+                });
+
+                console.log(buffer);
+                buffer.fill(0,privateKeys.length);
+                console.log("after",buffer);
+                var v = Buffer.from(buffer);
+                const bufferAsString = v.toString('hex');
+                const signatureV = "0x"+bufferAsString;
+                console.log("signature v",signatureV);
+                
+
+                await bridgeOut.transmit(swapId, message.message, signaturesR, signaturesV, signatureV);
                 var isReceiptRecorded = await bridgeOut.isReceiptRecorded(leafHash);
                 expect(isReceiptRecorded).to.equal(true)
 
@@ -542,8 +678,8 @@ describe("BridgeOut", function () {
                 var swapId = await bridgeOut.getSwapId(elf.address, chainId);
                 await regiment.AddRegimentMember(regimentId, bridgeOut.address);
 
-                const date = new Date();
-                const timestamp = Date.UTC(date.getFullYear(), date.getMonth(), date.getDate(), 0, 0, 0, 0);
+                const date = new Date();;
+                const timestamp = Date.UTC(date.getFullYear(), date.getMonth(), date.getUTCDate(), 0, 0, 0, 0);
                 var refreshTime = timestamp / 1000;
                 console.log(refreshTime);
                 var configs = [{
@@ -622,7 +758,7 @@ describe("BridgeOut", function () {
                 var swapId = await bridgeOut.getSwapId(elf.address, chainId);
 
                 const date = new Date();
-                const timestamp = Date.UTC(date.getFullYear(), date.getMonth(), date.getDate(), 0, 0, 0, 0);
+                const timestamp = Date.UTC(date.getFullYear(), date.getMonth(), date.getUTCDate(), 0, 0, 0, 0);
                 var refreshTime = timestamp / 1000;
                 console.log(refreshTime);
                 var configs = [{
@@ -700,7 +836,7 @@ describe("BridgeOut", function () {
                 var swapId = await bridgeOut.getSwapId(elf.address, chainId);
 
                 const date = new Date();
-                const timestamp = Date.UTC(date.getFullYear(), date.getMonth(), date.getDate(), 0, 0, 0, 0);
+                const timestamp = Date.UTC(date.getFullYear(), date.getMonth(), date.getUTCDate(), 0, 0, 0, 0);
                 var refreshTime = timestamp / 1000;
                 console.log(refreshTime);
                 var configs = [{
@@ -766,7 +902,7 @@ describe("BridgeOut", function () {
                 var swapId = await bridgeOut.getSwapId(elf.address, chainId);
 
                 const date = new Date();
-                const timestamp = Date.UTC(date.getFullYear(), date.getMonth(), date.getDate(), 0, 0, 0, 0);
+                const timestamp = Date.UTC(date.getFullYear(), date.getMonth(), date.getUTCDate(), 0, 0, 0, 0);
                 var refreshTime = timestamp / 1000;
                 console.log(refreshTime);
                 var configs = [{
@@ -947,7 +1083,7 @@ describe("BridgeOut", function () {
                 var swapId = await bridgeOut.getSwapId(elf.address, chainId);
 
                 const date = new Date();
-                const timestamp = Date.UTC(date.getFullYear(), date.getMonth(), date.getDate(), 0, 0, 0, 0);
+                const timestamp = Date.UTC(date.getFullYear(), date.getMonth(), date.getUTCDate(), 0, 0, 0, 0);
                 var refreshTime = timestamp / 1000;
                 console.log(refreshTime);
                 var configs = [{
@@ -1029,7 +1165,7 @@ describe("BridgeOut", function () {
                 var swapId = await bridgeOut.getSwapId(elf.address, chainId);
 
                 const date = new Date();
-                const timestamp = Date.UTC(date.getFullYear(), date.getMonth(), date.getDate(), 0, 0, 0, 0);
+                const timestamp = Date.UTC(date.getFullYear(), date.getMonth(), date.getUTCDate(), 0, 0, 0, 0);
                 var refreshTime = timestamp / 1000;
                 console.log(refreshTime);
                 var configs = [{
@@ -1133,6 +1269,24 @@ describe("BridgeOut", function () {
     function _generateTokenKey(token, chainId) {
         var data = ethers.utils.solidityPack(["address", "string"], [token, chainId]);
         return ethers.utils.sha256(data);
+    }
+
+    function _constructSignature(){
+        console.log("get private key");
+        let privateKeys = ["59c6995e998f97a5a0044966f0945389dc9e86dae88c7a8412f4603b6b78690d","5de4111afa1a4b94908f83103eb1f1706367c2e68ca870fc3fb9a804cdab365a","7c852118294e51e653712a81e05800f419141751be58f605c371e15141b007a6","47e179ec197488593b187f80a00eb0da91f1b9d0b13f8733639f19c30a34926a"]
+        var result = [];
+        var addresses = [];
+        privateKeys.forEach(element => {
+            let wallet = new ethers.Wallet(element);
+            console.log("Wallet address:",wallet.address);
+            console.log("private key:",wallet.privateKey);
+            result.push(wallet.privateKey);
+            addresses.push(wallet.address);
+            
+        });
+        console.log(result);
+        console.log(addresses);
+        return [result,addresses];
     }
 });
 

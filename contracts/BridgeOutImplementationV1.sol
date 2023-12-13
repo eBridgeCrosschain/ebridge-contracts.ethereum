@@ -42,6 +42,7 @@ contract BridgeOutImplementationV1 is ProxyStorage {
     mapping(address => uint256) public tokenAmountLimit;
     mapping(bytes32 => uint256) internal tokenDepositAmount;
     address public limiter;
+    uint8 public signatureThreshold;
 
     struct ReceivedReceipt {
         address asset; // ERC20 Token Address
@@ -129,6 +130,11 @@ contract BridgeOutImplementationV1 is ProxyStorage {
             "invalid limiter address"
         );
         limiter = _limiter;
+    }
+
+    function setSignatureThreshold(uint8 _signatureThreshold) external onlyWallet {
+        require(_signatureThreshold > 0,"Invalid input.");
+        signatureThreshold = _signatureThreshold;
     }
 
     function changeMultiSignWallet(address _multiSigWallet) external onlyOwner {
@@ -292,9 +298,7 @@ contract BridgeOutImplementationV1 is ProxyStorage {
         bytes32 _rawVs // signatures->v (Each 1 byte is combined into a 32-byte binder, which means that the maximum number of observer signatures is 32.)
     ) external {
         SwapInfo storage swapInfo = swapInfos[swapHashId];
-
-        (uint256 receiptIndex, bytes32 receiptHash) = BridgeOutLibrary
-            .verifySignature(
+        uint8 signersCount = BridgeOutLibrary.verifySignature(
                 swapInfo.regimentId,
                 _report,
                 _rs,
@@ -302,6 +306,8 @@ contract BridgeOutImplementationV1 is ProxyStorage {
                 _rawVs,
                 regiment
             );
+        (uint256 receiptIndex, bytes32 receiptHash) = 
+            BridgeOutLibrary.checkSignersThresholdAndDecodeReport(signersCount, signatureThreshold, _report);
         bytes32[] memory leafNodes = new bytes32[](1);
         leafNodes[0] = receiptHash;
         require(ledger[receiptHash].leafNodeIndex == 0, "already recorded");
