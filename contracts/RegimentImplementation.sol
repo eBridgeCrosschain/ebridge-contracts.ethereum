@@ -2,7 +2,7 @@ import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "./Proxy.sol";
 
-pragma solidity 0.8.9;
+pragma solidity ^0.8.11;
 
 contract RegimentImplementation is ProxyStorage {
     using EnumerableSet for EnumerableSet.AddressSet;

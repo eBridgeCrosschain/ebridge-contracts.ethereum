@@ -12,7 +12,7 @@ import "./Proxy.sol";
 import "./libraries/BridgeOutLibrary.sol";
 import "./interfaces/LimiterInterface.sol";
 
-pragma solidity 0.8.9;
+pragma solidity ^0.8.11;
 
 contract BridgeOutImplementationV1 is ProxyStorage {
     using SafeMath for uint256;

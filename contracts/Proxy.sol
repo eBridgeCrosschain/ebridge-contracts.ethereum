@@ -1,5 +1,5 @@
 import "@openzeppelin/contracts/access/Ownable.sol";
-pragma solidity 0.8.9;
+pragma solidity ^0.8.11;
 
 contract ProxyStorage is Ownable {
     address internal _implementation;
