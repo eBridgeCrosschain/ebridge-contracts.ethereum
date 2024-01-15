@@ -3,7 +3,7 @@ import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import "./Proxy.sol";
 
-pragma solidity 0.8.9;
+pragma solidity ^0.8.11;
 
 contract MerkleTreeImplementation is ProxyStorage {
     using SafeMath for uint256;

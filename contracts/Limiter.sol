@@ -1,6 +1,6 @@
 import './Proxy.sol';
 
-pragma solidity 0.8.9;
+pragma solidity ^0.8.11;
 
 contract Limiter is Proxy {
   constructor(
