@@ -10,6 +10,7 @@ import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import "./Proxy.sol";
 import "./libraries/BridgeOutLibrary.sol";
+import "./interfaces/LimiterInterface.sol";
 
 pragma solidity 0.8.9;
 
@@ -40,6 +41,8 @@ contract BridgeOutImplementationV1 is ProxyStorage {
     mapping(string => bool) internal receiptApproveMap;
     mapping(address => uint256) public tokenAmountLimit;
     mapping(bytes32 => uint256) internal tokenDepositAmount;
+    address public limiter;
+    uint8 public signatureThreshold;
 
     struct ReceivedReceipt {
         address asset; // ERC20 Token Address
@@ -119,6 +122,19 @@ contract BridgeOutImplementationV1 is ProxyStorage {
             "invalid input"
         );
         defaultMerkleTreeDepth = _defaultMerkleTreeDepth;
+    }
+
+    function setLimiter(address _limiter) external onlyWallet {
+        require(
+            limiter == address(0) && _limiter != address(0),
+            "invalid limiter address"
+        );
+        limiter = _limiter;
+    }
+
+    function setSignatureThreshold(uint8 _signatureThreshold) external onlyWallet {
+        require(_signatureThreshold > 0,"Invalid input.");
+        signatureThreshold = _signatureThreshold;
     }
 
     function changeMultiSignWallet(address _multiSigWallet) external onlyOwner {
@@ -203,8 +219,14 @@ contract BridgeOutImplementationV1 is ProxyStorage {
         bytes32 spaceId = swapInfos[swapId].spaceId;
         require(spaceId != bytes32(0), "swap pair not found");
         require(amount > 0, "invalid amount");
-
+        
         SwapInfo storage swapInfo = swapInfos[swapId];
+        uint256 targetTokenAmount = amount
+            .mul(swapInfo.targetToken.targetShare)
+            .div(swapInfo.targetToken.originShare);
+
+        ILimiter(limiter).consumeDailyLimit(swapId, tokenAddress, targetTokenAmount);
+        ILimiter(limiter).consumeTokenBucket(swapId, tokenAddress, targetTokenAmount);
 
         bytes32 leafHash = BridgeOutLibrary.computeLeafHash(
             receiptId,
@@ -222,16 +244,11 @@ contract BridgeOutImplementationV1 is ProxyStorage {
         SwapAmounts storage swapAmouts = ledger[leafHash];
         require(swapAmouts.receiver == address(0), "already claimed");
         swapAmouts.receiver = receiverAddress;
-        uint256 targetTokenAmount = amount
-            .mul(swapInfo.targetToken.targetShare)
-            .div(swapInfo.targetToken.originShare);
+        
         require(
             targetTokenAmount <= tokenDepositAmount[swapId],
             "deposit not enough"
         );
-        if (targetTokenAmount >= tokenAmountLimit[swapInfo.targetToken.token]) {
-            require(receiptApproveMap[receiptId], "should approve");
-        }
         tokenDepositAmount[swapId] = tokenDepositAmount[swapId].sub(
             targetTokenAmount
         );
@@ -281,9 +298,7 @@ contract BridgeOutImplementationV1 is ProxyStorage {
         bytes32 _rawVs // signatures->v (Each 1 byte is combined into a 32-byte binder, which means that the maximum number of observer signatures is 32.)
     ) external {
         SwapInfo storage swapInfo = swapInfos[swapHashId];
-
-        (uint256 receiptIndex, bytes32 receiptHash) = BridgeOutLibrary
-            .verifySignature(
+        uint8 signersCount = BridgeOutLibrary.verifySignature(
                 swapInfo.regimentId,
                 _report,
                 _rs,
@@ -291,6 +306,8 @@ contract BridgeOutImplementationV1 is ProxyStorage {
                 _rawVs,
                 regiment
             );
+        (uint256 receiptIndex, bytes32 receiptHash) = 
+            BridgeOutLibrary.checkSignersThresholdAndDecodeReport(signersCount, signatureThreshold, _report);
         bytes32[] memory leafNodes = new bytes32[](1);
         leafNodes[0] = receiptHash;
         require(ledger[receiptHash].leafNodeIndex == 0, "already recorded");
@@ -377,15 +394,6 @@ contract BridgeOutImplementationV1 is ProxyStorage {
         regimentId = swapInfos[swapId].regimentId;
         spaceId = swapInfos[swapId].spaceId;
         token = swapInfos[swapId].targetToken.token;
-    }
-
-    function setLimits(
-        address[] memory tokens,
-        uint256[] memory limits
-    ) external onlyOwner {
-        for (uint256 i = 0; i < tokens.length; i++) {
-            tokenAmountLimit[tokens[i]] = limits[i];
-        }
     }
 
     function approve(string calldata receiptId) external {

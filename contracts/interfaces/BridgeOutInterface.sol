@@ -16,4 +16,9 @@ interface IBridgeOut {
     function restart() external;
 
     function pause() external;
+
+    function getSwapId(
+        address token,
+        string calldata fromChainId
+    ) external view returns(bytes32);
 }
