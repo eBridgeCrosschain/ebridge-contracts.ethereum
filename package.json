@@ -25,6 +25,6 @@
     "@openzeppelin/contracts": "^4.9.2",
     "dotenv": "^16.0.2",
     "hardhat-contract-sizer": "^2.6.1",
-    "web3": "^1.10.3"
+    "web3": "^1.10.0"
   }
 }

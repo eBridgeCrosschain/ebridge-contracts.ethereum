@@ -30,7 +30,7 @@ module.exports = {
     nile: {
       privateKey: '0000000000000000000000000000000000000000000000000000000000000001',
       userFeePercentage: 100,
-      feeLimit: 1e10,
+      feeLimit: 1.5e10,
       originEnergyLimit: 1e7,
       fullHost: 'https://nile.trongrid.io',
       network_id: '3'
@@ -39,7 +39,7 @@ module.exports = {
       // For tronbox/tre docker image
       privateKey: '0000000000000000000000000000000000000000000000000000000000000001',
       userFeePercentage: 0,
-      feeLimit: 1e10,
+      feeLimit: 1e9,
       originEnergyLimit: 1e7,
       fullHost: 'http://127.0.0.1:' + port,
       network_id: '9'
