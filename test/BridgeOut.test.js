@@ -1227,88 +1227,6 @@ describe("BridgeOut", function () {
                 const validReceiptIndex = "1234", invalidReceiptIndex = "1235";
                 const validAmount = "100", invalidAmount = "99";
 
-                testCasesNEG = [
-                    {
-                        claimedBySender: true,
-                        useValidReceiptId: false,
-                        useValidAmount: true,
-                        useValidTarget: true,
-                        expectedErrorMessage: "Arithmetic operation overflowed"
-                    },
-                    {
-                        claimedBySender: true,
-                        useValidReceiptId: true,
-                        useValidAmount: false,
-                        useValidTarget: true,
-                        expectedErrorMessage: "Arithmetic operation overflowed"
-                    },
-                    {
-                        claimedBySender: true,
-                        useValidReceiptId: true,
-                        useValidAmount: true,
-                        useValidTarget: false,
-                        expectedErrorMessage: "Arithmetic operation overflowed"
-                    },
-                    {
-                        claimedBySender: false,
-                        useValidReceiptId: false,
-                        useValidAmount: true,
-                        useValidTarget: true,
-                        expectedErrorMessage: "Arithmetic operation overflowed"
-                    },
-                    {
-                        claimedBySender: false,
-                        useValidReceiptId: true,
-                        useValidAmount: false,
-                        useValidTarget: true,
-                        expectedErrorMessage: "Arithmetic operation overflowed"
-                    },
-                    {
-                        claimedBySender: false,
-                        useValidReceiptId: true,
-                        useValidAmount: true,
-                        useValidTarget: false,
-                        expectedErrorMessage: "Arithmetic operation overflowed"
-                    }
-                ];
-                testCasesNEG.forEach(({ claimedBySender, useValidReceiptId, useValidAmount, useValidTarget, expectedErrorMessage }) => {
-                    it("Should not be able to swapToken", async function () {
-                        var { swapId, receiptKey, bridgeOut, elf, token, chainId, owner, otherAccount1, otherAccount2 } = await loadFixture(computeLeafHashAndTransmit);
-                        let sender, receiptId, amount, targetAddress;
-
-                        if (claimedBySender) {
-                            sender = owner
-                        } else {
-                            sender = otherAccount1
-                        }
-
-                        if (useValidReceiptId) {
-                            receiptId = receiptKey + validReceiptIndex
-                        } else {
-                            receiptId = receiptKey + invalidReceiptIndex
-                        }
-
-                        if (useValidAmount) {
-                            amount = validAmount
-                        } else {
-                            amount = invalidAmount
-                        }
-
-                        if (useValidTarget) {
-                            targetAddress = owner.address
-                        } else {
-                            targetAddress = otherAccount2.address
-                        }
-
-                        try {
-                            await bridgeOut.connect(sender).swapToken(swapId, receiptId, amount, targetAddress);
-                        } catch (err) {
-                            expect(err != null)
-                            expect(err.message).to.contains(expectedErrorMessage)
-                        }
-                    })
-                })
-
                 testCasesPOS = [
                     {
                         claimedBySender: true
@@ -1319,15 +1237,11 @@ describe("BridgeOut", function () {
                 ];
                 testCasesPOS.forEach(({ claimedBySender }) => {
                     it("Should be able to swapToken", async function () {
-                        var { swapId, bridgeOut, elf, token, chainId, owner, otherAccount1, receiptId, amount, targetAddress } = await loadFixture(computeLeafHashAndTransmit);
+                        var { swapId, bridgeOut, elf, token, chainId, owner, otherAccount1, receiptId, amount, receiverAddress } = await loadFixture(computeLeafHashAndTransmit);
                         
-                        if (claimedBySender) {
-                            sender = owner
-                        } else {
-                            sender = otherAccount1
-                        }
+                        let sender = claimedBySender ? owner : otherAccount1;
 
-                        await bridgeOut.connect(sender).swapToken(swapId, receiptId, amount, targetAddress);
+                        await bridgeOut.connect(sender).swapToken(swapId, receiptId, amount, receiverAddress);
                         expect(await elf.balanceOf(bridgeOut.address)).to.equal("0")
                         expect(await elf.balanceOf(owner.address)).to.equal(amount)
                         tokens = [token];
@@ -1335,8 +1249,70 @@ describe("BridgeOut", function () {
                         var indexes = await bridgeOut.getReceiveReceiptIndex(tokens, chainIds);
                         var infos = await bridgeOut.getReceivedReceiptInfos(elf.address, chainId, 1, indexes[0]);
                         expect(infos[0].amount).to.equal(amount)
-                        expect(infos[0].targetAddress).to.equal(targetAddress)
+                        expect(infos[0].targetAddress).to.equal(receiverAddress)
                         expect(infos[0].asset).to.equal(token)
+                    })
+                })
+
+                testCasesNEG = [
+                    {
+                        claimedBySender: true,
+                        useValidReceiptId: false,
+                        useValidAmount: true,
+                        useValidReceiverAddress: true,
+                        expectedErrorMessage: "Arithmetic operation overflowed"
+                    },
+                    {
+                        claimedBySender: true,
+                        useValidReceiptId: true,
+                        useValidAmount: false,
+                        useValidReceiverAddress: true,
+                        expectedErrorMessage: "Arithmetic operation overflowed"
+                    },
+                    {
+                        claimedBySender: true,
+                        useValidReceiptId: true,
+                        useValidAmount: true,
+                        useValidReceiverAddress: false,
+                        expectedErrorMessage: "Arithmetic operation overflowed"
+                    },
+                    {
+                        claimedBySender: false,
+                        useValidReceiptId: false,
+                        useValidAmount: true,
+                        useValidReceiverAddress: true,
+                        expectedErrorMessage: "Arithmetic operation overflowed"
+                    },
+                    {
+                        claimedBySender: false,
+                        useValidReceiptId: true,
+                        useValidAmount: false,
+                        useValidReceiverAddress: true,
+                        expectedErrorMessage: "Arithmetic operation overflowed"
+                    },
+                    {
+                        claimedBySender: false,
+                        useValidReceiptId: true,
+                        useValidAmount: true,
+                        useValidReceiverAddress: false,
+                        expectedErrorMessage: "Arithmetic operation overflowed"
+                    }
+                ];
+                testCasesNEG.forEach(({ claimedBySender, useValidReceiptId, useValidAmount, useValidReceiverAddress, expectedErrorMessage }) => {
+                    it("Should not be able to swapToken", async function () {
+                        var { swapId, receiptKey, bridgeOut, owner, otherAccount1, otherAccount2 } = await loadFixture(computeLeafHashAndTransmit);
+
+                        let sender = claimedBySender ? owner : otherAccount1;
+                        let receiptId = useValidReceiptId ? receiptKey + validReceiptIndex : receiptKey + invalidReceiptIndex;
+                        let amount = useValidAmount ? validAmount : invalidAmount
+                        let receiverAddress = useValidReceiverAddress ? owner.address : otherAccount2.address
+
+                        try {
+                            await bridgeOut.connect(sender).swapToken(swapId, receiptId, amount, receiverAddress);
+                        } catch (err) {
+                            expect(err != null)
+                            expect(err.message).to.contains(expectedErrorMessage)
+                        }
                     })
                 })
 
@@ -1381,8 +1357,8 @@ describe("BridgeOut", function () {
                     var receiptKey = tokenKey.toString() + ".";
                     var receiptId = receiptKey + index;
                     var amount = validAmount;
-                    var targetAddress = owner.address;
-                    var leafHash = await lib.computeLeafHash(receiptId, amount, targetAddress);
+                    var receiverAddress = owner.address;
+                    var leafHash = await lib.computeLeafHash(receiptId, amount, receiverAddress);
 
                     var message = createMessage(index, leafHash)
                     hashMessage = ethers.utils.keccak256(message.message)
@@ -1394,7 +1370,7 @@ describe("BridgeOut", function () {
                     var v = Signature.v == 27 ? "0x0000000000000000000000000000000000000000000000000000000000000000" : "0x0100000000000000000000000000000000000000000000000000000000000000"
                     await regiment.AddRegimentMember(regimentId, bridgeOut.address);
                     await bridgeOut.transmit(swapId, message.message, [Signature.r], [Signature.s], v);
-                    return { swapId, receiptKey, receiptId, amount, targetAddress, elf, token, chainId, bridgeOut, owner, otherAccount0, otherAccount1, otherAccount2 };
+                    return { swapId, receiptKey, receiptId, amount, receiverAddress, elf, token, chainId, bridgeOut, owner, otherAccount0, otherAccount1, otherAccount2 };
                 }
             })
         });
