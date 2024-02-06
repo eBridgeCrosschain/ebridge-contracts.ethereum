@@ -1222,86 +1222,116 @@ describe("BridgeOut", function () {
                 bridgeOut.swapToken(swapId, receiptId, amount, targetAddress)
                 expect(await elf.balanceOf(owner.address)).to.equal(amount)
             })
+
             describe("swapToken test (swapToken can be called by anyone)", function () {
-                testCases = [
+                const validReceiptIndex = "1234", invalidReceiptIndex = "1235";
+                const validAmount = "100", invalidAmount = "99";
+
+                testCasesNEG = [
                     {
-                        description: "Should be able to swapToken when sender and receiver are the same",
-                        receiptIdSuffix: "1234",
-                        amount: "100",
-                        target: "owner"
-                    },
-                    {
-                        description: "Should not be able to swapToken when sender and receiver are the same and input invalid receiptId",
-                        receiptIdSuffix: "1235",
-                        amount: "100",
-                        target: "owner",
+                        claimedBySender: true,
+                        useValidReceiptId: false,
+                        useValidAmount: true,
+                        useValidTarget: true,
                         expectedErrorMessage: "Arithmetic operation overflowed"
                     },
                     {
-                        description: "Should not be able to swapToken when sender and receiver are the same and input invalid amount",
-                        receiptIdSuffix: "1234",
-                        amount: "101",
-                        target: "owner",
+                        claimedBySender: true,
+                        useValidReceiptId: true,
+                        useValidAmount: false,
+                        useValidTarget: true,
                         expectedErrorMessage: "Arithmetic operation overflowed"
                     },
                     {
-                        description: "Should not be able to swapToken when sender and receiver are the same and input invalid targetAddress",
-                        receiptIdSuffix: "1234",
-                        amount: "100",
-                        target: "otherAccount1",
+                        claimedBySender: true,
+                        useValidReceiptId: true,
+                        useValidAmount: true,
+                        useValidTarget: false,
                         expectedErrorMessage: "Arithmetic operation overflowed"
                     },
                     {
-                        description: "Should be able to swapToken when sender and receiver are different",
-                        receiptIdSuffix: "1234",
-                        amount: "100",
-                        target: "owner"
-                    },
-                    {
-                        description: "Should not be able to swapToken when sender and receiver are different and input invalid receiptId",
-                        receiptIdSuffix: "1235",
-                        amount: "100",
-                        target: "owner",
+                        claimedBySender: false,
+                        useValidReceiptId: false,
+                        useValidAmount: true,
+                        useValidTarget: true,
                         expectedErrorMessage: "Arithmetic operation overflowed"
                     },
                     {
-                        description: "Should not be able to swapToken when sender and receiver are different and input invalid amount",
-                        receiptIdSuffix: "1234",
-                        amount: "101",
-                        target: "owner",
+                        claimedBySender: false,
+                        useValidReceiptId: true,
+                        useValidAmount: false,
+                        useValidTarget: true,
                         expectedErrorMessage: "Arithmetic operation overflowed"
                     },
                     {
-                        description: "Should not be able to swapToken when sender and receiver are different and input invalid targetAddress",
-                        receiptIdSuffix: "1234",
-                        amount: "100",
-                        target: "otherAccount1",
+                        claimedBySender: false,
+                        useValidReceiptId: true,
+                        useValidAmount: true,
+                        useValidTarget: false,
                         expectedErrorMessage: "Arithmetic operation overflowed"
                     }
                 ];
+                testCasesNEG.forEach(({ claimedBySender, useValidReceiptId, useValidAmount, useValidTarget, expectedErrorMessage }) => {
+                    it("Should not be able to swapToken", async function () {
+                        var { swapId, receiptKey, bridgeOut, elf, token, chainId, owner, otherAccount1, otherAccount2 } = await loadFixture(computeLeafHashAndTransmit);
+                        let sender, receiptId, amount, targetAddress;
 
-                testCases.forEach(({ description, receiptIdSuffix, amount, target, expectedErrorMessage }) => {
-                    it(description, async function () {
-                        var { swapId, receiptKey, bridgeOut, elf, token, chainId, owner, otherAccount1 } = await loadFixture(computeLeafHashAndTransmit);
-                        let targetAddress;
-
-                        if (target == "otherAccount1") {
-                            targetAddress = otherAccount1.address
+                        if (claimedBySender) {
+                            sender = owner
                         } else {
+                            sender = otherAccount1
+                        }
+
+                        if (useValidReceiptId) {
+                            receiptId = receiptKey + validReceiptIndex
+                        } else {
+                            receiptId = receiptKey + invalidReceiptIndex
+                        }
+
+                        if (useValidAmount) {
+                            amount = validAmount
+                        } else {
+                            amount = invalidAmount
+                        }
+
+                        if (useValidTarget) {
                             targetAddress = owner.address
+                        } else {
+                            targetAddress = otherAccount2.address
                         }
 
                         try {
-                            await bridgeOut.swapToken(swapId, receiptKey + receiptIdSuffix, amount, targetAddress);
+                            await bridgeOut.connect(sender).swapToken(swapId, receiptId, amount, targetAddress);
                         } catch (err) {
                             expect(err != null)
                             expect(err.message).to.contains(expectedErrorMessage)
-                            return;
                         }
+                    })
+                })
+
+                testCasesPOS = [
+                    {
+                        claimedBySender: true
+                    },
+                    {
+                        claimedBySender: false
+                    }
+                ];
+                testCasesPOS.forEach(({ claimedBySender }) => {
+                    it("Should be able to swapToken", async function () {
+                        var { swapId, bridgeOut, elf, token, chainId, owner, otherAccount1, receiptId, amount, targetAddress } = await loadFixture(computeLeafHashAndTransmit);
+                        
+                        if (claimedBySender) {
+                            sender = owner
+                        } else {
+                            sender = otherAccount1
+                        }
+
+                        await bridgeOut.connect(sender).swapToken(swapId, receiptId, amount, targetAddress);
                         expect(await elf.balanceOf(bridgeOut.address)).to.equal("0")
                         expect(await elf.balanceOf(owner.address)).to.equal(amount)
-                        var tokens = [token];
-                        var chainIds = [chainId];
+                        tokens = [token];
+                        chainIds = [chainId];
                         var indexes = await bridgeOut.getReceiveReceiptIndex(tokens, chainIds);
                         var infos = await bridgeOut.getReceivedReceiptInfos(elf.address, chainId, 1, indexes[0]);
                         expect(infos[0].amount).to.equal(amount)
@@ -1311,7 +1341,7 @@ describe("BridgeOut", function () {
                 })
 
                 async function computeLeafHashAndTransmit() {
-                    const { regimentId, regiment, bridgeOut, owner, otherAccount0, otherAccount1, lib, admin, limiter } = await loadFixture(deployBridgeOutFixture);
+                    const { regimentId, regiment, bridgeOut, owner, otherAccount0, otherAccount1, otherAccount2, lib, admin, limiter } = await loadFixture(deployBridgeOutFixture);
                     const { elf } = await deployTokensFixture()
                     var chainId = "AELF_MAINNET";
                     _newAdmins = [bridgeOut.address];
@@ -1339,7 +1369,7 @@ describe("BridgeOut", function () {
                     }]
                     await limiter.connect(admin).setDailyLimit(configs);
 
-                    amount = "100";
+                    amount = validAmount;
                     tokens = token;
                     amounts = amount;
                     await elf.mint(owner.address, amount);
@@ -1347,10 +1377,10 @@ describe("BridgeOut", function () {
                     var tokenKey = _generateTokenKey(elf.address, chainId);
                     await bridgeOut.deposit(tokenKey, tokens, amounts);
 
-                    var index = "1234";
+                    var index = validReceiptIndex;
                     var receiptKey = tokenKey.toString() + ".";
                     var receiptId = receiptKey + index;
-                    var amount = "100";
+                    var amount = validAmount;
                     var targetAddress = owner.address;
                     var leafHash = await lib.computeLeafHash(receiptId, amount, targetAddress);
 
@@ -1364,7 +1394,7 @@ describe("BridgeOut", function () {
                     var v = Signature.v == 27 ? "0x0000000000000000000000000000000000000000000000000000000000000000" : "0x0100000000000000000000000000000000000000000000000000000000000000"
                     await regiment.AddRegimentMember(regimentId, bridgeOut.address);
                     await bridgeOut.transmit(swapId, message.message, [Signature.r], [Signature.s], v);
-                    return { swapId, receiptKey, receiptId, amount, targetAddress, elf, token, chainId, bridgeOut, owner, otherAccount0, otherAccount1 };
+                    return { swapId, receiptKey, receiptId, amount, targetAddress, elf, token, chainId, bridgeOut, owner, otherAccount0, otherAccount1, otherAccount2 };
                 }
             })
         });
