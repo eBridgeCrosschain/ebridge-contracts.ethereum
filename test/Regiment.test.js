@@ -12,8 +12,12 @@ describe("Regiment", function () {
         const _maximumAdminsCount = 3;
 
         const [owner, otherAccount0, otherAccount1] = await ethers.getSigners();
+        const RegimentImplementation = await ethers.getContractFactory("RegimentImplementation");
         const Regiment = await ethers.getContractFactory("Regiment");
-        const regiment = await Regiment.deploy(_memberJoinLimit, _regimentLimit, _maximumAdminsCount);
+        const regimentImplementation = await RegimentImplementation.deploy();
+        const regimentProxy = await Regiment.deploy(_memberJoinLimit, _regimentLimit, _maximumAdminsCount,regimentImplementation.address);
+        const regiment = RegimentImplementation.attach(regimentProxy.address);
+
         return { regiment, owner, otherAccount0, otherAccount1 };
     }
     describe("deploy", function () {
@@ -136,7 +140,7 @@ describe("Regiment", function () {
 
 
                     //permission deny
-                    var error = "Origin sender is not manager or admin of this regiment"
+                    var error = "Origin sender is not manager of this regiment"
                     await expect(regiment.connect(otherAccount0).AddRegimentMember(regimentId, _newAMember))
                         .to.be.revertedWith(error);
 
@@ -222,7 +226,7 @@ describe("Regiment", function () {
                     await regiment.AddRegimentMember(regimentId, _newMember);
 
                     //permission deny
-                    var error = "Origin sender is not manager or admin of this regiment"
+                    var error = "Origin sender is not manager of this regiment"
                     await expect(regiment.connect(otherAccount0).DeleteRegimentMember(regimentId, _newMember))
                         .to.be.revertedWith(error);
 

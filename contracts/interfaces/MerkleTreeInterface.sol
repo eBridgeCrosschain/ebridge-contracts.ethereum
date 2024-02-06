@@ -1,9 +1,10 @@
 pragma solidity >=0.5.0;
 
 interface IMerkleTree {
-    function createSpace(bytes32 regimentId, uint256 pathLength)
-        external
-        returns (bytes32);
+    function createSpace(
+        bytes32 regimentId,
+        uint256 pathLength
+    ) external returns (bytes32);
 
     function merkleProof(
         bytes32 spaceId,
@@ -13,12 +14,15 @@ interface IMerkleTree {
         bool[] calldata _isLeftNode
     ) external view returns (bool);
 
-    function getLeafLocatedMerkleTreeIndex(bytes32 spaceId, uint256 leaf_index)
-        external
-        view
-        returns (uint256);
+    function getLeafLocatedMerkleTreeIndex(
+        bytes32 spaceId,
+        uint256 leaf_index
+    ) external view returns (uint256);
 
-    function getMerklePath(bytes32 spaceId, uint256 leafNodeIndex)
+    function getMerklePath(
+        bytes32 spaceId,
+        uint256 leafNodeIndex
+    )
         external
         view
         returns (
@@ -28,7 +32,8 @@ interface IMerkleTree {
             bool[] memory positions
         );
 
-    function recordMerkleTree(bytes32 spaceId, bytes32[] memory leafNodeHash)
-        external
-        returns (uint256);
+    function recordMerkleTree(
+        bytes32 spaceId,
+        bytes32[] memory leafNodeHash
+    ) external returns (uint256);
 }

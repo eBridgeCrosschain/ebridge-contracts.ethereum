@@ -1,11 +1,11 @@
-import './interfaces/MerkleTreeInterface.sol';
-import './interfaces/RegimentInterface.sol';
-import '@openzeppelin/contracts/utils/math/SafeMath.sol';
-import '@openzeppelin/contracts/utils/Strings.sol';
-import '@openzeppelin/contracts/utils/structs/EnumerableSet.sol';
-import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
-import '@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol';
-import './Proxy.sol';
+import "./interfaces/MerkleTreeInterface.sol";
+import "./interfaces/RegimentInterface.sol";
+import "@openzeppelin/contracts/utils/math/SafeMath.sol";
+import "@openzeppelin/contracts/utils/Strings.sol";
+import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import "./Proxy.sol";
 pragma solidity 0.8.9;
 
 contract BridgeOut is Proxy {
@@ -13,22 +13,31 @@ contract BridgeOut is Proxy {
         address _merkleTree,
         address _regiment,
         address _bridgeIn,
-        address _implementation,
-        address _tokenAddress
+        address _approveController,
+        address _multiSigWallet,
+        address _tokenAddress,
+        address _implementation
     ) Proxy(_implementation) {
-        delegateTo(
-            _implementation,
-            abi.encodeWithSignature(
-                'initialize(address,address,address,address)',
-                _merkleTree,
-                _regiment,
-                _bridgeIn,
-                _tokenAddress
-            )
+        require(
+            _merkleTree != address(0) &&
+                _regiment != address(0) &&
+                _bridgeIn != address(0) &&
+                _tokenAddress != address(0) &&
+                _approveController != address(0) &&
+                _multiSigWallet != address(0),
+            "invalid input"
         );
         delegateTo(
             _implementation,
-            abi.encodeWithSignature('setDefaultMerkleTreeDepth(uint256)', 10)
+            abi.encodeWithSignature(
+                "initialize(address,address,address,address,address,address)",
+                _merkleTree,
+                _regiment,
+                _bridgeIn,
+                _tokenAddress,
+                _approveController,
+                _multiSigWallet
+            )
         );
     }
 
