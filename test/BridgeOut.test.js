@@ -1229,9 +1229,11 @@ describe("BridgeOut", function () {
 
                 testCasesPOS = [
                     {
+                        // claimedBySender being true indicates that the swapToken was called by sender.address
                         claimedBySender: true
                     },
                     {
+                        // claimedBySender being false indicates that the swapToken was called by otherAccount1.address
                         claimedBySender: false
                     }
                 ];
