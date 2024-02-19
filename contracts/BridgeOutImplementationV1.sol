@@ -215,7 +215,6 @@ contract BridgeOutImplementationV1 is ProxyStorage {
         address receiverAddress
     ) external {
         require(!isPaused, "BridgeOut:paused");
-        require(msg.sender == receiverAddress, "no permission");
         bytes32 spaceId = swapInfos[swapId].spaceId;
         require(spaceId != bytes32(0), "swap pair not found");
         require(amount > 0, "invalid amount");
