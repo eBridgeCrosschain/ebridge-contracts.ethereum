@@ -252,18 +252,11 @@ contract BridgeOutImplementationV1 is ProxyStorage {
         tokenDepositAmount[swapId] = tokenDepositAmount[swapId].sub(
             targetTokenAmount
         );
-        if (swapInfo.targetToken.token == tokenAddress) {
-            INativeToken(tokenAddress).withdraw(targetTokenAmount);
-            (bool success, ) = payable(receiverAddress).call{
-                value: targetTokenAmount
-            }("");
-            require(success, "failed");
-        } else {
-            IERC20(swapInfo.targetToken.token).safeTransfer(
-                receiverAddress,
-                targetTokenAmount
-            );
-        }
+        // The Tron blockchain currently only supports the USDT token, so the logic for the native token (TRX) is removed
+        IERC20(swapInfo.targetToken.token).safeTransfer(
+            receiverAddress,
+            targetTokenAmount
+        );
         swapAmouts.receivedAmounts[
             swapInfo.targetToken.token
         ] = targetTokenAmount;

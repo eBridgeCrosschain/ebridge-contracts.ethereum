@@ -165,16 +165,6 @@ contract BridgeInImplementation is ProxyStorage {
         return tokenList.contains(tokenKey);
     }
 
-    function createNativeTokenReceipt(
-        string calldata targetChainId,
-        string calldata targetAddress
-    ) external payable whenNotPaused {
-        consumeReceiptLimit(tokenAddress,msg.value,targetChainId);
-        INativeToken(tokenAddress).deposit{value: msg.value}();
-        IERC20(tokenAddress).safeApprove(bridgeOut, msg.value);
-        generateReceipt(tokenAddress, msg.value, targetChainId, targetAddress);
-    }
-
     // Create new receipt and deposit erc20 token
     function createReceipt(
         address token,
