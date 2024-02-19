@@ -1,4 +1,4 @@
-pragma solidity 0.8.9;
+pragma solidity ^0.8.11;
 
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
@@ -163,16 +163,6 @@ contract BridgeInImplementation is ProxyStorage {
     ) public view returns (bool) {
         bytes32 tokenKey = BridgeInLibrary._generateTokenKey(token, chainId);
         return tokenList.contains(tokenKey);
-    }
-
-    function createNativeTokenReceipt(
-        string calldata targetChainId,
-        string calldata targetAddress
-    ) external payable whenNotPaused {
-        consumeReceiptLimit(tokenAddress,msg.value,targetChainId);
-        INativeToken(tokenAddress).deposit{value: msg.value}();
-        IERC20(tokenAddress).safeApprove(bridgeOut, msg.value);
-        generateReceipt(tokenAddress, msg.value, targetChainId, targetAddress);
     }
 
     // Create new receipt and deposit erc20 token

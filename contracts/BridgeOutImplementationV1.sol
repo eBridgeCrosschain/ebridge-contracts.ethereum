@@ -12,7 +12,7 @@ import "./Proxy.sol";
 import "./libraries/BridgeOutLibrary.sol";
 import "./interfaces/LimiterInterface.sol";
 
-pragma solidity 0.8.9;
+pragma solidity ^0.8.11;
 
 contract BridgeOutImplementationV1 is ProxyStorage {
     using SafeMath for uint256;
@@ -215,7 +215,6 @@ contract BridgeOutImplementationV1 is ProxyStorage {
         address receiverAddress
     ) external {
         require(!isPaused, "BridgeOut:paused");
-        require(msg.sender == receiverAddress, "no permission");
         bytes32 spaceId = swapInfos[swapId].spaceId;
         require(spaceId != bytes32(0), "swap pair not found");
         require(amount > 0, "invalid amount");
@@ -252,18 +251,11 @@ contract BridgeOutImplementationV1 is ProxyStorage {
         tokenDepositAmount[swapId] = tokenDepositAmount[swapId].sub(
             targetTokenAmount
         );
-        if (swapInfo.targetToken.token == tokenAddress) {
-            INativeToken(tokenAddress).withdraw(targetTokenAmount);
-            (bool success, ) = payable(receiverAddress).call{
-                value: targetTokenAmount
-            }("");
-            require(success, "failed");
-        } else {
-            IERC20(swapInfo.targetToken.token).safeTransfer(
-                receiverAddress,
-                targetTokenAmount
-            );
-        }
+        // The Tron blockchain currently only supports the USDT token, so the logic for the native token (TRX) is removed
+        IERC20(swapInfo.targetToken.token).safeTransfer(
+            receiverAddress,
+            targetTokenAmount
+        );
         swapAmouts.receivedAmounts[
             swapInfo.targetToken.token
         ] = targetTokenAmount;
