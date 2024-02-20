@@ -791,10 +791,10 @@ describe("BridgeOut", function () {
                 await regiment.AddRegimentMember(regimentId, bridgeOut.address);
                 await bridgeOut.transmit(swapId, message.message, [Signature.r], [Signature.s], v);
 
-                //only receiver has permission to swap token
+                //any receiver has permission to swap token
                 error = "no permission";
                 await expect(bridgeOut.connect(otherAccount0).swapToken(swapId, receiptId, amount, targetAddress))
-                    .to.be.revertedWith(error);
+                    .to.not.revertedWith(error);
                 //token swap pair not found
                 error = "swap pair not found";
                 await expect(bridgeOut.swapToken(regimentId, receiptId, amount, targetAddress))
@@ -1222,6 +1222,159 @@ describe("BridgeOut", function () {
                 bridgeOut.swapToken(swapId, receiptId, amount, targetAddress)
                 expect(await elf.balanceOf(owner.address)).to.equal(amount)
             })
+
+            describe("swapToken test (swapToken can be called by anyone)", function () {
+                const validReceiptIndex = "1234", invalidReceiptIndex = "1235";
+                const validAmount = "100", invalidAmount = "99";
+
+                testCasesPOS = [
+                    {
+                        // claimedBySender being true indicates that the swapToken was called by sender.address
+                        claimedBySender: true
+                    },
+                    {
+                        // claimedBySender being false indicates that the swapToken was called by otherAccount1.address
+                        claimedBySender: false
+                    }
+                ];
+                testCasesPOS.forEach(({ claimedBySender }) => {
+                    it("Should be able to swapToken", async function () {
+                        var { swapId, bridgeOut, elf, token, chainId, owner, otherAccount1, receiptId, amount, receiverAddress } = await loadFixture(computeLeafHashAndTransmit);
+                        
+                        let sender = claimedBySender ? owner : otherAccount1;
+
+                        await bridgeOut.connect(sender).swapToken(swapId, receiptId, amount, receiverAddress);
+                        expect(await elf.balanceOf(bridgeOut.address)).to.equal("0")
+                        expect(await elf.balanceOf(owner.address)).to.equal(amount)
+                        tokens = [token];
+                        chainIds = [chainId];
+                        var indexes = await bridgeOut.getReceiveReceiptIndex(tokens, chainIds);
+                        var infos = await bridgeOut.getReceivedReceiptInfos(elf.address, chainId, 1, indexes[0]);
+                        expect(infos[0].amount).to.equal(amount)
+                        expect(infos[0].targetAddress).to.equal(receiverAddress)
+                        expect(infos[0].asset).to.equal(token)
+                    })
+                })
+
+                testCasesNEG = [
+                    {
+                        claimedBySender: true,
+                        useValidReceiptId: false,
+                        useValidAmount: true,
+                        useValidReceiverAddress: true,
+                        expectedErrorMessage: "Arithmetic operation overflowed"
+                    },
+                    {
+                        claimedBySender: true,
+                        useValidReceiptId: true,
+                        useValidAmount: false,
+                        useValidReceiverAddress: true,
+                        expectedErrorMessage: "Arithmetic operation overflowed"
+                    },
+                    {
+                        claimedBySender: true,
+                        useValidReceiptId: true,
+                        useValidAmount: true,
+                        useValidReceiverAddress: false,
+                        expectedErrorMessage: "Arithmetic operation overflowed"
+                    },
+                    {
+                        claimedBySender: false,
+                        useValidReceiptId: false,
+                        useValidAmount: true,
+                        useValidReceiverAddress: true,
+                        expectedErrorMessage: "Arithmetic operation overflowed"
+                    },
+                    {
+                        claimedBySender: false,
+                        useValidReceiptId: true,
+                        useValidAmount: false,
+                        useValidReceiverAddress: true,
+                        expectedErrorMessage: "Arithmetic operation overflowed"
+                    },
+                    {
+                        claimedBySender: false,
+                        useValidReceiptId: true,
+                        useValidAmount: true,
+                        useValidReceiverAddress: false,
+                        expectedErrorMessage: "Arithmetic operation overflowed"
+                    }
+                ];
+                testCasesNEG.forEach(({ claimedBySender, useValidReceiptId, useValidAmount, useValidReceiverAddress, expectedErrorMessage }) => {
+                    it("Should not be able to swapToken", async function () {
+                        var { swapId, receiptKey, bridgeOut, owner, otherAccount1, otherAccount2 } = await loadFixture(computeLeafHashAndTransmit);
+
+                        let sender = claimedBySender ? owner : otherAccount1;
+                        let receiptId = useValidReceiptId ? receiptKey + validReceiptIndex : receiptKey + invalidReceiptIndex;
+                        let amount = useValidAmount ? validAmount : invalidAmount
+                        let receiverAddress = useValidReceiverAddress ? owner.address : otherAccount2.address
+
+                        try {
+                            await bridgeOut.connect(sender).swapToken(swapId, receiptId, amount, receiverAddress);
+                        } catch (err) {
+                            expect(err != null)
+                            expect(err.message).to.contains(expectedErrorMessage)
+                        }
+                    })
+                })
+
+                async function computeLeafHashAndTransmit() {
+                    const { regimentId, regiment, bridgeOut, owner, otherAccount0, otherAccount1, otherAccount2, lib, admin, limiter } = await loadFixture(deployBridgeOutFixture);
+                    const { elf } = await deployTokensFixture()
+                    var chainId = "AELF_MAINNET";
+                    _newAdmins = [bridgeOut.address];
+                    await regiment.AddAdmins(regimentId, _newAdmins);
+                    var token = elf.address;
+
+                    var targetToken = {
+                        token,
+                        fromChainId: chainId,
+                        originShare: "100",
+                        targetShare: "100"
+                    }
+
+                    await bridgeOut.createSwap(targetToken, regimentId);
+                    var swapId = await bridgeOut.getSwapId(elf.address, chainId);
+
+                    const date = new Date();
+                    const timestamp = Date.UTC(date.getFullYear(), date.getMonth(), date.getUTCDate(), 0, 0, 0, 0);
+                    var refreshTime = timestamp / 1000;
+                    console.log(refreshTime);
+                    var configs = [{
+                        dailyLimitId: swapId,
+                        refreshTime: refreshTime,
+                        defaultTokenAmount: "3000000000000"
+                    }]
+                    await limiter.connect(admin).setDailyLimit(configs);
+
+                    amount = validAmount;
+                    tokens = token;
+                    amounts = amount;
+                    await elf.mint(owner.address, amount);
+                    await elf.approve(bridgeOut.address, amount);
+                    var tokenKey = _generateTokenKey(elf.address, chainId);
+                    await bridgeOut.deposit(tokenKey, tokens, amounts);
+
+                    var index = validReceiptIndex;
+                    var receiptKey = tokenKey.toString() + ".";
+                    var receiptId = receiptKey + index;
+                    var amount = validAmount;
+                    var receiverAddress = owner.address;
+                    var leafHash = await lib.computeLeafHash(receiptId, amount, receiverAddress);
+
+                    var message = createMessage(index, leafHash)
+                    hashMessage = ethers.utils.keccak256(message.message)
+                    // Sign the hashed address
+                    let mnemonic = "test test test test test test test test test test test junk";
+                    let mnemonicWallet = ethers.Wallet.fromMnemonic(mnemonic);
+                    let signKey = new ethers.utils.SigningKey(mnemonicWallet.privateKey);
+                    var Signature = signKey.signDigest(hashMessage);
+                    var v = Signature.v == 27 ? "0x0000000000000000000000000000000000000000000000000000000000000000" : "0x0100000000000000000000000000000000000000000000000000000000000000"
+                    await regiment.AddRegimentMember(regimentId, bridgeOut.address);
+                    await bridgeOut.transmit(swapId, message.message, [Signature.r], [Signature.s], v);
+                    return { swapId, receiptKey, receiptId, amount, receiverAddress, elf, token, chainId, bridgeOut, owner, otherAccount0, otherAccount1, otherAccount2 };
+                }
+            })
         });
         describe("computeLeafHash test", function () {
             it("Should computeLeafHash successful", async function () {
@@ -1289,4 +1442,3 @@ describe("BridgeOut", function () {
         return [result,addresses];
     }
 });
-
