@@ -771,12 +771,12 @@ describe("BridgeOut", function () {
                 const timestamp = Date.UTC(date.getFullYear(), date.getMonth(), date.getUTCDate(), 0, 0, 0, 0);
                 var refreshTime = timestamp / 1000;
                 console.log(refreshTime);
-                // var configs = [{
-                //     dailyLimitId : swapId,
-                //     refreshTime : refreshTime,
-                //     defaultTokenAmount : "3000000000000"
-                // }]
-                // await limiter.connect(admin).setDailyLimit(configs);
+                var configs = [{
+                    dailyLimitId : swapId,
+                    refreshTime : refreshTime,
+                    defaultTokenAmount : "3000000000000"
+                }]
+                await limiter.connect(admin).setDailyLimit(configs);
 
                 var index = "1234";
                 var receiptId = tokenKey.toString().substring(2) + "." + index;

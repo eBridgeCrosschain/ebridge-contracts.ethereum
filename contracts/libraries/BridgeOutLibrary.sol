@@ -71,7 +71,7 @@ library BridgeOutLibrary {
                 report.rs[i],
                 report.ss[i]
             );
-            require(_contains(signers,signer), "non-unique signature");
+            require(!_contains(signers,signer), "non-unique signature");
             signers[i] = signer;
             signersCount = uint8(uint256(signersCount).add(1));
         }
