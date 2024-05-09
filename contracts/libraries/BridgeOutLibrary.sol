@@ -29,7 +29,7 @@ library BridgeOutLibrary {
         bytes32 receiptHash;
         uint256 amount;
         address receiveAddress;
-        bytes32 tokenKey;
+        bytes32 receiptIdToken;
     }
 
     function verifyMerkleTree(
@@ -94,10 +94,10 @@ library BridgeOutLibrary {
         bytes32 targetAddress;
         ReceiptInfo memory receiptInfo;
         if (_report.length > 128) {
-            (, , receiptIndex, receiptInfo.receiptHash,receiptInfo.amount,targetAddress,receiptInfo.tokenKey) = abi.decode(
+            (, , receiptIndex, receiptInfo.receiptHash,receiptInfo.amount,targetAddress,receiptInfo.receiptIdToken) = abi.decode(
                 _report,(uint256, uint256, uint256, bytes32,uint256,bytes32,bytes32));
             receiptInfo.receiveAddress = address(uint160(uint256(targetAddress)));
-            receiptInfo.receiptId = string(abi.encodePacked(receiptInfo.tokenKey.toHexWithoutPrefixes(), '.', receiptIndex.toString()));
+            receiptInfo.receiptId = string(abi.encodePacked(receiptInfo.receiptIdToken.toHexWithoutPrefixes(), '.', receiptIndex.toString()));
 
             bytes32 leafHash = computeLeafHash(receiptInfo.receiptId,receiptInfo.amount,receiptInfo.receiveAddress);
             require (leafHash == receiptInfo.receiptHash,"verification failed");

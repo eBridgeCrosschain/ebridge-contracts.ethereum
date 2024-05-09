@@ -4,7 +4,7 @@ const {
 } = require("@nomicfoundation/hardhat-network-helpers");
 const { expect } = require("chai");
 const { ethers } = require("hardhat");
-const BigNumber = require("bignumber.js")
+const BigNumber = require("bignumber.js");
 describe("BridgeOut", function () {
     async function deployBridgeOutFixture() {
         // Contracts are deployed using the first signer/account by default
@@ -841,6 +841,103 @@ describe("BridgeOut", function () {
                 expect(infos[0].targetAddress).to.equal(targetAddress)
                 expect(infos[0].asset).to.equal(token)
             })
+            it("Should tramsmit and receive failed", async function () {
+
+                const { merkleTree, regimentId, regiment, bridgeOut, owner, otherAccount0, otherAccount1, lib, otherAccount2, admin, limiter } = await loadFixture(deployBridgeOutFixture);
+                const { elf, usdt } = await deployTokensFixture()
+                var chainId = "AELF_MAINNET";
+                _newAdmins = [bridgeOut.address];
+                await regiment.AddAdmins(regimentId, _newAdmins);
+                var token = elf.address;
+
+                var targetToken = {
+                    token,
+                    fromChainId: chainId,
+                    originShare: "100",
+                    targetShare: "100"
+                }
+
+
+                await bridgeOut.connect(otherAccount2).setSignatureThreshold(4);
+
+                await bridgeOut.createSwap(targetToken, regimentId);
+                var swapId = await bridgeOut.getSwapId(elf.address, chainId);
+
+                amount = 100;
+                tokens = token;
+                amounts = amount;
+
+                await elf.mint(owner.address, amount);
+                await elf.approve(bridgeOut.address, amount);
+                var tokenKey = _generateTokenKey(token, chainId);
+                await bridgeOut.deposit(tokenKey, tokens, amounts);
+
+                const date = new Date();
+                const timestamp = Date.UTC(date.getFullYear(), date.getMonth(), date.getUTCDate(), 0, 0, 0, 0);
+                var refreshTime = timestamp / 1000;
+                console.log(refreshTime);
+                var configs = [{
+                    dailyLimitId : swapId,
+                    refreshTime : refreshTime,
+                    defaultTokenAmount : "3000000000000"
+                }]
+                await limiter.connect(admin).setDailyLimit(configs);
+
+                var index = "1234";
+                var receiptId = tokenKey.toString().substring(2) + "." + index;
+                console.log("receiptId:",receiptId);
+                var amount = "100";
+                var targetAddress = owner.address;
+                var leafHash = await lib.computeLeafHash(receiptId, amount, targetAddress);
+                console.log("leaf hash",leafHash);
+                console.log("owner address",targetAddress);
+                var message = createMultiMessage(index, leafHash,amount,targetAddress,leafHash);
+                hashMessage = ethers.utils.keccak256(message.message)
+                await regiment.AddRegimentMember(regimentId, bridgeOut.address);
+
+                console.log("construct signature.")
+                var privateKeys = _constructSignature()[0];
+                var addresses = _constructSignature()[1];
+                console.log("privateKeys list",privateKeys)
+
+
+                addresses.forEach(async element => {
+                    await regiment.AddRegimentMember(regimentId, element);
+                });
+
+                var memberList = await regiment.GetRegimentMemberList(regimentId);
+                console.log(memberList);
+            
+                var signaturesR = [];
+                var signaturesV = [];
+                let buffer = new Array(32);
+
+                privateKeys.forEach((element,i) => {
+                    console.log("private key",element);
+                    let signKey = new ethers.utils.SigningKey(element);
+                    console.log("sign digest",element);
+                    var Signature = signKey.signDigest(hashMessage);
+                    console.log("signature r",Signature.r);
+                    signaturesR.push(Signature.r);
+                    signaturesV.push(Signature.s);
+                    var vv = Signature.v == 27 ? "00" : "01";
+                    buffer[i] = vv;
+                });
+
+                console.log(buffer);
+                buffer.fill(0,privateKeys.length);
+                console.log("after",buffer);
+                var v = Buffer.from(buffer);
+                const bufferAsString = v.toString('hex');
+                const signatureV = "0x"+bufferAsString;
+                console.log("signature v",signatureV);
+
+                var error = "verification failed";
+                await expect(bridgeOut.transmit(swapId, message.message, signaturesR, signaturesV, signatureV)).to.be.revertedWith(error);
+                var isReceiptRecorded = await bridgeOut.isReceiptRecorded(leafHash);
+                expect(isReceiptRecorded).to.equal(false)
+                
+            })
         });
         describe("swapToken test", function () {
             it("Should revert when trigger error", async function () {
@@ -896,7 +993,7 @@ describe("BridgeOut", function () {
                 await bridgeOut.transmit(swapId, message.message, [Signature.r], [Signature.s], v);
 
                 //token swap pair not found
-                error = "swap pair not found";
+                var error = "swap pair not found";
                 await expect(bridgeOut.swapToken(regimentId, receiptId, amount, targetAddress))
                     .to.be.revertedWith(error);
                 //invalid amount
@@ -1296,7 +1393,7 @@ describe("BridgeOut", function () {
                 await bridgeInMock.pause(bridgeOut.address);
 
                 //revert when paused
-                error = "BridgeOut:paused"
+                var error = "BridgeOut:paused"
                 await expect(bridgeOut.swapToken(swapId, receiptId, amount, targetAddress))
                     .to.be.revertedWith(error);
 

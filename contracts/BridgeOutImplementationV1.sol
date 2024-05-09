@@ -158,7 +158,7 @@ contract BridgeOutImplementationV1 is ProxyStorage {
             targetTokenList.length() < MaxTokenKeyCount,
             "token list exceed"
         );
-        bytes32 tokenKey = BridgeOutLibrary.generateTokenKey(
+        bytes32 tokenKey = _getTokenKey(
             targetToken.token,
             targetToken.fromChainId
         );
@@ -222,7 +222,7 @@ contract BridgeOutImplementationV1 is ProxyStorage {
             leafNodeIndex,
             leafHash
         );
-        bytes32 tokenKey = BridgeOutLibrary.generateTokenKey(
+        bytes32 tokenKey = _getTokenKey(
             swapInfo.targetToken.token,
             swapInfo.targetToken.fromChainId
         );
@@ -311,7 +311,7 @@ contract BridgeOutImplementationV1 is ProxyStorage {
             targetTokenAmount
         );
         swapAmouts.receivedAmounts[token] = targetTokenAmount;
-        bytes32 tokenKey = receiptInfo.tokenKey;
+        bytes32 tokenKey = _getTokenKey(token,swapInfo.targetToken.fromChainId);
         receivedReceiptIndex[tokenKey] = receivedReceiptIndex[tokenKey].add(1);
         receivedReceiptsMap[tokenKey][receivedReceiptIndex[tokenKey]] = ReceivedReceipt(
             token,
@@ -321,6 +321,13 @@ contract BridgeOutImplementationV1 is ProxyStorage {
             block.timestamp,
             swapInfo.targetToken.fromChainId,
             receiptInfo.receiptId
+        );
+    }
+
+    function _getTokenKey(address token,string memory chainId) private pure returns (bytes32){
+        return BridgeOutLibrary.generateTokenKey(
+            token,
+            chainId
         );
     }
 
@@ -335,7 +342,7 @@ contract BridgeOutImplementationV1 is ProxyStorage {
         require(tokens.length == fromChainIds.length, "invalid input");
         uint256[] memory indexs = new uint256[](tokens.length);
         for (uint256 i = 0; i < tokens.length; i++) {
-            bytes32 tokenKey = BridgeOutLibrary.generateTokenKey(
+            bytes32 tokenKey = _getTokenKey(
                 tokens[i],
                 fromChainIds[i]
             );
@@ -348,7 +355,7 @@ contract BridgeOutImplementationV1 is ProxyStorage {
         address token,
         string calldata fromChainId
     ) public view returns (bytes32) {
-        bytes32 tokenKey = BridgeOutLibrary.generateTokenKey(
+        bytes32 tokenKey = _getTokenKey(
             token,
             fromChainId
         );
@@ -361,7 +368,7 @@ contract BridgeOutImplementationV1 is ProxyStorage {
         uint256 fromIndex,
         uint256 endIndex
     ) public view returns (ReceivedReceipt[] memory _receipts) {
-        bytes32 tokenKey = BridgeOutLibrary.generateTokenKey(
+        bytes32 tokenKey = _getTokenKey(
             token,
             fromChainId
         );
