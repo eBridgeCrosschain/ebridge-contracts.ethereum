@@ -992,6 +992,10 @@ describe("BridgeOut", function () {
                 await regiment.AddRegimentMember(regimentId, bridgeOut.address);
                 await bridgeOut.transmit(swapId, message.message, [Signature.r], [Signature.s], v);
 
+                //any receiver has permission to swap token
+                error = "no permission";
+                await expect(bridgeOut.connect(otherAccount0).swapToken(swapId, receiptId, amount, targetAddress))
+                    .to.not.revertedWith(error);
                 //token swap pair not found
                 var error = "swap pair not found";
                 await expect(bridgeOut.swapToken(regimentId, receiptId, amount, targetAddress))
@@ -1477,4 +1481,3 @@ describe("BridgeOut", function () {
         return [result,addresses];
     }
 });
-
