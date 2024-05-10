@@ -4,7 +4,7 @@ const {
 } = require("@nomicfoundation/hardhat-network-helpers");
 const { expect } = require("chai");
 const { ethers } = require("hardhat");
-const BigNumber = require("bignumber.js")
+const BigNumber = require("bignumber.js");
 describe("BridgeOut", function () {
     async function deployBridgeOutFixture() {
         // Contracts are deployed using the first signer/account by default
@@ -658,7 +658,6 @@ describe("BridgeOut", function () {
                 expect(isReceiptRecorded).to.equal(true)
 
             })
-
             it("Should getReceivedReceiptInfos correctly when transmited muti messages", async function () {
                 const { merkleTree, regimentId, regiment, bridgeOut, owner, otherAccount0, otherAccount1,lib,otherAccount2, admin, limiter } = await loadFixture(deployBridgeOutFixture);
                 const { elf, usdt } = await deployTokensFixture()
@@ -737,6 +736,208 @@ describe("BridgeOut", function () {
                 expect(infos[1].targetAddress).to.equal(targetAddress)
 
             })
+            it("Should tramsmit and receive successful", async function () {
+
+                const { merkleTree, regimentId, regiment, bridgeOut, owner, otherAccount0, otherAccount1, lib, otherAccount2, admin, limiter } = await loadFixture(deployBridgeOutFixture);
+                const { elf, usdt } = await deployTokensFixture()
+                var chainId = "AELF_MAINNET";
+                _newAdmins = [bridgeOut.address];
+                await regiment.AddAdmins(regimentId, _newAdmins);
+                var token = elf.address;
+
+                var targetToken = {
+                    token,
+                    fromChainId: chainId,
+                    originShare: "100",
+                    targetShare: "100"
+                }
+
+
+                await bridgeOut.connect(otherAccount2).setSignatureThreshold(4);
+
+                await bridgeOut.createSwap(targetToken, regimentId);
+                var swapId = await bridgeOut.getSwapId(elf.address, chainId);
+
+                amount = 100;
+                tokens = token;
+                amounts = amount;
+
+                await elf.mint(owner.address, amount);
+                await elf.approve(bridgeOut.address, amount);
+                var tokenKey = _generateTokenKey(token, chainId);
+                await bridgeOut.deposit(tokenKey, tokens, amounts);
+
+                const date = new Date();
+                const timestamp = Date.UTC(date.getFullYear(), date.getMonth(), date.getUTCDate(), 0, 0, 0, 0);
+                var refreshTime = timestamp / 1000;
+                console.log(refreshTime);
+                var configs = [{
+                    dailyLimitId : swapId,
+                    refreshTime : refreshTime,
+                    defaultTokenAmount : "3000000000000"
+                }]
+                await limiter.connect(admin).setDailyLimit(configs);
+
+                var index = "1234";
+                var receiptId = tokenKey.toString().substring(2) + "." + index;
+                console.log("receiptId:",receiptId);
+                var amount = "100";
+                var targetAddress = owner.address;
+                var leafHash = await lib.computeLeafHash(receiptId, amount, targetAddress);
+                console.log("leaf hash",leafHash);
+                console.log("owner address",targetAddress);
+                var message = createMultiMessage(index, leafHash,amount,targetAddress,tokenKey);
+                hashMessage = ethers.utils.keccak256(message.message)
+                await regiment.AddRegimentMember(regimentId, bridgeOut.address);
+
+                console.log("construct signature.")
+                var privateKeys = _constructSignature()[0];
+                var addresses = _constructSignature()[1];
+                console.log("privateKeys list",privateKeys)
+
+
+                addresses.forEach(async element => {
+                    await regiment.AddRegimentMember(regimentId, element);
+                });
+
+                var memberList = await regiment.GetRegimentMemberList(regimentId);
+                console.log(memberList);
+            
+                var signaturesR = [];
+                var signaturesV = [];
+                let buffer = new Array(32);
+
+                privateKeys.forEach((element,i) => {
+                    console.log("private key",element);
+                    let signKey = new ethers.utils.SigningKey(element);
+                    console.log("sign digest",element);
+                    var Signature = signKey.signDigest(hashMessage);
+                    console.log("signature r",Signature.r);
+                    signaturesR.push(Signature.r);
+                    signaturesV.push(Signature.s);
+                    var vv = Signature.v == 27 ? "00" : "01";
+                    buffer[i] = vv;
+                });
+
+                console.log(buffer);
+                buffer.fill(0,privateKeys.length);
+                console.log("after",buffer);
+                var v = Buffer.from(buffer);
+                const bufferAsString = v.toString('hex');
+                const signatureV = "0x"+bufferAsString;
+                console.log("signature v",signatureV);
+
+                var result = await bridgeOut.transmit(swapId, message.message, signaturesR, signaturesV, signatureV);
+                console.log(result);
+                var isReceiptRecorded = await bridgeOut.isReceiptRecorded(leafHash);
+                expect(isReceiptRecorded).to.equal(true)
+                expect(await elf.balanceOf(bridgeOut.address)).to.equal("0")
+                expect(await elf.balanceOf(owner.address)).to.equal(amount)
+                tokens = [token];
+                chainIds = [chainId];
+                var indexes = await bridgeOut.getReceiveReceiptIndex(tokens, chainIds);
+                var infos = await bridgeOut.getReceivedReceiptInfos(elf.address, chainId, 1, indexes[0]);
+                expect(infos[0].amount).to.equal(amount)
+                expect(infos[0].targetAddress).to.equal(targetAddress)
+                expect(infos[0].asset).to.equal(token)
+            })
+            it("Should tramsmit and receive failed", async function () {
+
+                const { merkleTree, regimentId, regiment, bridgeOut, owner, otherAccount0, otherAccount1, lib, otherAccount2, admin, limiter } = await loadFixture(deployBridgeOutFixture);
+                const { elf, usdt } = await deployTokensFixture()
+                var chainId = "AELF_MAINNET";
+                _newAdmins = [bridgeOut.address];
+                await regiment.AddAdmins(regimentId, _newAdmins);
+                var token = elf.address;
+
+                var targetToken = {
+                    token,
+                    fromChainId: chainId,
+                    originShare: "100",
+                    targetShare: "100"
+                }
+
+
+                await bridgeOut.connect(otherAccount2).setSignatureThreshold(4);
+
+                await bridgeOut.createSwap(targetToken, regimentId);
+                var swapId = await bridgeOut.getSwapId(elf.address, chainId);
+
+                amount = 100;
+                tokens = token;
+                amounts = amount;
+
+                await elf.mint(owner.address, amount);
+                await elf.approve(bridgeOut.address, amount);
+                var tokenKey = _generateTokenKey(token, chainId);
+                await bridgeOut.deposit(tokenKey, tokens, amounts);
+
+                const date = new Date();
+                const timestamp = Date.UTC(date.getFullYear(), date.getMonth(), date.getUTCDate(), 0, 0, 0, 0);
+                var refreshTime = timestamp / 1000;
+                console.log(refreshTime);
+                var configs = [{
+                    dailyLimitId : swapId,
+                    refreshTime : refreshTime,
+                    defaultTokenAmount : "3000000000000"
+                }]
+                await limiter.connect(admin).setDailyLimit(configs);
+
+                var index = "1234";
+                var receiptId = tokenKey.toString().substring(2) + "." + index;
+                console.log("receiptId:",receiptId);
+                var amount = "100";
+                var targetAddress = owner.address;
+                var leafHash = await lib.computeLeafHash(receiptId, amount, targetAddress);
+                console.log("leaf hash",leafHash);
+                console.log("owner address",targetAddress);
+                var message = createMultiMessage(index, leafHash,amount,targetAddress,leafHash);
+                hashMessage = ethers.utils.keccak256(message.message)
+                await regiment.AddRegimentMember(regimentId, bridgeOut.address);
+
+                console.log("construct signature.")
+                var privateKeys = _constructSignature()[0];
+                var addresses = _constructSignature()[1];
+                console.log("privateKeys list",privateKeys)
+
+
+                addresses.forEach(async element => {
+                    await regiment.AddRegimentMember(regimentId, element);
+                });
+
+                var memberList = await regiment.GetRegimentMemberList(regimentId);
+                console.log(memberList);
+            
+                var signaturesR = [];
+                var signaturesV = [];
+                let buffer = new Array(32);
+
+                privateKeys.forEach((element,i) => {
+                    console.log("private key",element);
+                    let signKey = new ethers.utils.SigningKey(element);
+                    console.log("sign digest",element);
+                    var Signature = signKey.signDigest(hashMessage);
+                    console.log("signature r",Signature.r);
+                    signaturesR.push(Signature.r);
+                    signaturesV.push(Signature.s);
+                    var vv = Signature.v == 27 ? "00" : "01";
+                    buffer[i] = vv;
+                });
+
+                console.log(buffer);
+                buffer.fill(0,privateKeys.length);
+                console.log("after",buffer);
+                var v = Buffer.from(buffer);
+                const bufferAsString = v.toString('hex');
+                const signatureV = "0x"+bufferAsString;
+                console.log("signature v",signatureV);
+
+                var error = "verification failed";
+                await expect(bridgeOut.transmit(swapId, message.message, signaturesR, signaturesV, signatureV)).to.be.revertedWith(error);
+                var isReceiptRecorded = await bridgeOut.isReceiptRecorded(leafHash);
+                expect(isReceiptRecorded).to.equal(false)
+                
+            })
         });
         describe("swapToken test", function () {
             it("Should revert when trigger error", async function () {
@@ -796,7 +997,7 @@ describe("BridgeOut", function () {
                 await expect(bridgeOut.connect(otherAccount0).swapToken(swapId, receiptId, amount, targetAddress))
                     .to.not.revertedWith(error);
                 //token swap pair not found
-                error = "swap pair not found";
+                var error = "swap pair not found";
                 await expect(bridgeOut.swapToken(regimentId, receiptId, amount, targetAddress))
                     .to.be.revertedWith(error);
                 //invalid amount
@@ -1121,11 +1322,6 @@ describe("BridgeOut", function () {
                     .to.be.revertedWithCustomError(limiter,"DailyLimitExceeded");
 
                 //setlimit revert 
-                error = "no permission"
-                await expect(bridgeOut.connect(otherAccount1).approve(receiptId))
-                    .to.be.revertedWith(error);
-
-                await bridgeOut.connect(otherAccount0).approve(receiptId);
 
                 var configs = [{
                     dailyLimitId : swapId,
@@ -1201,7 +1397,7 @@ describe("BridgeOut", function () {
                 await bridgeInMock.pause(bridgeOut.address);
 
                 //revert when paused
-                error = "BridgeOut:paused"
+                var error = "BridgeOut:paused"
                 await expect(bridgeOut.swapToken(swapId, receiptId, amount, targetAddress))
                     .to.be.revertedWith(error);
 
@@ -1221,159 +1417,6 @@ describe("BridgeOut", function () {
                 //success
                 bridgeOut.swapToken(swapId, receiptId, amount, targetAddress)
                 expect(await elf.balanceOf(owner.address)).to.equal(amount)
-            })
-
-            describe("swapToken test (swapToken can be called by anyone)", function () {
-                const validReceiptIndex = "1234", invalidReceiptIndex = "1235";
-                const validAmount = "100", invalidAmount = "99";
-
-                testCasesPOS = [
-                    {
-                        // claimedBySender being true indicates that the swapToken was called by sender.address
-                        claimedBySender: true
-                    },
-                    {
-                        // claimedBySender being false indicates that the swapToken was called by otherAccount1.address
-                        claimedBySender: false
-                    }
-                ];
-                testCasesPOS.forEach(({ claimedBySender }) => {
-                    it("Should be able to swapToken", async function () {
-                        var { swapId, bridgeOut, elf, token, chainId, owner, otherAccount1, receiptId, amount, receiverAddress } = await loadFixture(computeLeafHashAndTransmit);
-                        
-                        let sender = claimedBySender ? owner : otherAccount1;
-
-                        await bridgeOut.connect(sender).swapToken(swapId, receiptId, amount, receiverAddress);
-                        expect(await elf.balanceOf(bridgeOut.address)).to.equal("0")
-                        expect(await elf.balanceOf(owner.address)).to.equal(amount)
-                        tokens = [token];
-                        chainIds = [chainId];
-                        var indexes = await bridgeOut.getReceiveReceiptIndex(tokens, chainIds);
-                        var infos = await bridgeOut.getReceivedReceiptInfos(elf.address, chainId, 1, indexes[0]);
-                        expect(infos[0].amount).to.equal(amount)
-                        expect(infos[0].targetAddress).to.equal(receiverAddress)
-                        expect(infos[0].asset).to.equal(token)
-                    })
-                })
-
-                testCasesNEG = [
-                    {
-                        claimedBySender: true,
-                        useValidReceiptId: false,
-                        useValidAmount: true,
-                        useValidReceiverAddress: true,
-                        expectedErrorMessage: "Arithmetic operation overflowed"
-                    },
-                    {
-                        claimedBySender: true,
-                        useValidReceiptId: true,
-                        useValidAmount: false,
-                        useValidReceiverAddress: true,
-                        expectedErrorMessage: "Arithmetic operation overflowed"
-                    },
-                    {
-                        claimedBySender: true,
-                        useValidReceiptId: true,
-                        useValidAmount: true,
-                        useValidReceiverAddress: false,
-                        expectedErrorMessage: "Arithmetic operation overflowed"
-                    },
-                    {
-                        claimedBySender: false,
-                        useValidReceiptId: false,
-                        useValidAmount: true,
-                        useValidReceiverAddress: true,
-                        expectedErrorMessage: "Arithmetic operation overflowed"
-                    },
-                    {
-                        claimedBySender: false,
-                        useValidReceiptId: true,
-                        useValidAmount: false,
-                        useValidReceiverAddress: true,
-                        expectedErrorMessage: "Arithmetic operation overflowed"
-                    },
-                    {
-                        claimedBySender: false,
-                        useValidReceiptId: true,
-                        useValidAmount: true,
-                        useValidReceiverAddress: false,
-                        expectedErrorMessage: "Arithmetic operation overflowed"
-                    }
-                ];
-                testCasesNEG.forEach(({ claimedBySender, useValidReceiptId, useValidAmount, useValidReceiverAddress, expectedErrorMessage }) => {
-                    it("Should not be able to swapToken", async function () {
-                        var { swapId, receiptKey, bridgeOut, owner, otherAccount1, otherAccount2 } = await loadFixture(computeLeafHashAndTransmit);
-
-                        let sender = claimedBySender ? owner : otherAccount1;
-                        let receiptId = useValidReceiptId ? receiptKey + validReceiptIndex : receiptKey + invalidReceiptIndex;
-                        let amount = useValidAmount ? validAmount : invalidAmount
-                        let receiverAddress = useValidReceiverAddress ? owner.address : otherAccount2.address
-
-                        try {
-                            await bridgeOut.connect(sender).swapToken(swapId, receiptId, amount, receiverAddress);
-                        } catch (err) {
-                            expect(err != null)
-                            expect(err.message).to.contains(expectedErrorMessage)
-                        }
-                    })
-                })
-
-                async function computeLeafHashAndTransmit() {
-                    const { regimentId, regiment, bridgeOut, owner, otherAccount0, otherAccount1, otherAccount2, lib, admin, limiter } = await loadFixture(deployBridgeOutFixture);
-                    const { elf } = await deployTokensFixture()
-                    var chainId = "AELF_MAINNET";
-                    _newAdmins = [bridgeOut.address];
-                    await regiment.AddAdmins(regimentId, _newAdmins);
-                    var token = elf.address;
-
-                    var targetToken = {
-                        token,
-                        fromChainId: chainId,
-                        originShare: "100",
-                        targetShare: "100"
-                    }
-
-                    await bridgeOut.createSwap(targetToken, regimentId);
-                    var swapId = await bridgeOut.getSwapId(elf.address, chainId);
-
-                    const date = new Date();
-                    const timestamp = Date.UTC(date.getFullYear(), date.getMonth(), date.getUTCDate(), 0, 0, 0, 0);
-                    var refreshTime = timestamp / 1000;
-                    console.log(refreshTime);
-                    var configs = [{
-                        dailyLimitId: swapId,
-                        refreshTime: refreshTime,
-                        defaultTokenAmount: "3000000000000"
-                    }]
-                    await limiter.connect(admin).setDailyLimit(configs);
-
-                    amount = validAmount;
-                    tokens = token;
-                    amounts = amount;
-                    await elf.mint(owner.address, amount);
-                    await elf.approve(bridgeOut.address, amount);
-                    var tokenKey = _generateTokenKey(elf.address, chainId);
-                    await bridgeOut.deposit(tokenKey, tokens, amounts);
-
-                    var index = validReceiptIndex;
-                    var receiptKey = tokenKey.toString() + ".";
-                    var receiptId = receiptKey + index;
-                    var amount = validAmount;
-                    var receiverAddress = owner.address;
-                    var leafHash = await lib.computeLeafHash(receiptId, amount, receiverAddress);
-
-                    var message = createMessage(index, leafHash)
-                    hashMessage = ethers.utils.keccak256(message.message)
-                    // Sign the hashed address
-                    let mnemonic = "test test test test test test test test test test test junk";
-                    let mnemonicWallet = ethers.Wallet.fromMnemonic(mnemonic);
-                    let signKey = new ethers.utils.SigningKey(mnemonicWallet.privateKey);
-                    var Signature = signKey.signDigest(hashMessage);
-                    var v = Signature.v == 27 ? "0x0000000000000000000000000000000000000000000000000000000000000000" : "0x0100000000000000000000000000000000000000000000000000000000000000"
-                    await regiment.AddRegimentMember(regimentId, bridgeOut.address);
-                    await bridgeOut.transmit(swapId, message.message, [Signature.r], [Signature.s], v);
-                    return { swapId, receiptKey, receiptId, amount, receiverAddress, elf, token, chainId, bridgeOut, owner, otherAccount0, otherAccount1, otherAccount2 };
-                }
             })
         });
         describe("computeLeafHash test", function () {
@@ -1396,25 +1439,21 @@ describe("BridgeOut", function () {
 
             })
         });
-        describe("change approve transfer controller", function () {
-            it("Should change approve transfer controller successful", async function () {
-                const { merkleTree, regimentId, regiment, bridgeOut, owner, otherAccount0, otherAccount1, bridgeInMock, weth, lib, otherAccount2 } = await loadFixture(deployBridgeOutFixture);
-                expect(await bridgeOut.approveController()).to.equal(otherAccount0.address);
-                await bridgeOut.connect(otherAccount2).changeApproveController(otherAccount1.address);
-                expect(await bridgeOut.approveController()).to.equal(otherAccount1.address);
-            });
-            it("revert no permission", async function () {
-                const { merkleTree, regimentId, regiment, bridgeOut, owner, otherAccount0, otherAccount1, bridgeInMock } = await loadFixture(deployBridgeOutFixture);
-                expect(await bridgeOut.approveController()).to.equal(otherAccount0.address);
-                var error = 'BridgeOut:only for Wallet call';
-                await expect(bridgeOut.connect(otherAccount1).changeApproveController(otherAccount1.address)).to.be.revertedWith(error);
-            });
-        });
-
     });
     function createMessage(nodeNumber, leafHash) {
 
         var message = ethers.utils.solidityPack(["bytes32", "bytes32", "uint256", "bytes32"], [leafHash, leafHash, nodeNumber, leafHash])
+        return { message };
+    }
+
+    function createMultiMessage(nodeNumber, leafHash,amount,targetAddress,receiptIdToken) {
+        console.log(targetAddress);
+        console.log(receiptIdToken);
+        var add =  '0x'.concat(targetAddress.slice(2).padStart(64, '0'));
+        console.log(add);
+        amount = 100
+        var message = ethers.utils.solidityPack(["uint256", "uint256", "uint256", "bytes32","uint256", "bytes32","bytes32"], [32, 5, nodeNumber, leafHash,amount,add,receiptIdToken])
+        console.log(message);
         return { message };
     }
 

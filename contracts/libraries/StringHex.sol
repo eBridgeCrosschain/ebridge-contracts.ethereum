@@ -57,4 +57,14 @@ library StringHex {
                 )
             );
     }
+
+    function toHexWithoutPrefixes(bytes32 data) internal pure returns (string memory) {
+        return
+            string(
+                abi.encodePacked(
+                    toHex16(bytes16(data)),
+                    toHex16(bytes16(data << 128))
+                )
+            );
+    }
 }
