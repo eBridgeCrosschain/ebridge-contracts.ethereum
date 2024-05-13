@@ -200,8 +200,8 @@ contract BridgeInImplementation is ProxyStorage {
             "Token is not support in that chain"
         );
         require(amount > 0, "invalid amount");
-        ILimiter(limiter).consumeDailyLimit(tokenKey,tokenAddress,amount);
-        ILimiter(limiter).consumeTokenBucket(tokenKey,tokenAddress,amount);
+        ILimiter(limiter).consumeDailyLimit(tokenKey,token,amount);
+        ILimiter(limiter).consumeTokenBucket(tokenKey,token,amount);
     }
 
     function generateReceipt(
