@@ -134,11 +134,6 @@ contract BridgeOutImplementationV1 is ProxyStorage {
         limiter = _limiter;
     }
 
-    function setSignatureThreshold(uint8 _signatureThreshold) external onlyWallet {
-        require(_signatureThreshold > 0,"Invalid input.");
-        signatureThreshold = _signatureThreshold;
-    }
-
     function changeMultiSignWallet(address _multiSigWallet) external onlyOwner {
         require(_multiSigWallet != address(0), "invalid input");
         multiSigWallet = _multiSigWallet;
@@ -247,8 +242,7 @@ contract BridgeOutImplementationV1 is ProxyStorage {
             _report,
             _rs,
             _ss,
-            _rawVs,
-            signatureThreshold
+            _rawVs
         ).verifySignatureAndDecodeReport(swapInfo.regimentId,regiment);
         require(ledger[receiptInfo.receiptHash].leafNodeIndex == 0, "already recorded");
         if (receiptInfo.receiveAddress != address(0)) {

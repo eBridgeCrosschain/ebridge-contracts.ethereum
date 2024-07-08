@@ -20,4 +20,8 @@ interface IRegiment {
         bytes32 regimentId,
         address[] memory memberAddress
     ) external view returns (bool);
+
+    function GetRegimentMemberList(
+        bytes32 regimentId
+    ) external view returns (address[] memory);
 }

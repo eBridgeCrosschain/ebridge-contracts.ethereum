@@ -205,18 +205,20 @@ describe("MultiSigWallet", function () {
                 var transactionId = 1;
                 await multiSigWallet.connect(account).confirmTransaction(transactionId);
                 await multiSigWallet.connect(account1).confirmTransaction(transactionId);
-                var result = await multiSigWallet.connect(account2).confirmTransaction(transactionId);
-                const receipt = await result.wait();
-                const data = receipt.logs[1].data;
-                const topics = receipt.logs[1].topics;
-                const interface = new ethers.utils.Interface(["event ExecutionFailure(uint256 indexed transactionId,string returnValue);"]);
-                const event = interface.decodeEventLog("ExecutionFailure", data, topics);
-                console.log(event);
-                var transactionId = event.transactionId;
-                var result = event.returnValue;
-                console.log("transactionId",transactionId);
-                console.log("result",result);
-                expect(result).to.equal("tokenKey already added");
+                error = "tokenKey already added"
+                await expect(multiSigWallet.connect(account2).confirmTransaction(transactionId))
+                    .to.be.revertedWith(error);
+                // const receipt = await result.wait();
+                // const data = receipt.logs[1].data;
+                // const topics = receipt.logs[1].topics;
+                // const interface = new ethers.utils.Interface(["event ExecutionFailure(uint256 indexed transactionId,string returnValue);"]);
+                // const event = interface.decodeEventLog("ExecutionFailure", data, topics);
+                // console.log(event);
+                // var transactionId = event.transactionId;
+                // var result = event.returnValue;
+                // console.log("transactionId",transactionId);
+                // console.log("result",result);
+                // expect(result).to.equal("tokenKey already added");
                 
             });
             it("Should executeTransaction success creeateRegiment", async function () {
@@ -285,10 +287,10 @@ describe("MultiSigWallet", function () {
             it("Should remove last member success", async function () {
                 const { bridgeIn, multiSigWallet, owner, account, account1, account2, account3, account4 } = await loadFixture(deployMultiSigWalletFixture);
                 let ABI = [
-                    "function removeMember(address member)"
+                    "function removeMemberWithRequirement(address member,uint256 _required)"
                 ];
                 let iface = new ethers.utils.Interface(ABI);
-                var data = iface.encodeFunctionData("removeMember", [account4.address])
+                var data = iface.encodeFunctionData("removeMemberWithRequirement", [account4.address,3])
 
                 await multiSigWallet.connect(account1).submitTransaction(multiSigWallet.address, 0, data);
 
@@ -311,10 +313,10 @@ describe("MultiSigWallet", function () {
                 const { bridgeIn, multiSigWallet, owner, account, account1, account2, account3, account4 } = await loadFixture(deployMultiSigWalletFixture);
             
                 let ABI = [
-                    "function removeMember(address member)"
+                    "function removeMemberWithRequirement(address member,uint256 _required)"
                 ];
                 let iface = new ethers.utils.Interface(ABI);
-                var data = iface.encodeFunctionData("removeMember", [account2.address])
+                var data = iface.encodeFunctionData("removeMemberWithRequirement", [account2.address,3])
 
                 await multiSigWallet.connect(account1).submitTransaction(multiSigWallet.address, 0, data);
 
@@ -338,10 +340,10 @@ describe("MultiSigWallet", function () {
             it("Should failed when remove a not exist member ", async function () {
                 const { bridgeIn, multiSigWallet, owner, account, account1, account2, account3, account4 } = await loadFixture(deployMultiSigWalletFixture);
                 let ABI = [
-                    "function removeMember(address member)"
+                    "function removeMemberWithRequirement(address member,uint256 _required)"
                 ];
                 let iface = new ethers.utils.Interface(ABI);
-                var data = iface.encodeFunctionData("removeMember", [owner.address])
+                var data = iface.encodeFunctionData("removeMemberWithRequirement", [owner.address,3])
 
                 await multiSigWallet.connect(account1).submitTransaction(multiSigWallet.address, 0, data);
 
@@ -351,23 +353,22 @@ describe("MultiSigWallet", function () {
                 var transactionId = 0;
                 await multiSigWallet.connect(account).confirmTransaction(transactionId);
                 await multiSigWallet.connect(account1).confirmTransaction(transactionId);
-                await multiSigWallet.connect(account2).confirmTransaction(transactionId);
+                error = "member not exist"
+                await expect(multiSigWallet.connect(account2).confirmTransaction(transactionId))
+                    .to.be.revertedWith(error);
 
                 //failed 
-                
-                var isConfirmed = await multiSigWallet.isConfirmed(transactionId);
-                expect(isConfirmed).to.equal(true);
                 var transaction = await multiSigWallet.transactions(transactionId);
-                expect( transaction.executed).to.equal(true);
+                expect( transaction.executed).to.equal(false);
                
             });
             it("Should failed when add an existed member ", async function () {
                 const { bridgeIn, multiSigWallet, owner, account, account1, account2, account3, account4 } = await loadFixture(deployMultiSigWalletFixture);
                 let ABI = [
-                    "function addMember(address member)"
+                    "function addMemberWithRequirement(address member,uint256 _required)"
                 ];
                 let iface = new ethers.utils.Interface(ABI);
-                var data = iface.encodeFunctionData("addMember", [account1.address])
+                var data = iface.encodeFunctionData("addMemberWithRequirement", [account1.address,3])
 
                 await multiSigWallet.connect(account1).submitTransaction(multiSigWallet.address, 0, data);
 
@@ -377,23 +378,22 @@ describe("MultiSigWallet", function () {
                 var transactionId = 0;
                 await multiSigWallet.connect(account).confirmTransaction(transactionId);
                 await multiSigWallet.connect(account1).confirmTransaction(transactionId);
-                await multiSigWallet.connect(account2).confirmTransaction(transactionId);
+                error = "member exists"
+                await expect(multiSigWallet.connect(account2).confirmTransaction(transactionId))
+                    .to.be.revertedWith(error);
 
                 //failed
-
-                var isConfirmed = await multiSigWallet.isConfirmed(transactionId);
-                expect(isConfirmed).to.equal(true);
                 var transaction = await multiSigWallet.transactions(transactionId);
-                expect( transaction.executed).to.equal(true);
+                expect( transaction.executed).to.equal(false);
                
             });
             it("Should add member success", async function () {
                 const { bridgeIn, multiSigWallet, owner, account, account1, account2, account3, account4 } = await loadFixture(deployMultiSigWalletFixture);
                 let ABI = [
-                    "function addMember(address member)"
+                    "function addMemberWithRequirement(address member,uint256 _required)"
                 ];
                 let iface = new ethers.utils.Interface(ABI);
-                var data = iface.encodeFunctionData("addMember", [owner.address])
+                var data = iface.encodeFunctionData("addMemberWithRequirement", [owner.address,3])
 
                 await multiSigWallet.connect(account1).submitTransaction(multiSigWallet.address, 0, data);
 

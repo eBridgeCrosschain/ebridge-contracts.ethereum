@@ -29,8 +29,6 @@ contract Limiter is Proxy {
     return returnData;
   }
 
-  receive() external payable {}
-
   fallback() external payable {
     // delegate all other functions to current implementation
     (bool success, ) = _implementation.delegatecall(msg.data);

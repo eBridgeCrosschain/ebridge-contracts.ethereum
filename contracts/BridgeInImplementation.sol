@@ -118,7 +118,7 @@ contract BridgeInImplementation is ProxyStorage {
 
     function addToken(Token[] calldata tokens) public onlyWallet {
         require(
-            tokenList.length() <= MaxTokenCount && tokens.length <= MaxTokenCountPerAddOrRemove,
+            tokenList.length().add(tokens.length) <= MaxTokenCount && tokens.length <= MaxTokenCountPerAddOrRemove,
             "token count exceed"
         );
         for (uint256 i = 0; i < tokens.length; i++) {

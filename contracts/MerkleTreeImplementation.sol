@@ -465,7 +465,7 @@ contract MerkleTreeImplementation is ProxyStorage {
             treeIndex
         ];
         require(
-            leafs.length() < (1 << spaceInfoMap[spaceId].pathLength),
+            leafs.length().add(to.sub(from).add(1)) <= (1 << spaceInfoMap[spaceId].pathLength),
             "leafs exceed"
         );
         for (uint256 i = from; i <= to; i++) {

@@ -1,8 +1,9 @@
 pragma solidity 0.8.9;
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
-contract MultiSigWallet is Ownable {
+contract MultiSigWallet is Ownable,ReentrancyGuard {
     using SafeMath for uint256;
     uint256 public constant MAX_member_COUNT = 20;
 
@@ -104,8 +105,8 @@ contract MultiSigWallet is Ownable {
 
     /// @dev Allows to add a new member. Transaction has to be sent by wallet.
     /// @param member Address of new member.
-    function addMember(
-        address member
+    function addMemberWithRequirement(
+        address member,uint256 _required 
     )
         public
         onlyWallet
@@ -116,12 +117,13 @@ contract MultiSigWallet is Ownable {
         isMember[member] = true;
         members.push(member);
         emit MemberAddition(member);
+        if (_required != required) changeRequirement(_required);
     }
 
     /// @dev Allows to remove an member. Transaction has to be sent by wallet.
     /// @param member Address of member.
-    function removeMember(
-        address member
+    function removeMemberWithRequirement(
+        address member,uint256 _required 
     ) public onlyWallet memberExists(member) {
         isMember[member] = false;
         for (uint256 i = 0; i < members.length - 1; i++)
@@ -130,29 +132,33 @@ contract MultiSigWallet is Ownable {
                 break;
             }
         members.pop();
-        if (required > members.length) changeRequirement(members.length);
         emit MemberRemoval(member);
+        if (_required > members.length || required > members.length) {
+            changeRequirement(members.length);
+        } else if (_required != required) {
+            changeRequirement(_required);
+        }
     }
 
     // /// @dev Allows to replace an member with a new member. Transaction has to be sent by wallet.
     // /// @param member Address of member to be replaced.
     // /// @param member Address of new member.
-    // function replaceMember(address member, address newMember)
-    //     public
-    //     onlyWallet
-    //     memberExists(member)
-    //     memberDoesNotExist(newMember)
-    // {
-    //     for (uint256 i = 0; i < members.length; i++)
-    //         if (members[i] == member) {
-    //             members[i] = newMember;
-    //             break;
-    //         }
-    //     isMember[member] = false;
-    //     isMember[newMember] = true;
-    //     emit MemberRemoval(member);
-    //     emit MemberAddition(newMember);
-    // }
+    function replaceMember(address member, address newMember)
+        public
+        onlyWallet
+        memberExists(member)
+        memberDoesNotExist(newMember)
+    {
+        for (uint256 i = 0; i < members.length; i++)
+            if (members[i] == member) {
+                members[i] = newMember;
+                break;
+            }
+        isMember[member] = false;
+        isMember[newMember] = true;
+        emit MemberRemoval(member);
+        emit MemberAddition(newMember);
+    }
 
     /// @dev Allows to change the number of required confirmations. Transaction has to be sent by wallet.
     /// @param _required Number of required confirmations.
@@ -210,21 +216,23 @@ contract MultiSigWallet is Ownable {
     /// @param transactionId Transaction ID.
     function executeTransaction(
         uint256 transactionId
-    ) public notExecuted(transactionId) {
+    ) public notExecuted(transactionId) nonReentrant() {
         if (isConfirmed(transactionId)) {
             Transaction storage transaction = transactions[transactionId];
             transaction.executed = true;
             (bool success, bytes memory returnData) = transaction.destination.call{
                 value: transaction.value
             }(transaction.data);
-            if (success) emit Execution(transactionId);
-            else {
+            if (success) {
+                emit Execution(transactionId);
+            } else {
                 bytes memory returnValue = new bytes(returnData.length-4);
                 for(uint i = 4; i < returnData.length;i++){
                     returnValue[i-4] = returnData[i];
                 }
                 string memory returnValueString = abi.decode(returnValue,(string));
                 emit ExecutionFailure(transactionId,returnValueString);
+                require(success,returnValueString);
             }
         }
     }
