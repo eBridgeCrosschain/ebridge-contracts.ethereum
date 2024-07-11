@@ -124,7 +124,7 @@ contract MultiSigWallet is Ownable,ReentrancyGuard {
     /// @param member Address of member.
     function removeMemberWithRequirement(
         address member,uint256 _required 
-    ) public onlyWallet memberExists(member) {
+    ) public onlyWallet memberExists(member){
         isMember[member] = false;
         for (uint256 i = 0; i < members.length - 1; i++)
             if (members[i] == member) {
@@ -133,10 +133,11 @@ contract MultiSigWallet is Ownable,ReentrancyGuard {
             }
         members.pop();
         emit MemberRemoval(member);
-        if (_required > members.length || required > members.length) {
-            changeRequirement(members.length);
-        } else if (_required != required) {
+        if (_required != required) 
+        {
             changeRequirement(_required);
+        }else if (required > members.length) {
+            changeRequirement(members.length);
         }
     }
 
