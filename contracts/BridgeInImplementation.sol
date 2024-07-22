@@ -10,6 +10,7 @@ import "./interfaces/BridgeOutInterface.sol";
 import "./interfaces/NativeTokenInterface.sol";
 import "./interfaces/LimiterInterface.sol";
 import "./libraries/BridgeInLibrary.sol";
+import "./interfaces/TokenPoolInterface.sol";
 
 contract BridgeInImplementation is ProxyStorage {
     using SafeMath for uint256;
@@ -37,6 +38,7 @@ contract BridgeInImplementation is ProxyStorage {
         private ownerToReceiptsIndexMap; //from 0
     mapping(bytes32 => uint256) public depositAmount;
     address public limiter;
+    address public tokenPool;
 
     modifier whenNotPaused() {
         require(!isPaused, "BrigeIn:paused");
@@ -99,6 +101,14 @@ contract BridgeInImplementation is ProxyStorage {
             "invalid bridge out address"
         );
         bridgeOut = _bridgeOut;
+    }
+
+    function setTokenPool(address _tokenPool) external onlyWallet {
+        require(
+            tokenPool == address(0) && _tokenPool != address(0),
+            "invalid token pool address"
+        );
+        tokenPool = _tokenPool;
     }
 
     function setLimiter(address _limiter) external onlyWallet {
@@ -171,7 +181,7 @@ contract BridgeInImplementation is ProxyStorage {
     ) external payable whenNotPaused {
         consumeReceiptLimit(tokenAddress,msg.value,targetChainId);
         INativeToken(tokenAddress).deposit{value: msg.value}();
-        IERC20(tokenAddress).safeApprove(bridgeOut, msg.value);
+        IERC20(tokenAddress).safeApprove(tokenPool, msg.value);
         generateReceipt(tokenAddress, msg.value, targetChainId, targetAddress);
     }
 
@@ -185,7 +195,7 @@ contract BridgeInImplementation is ProxyStorage {
         consumeReceiptLimit(token,amount,targetChainId);
         // Deposit token to this contract
         IERC20(token).safeTransferFrom(msg.sender, address(this), amount);
-        IERC20(token).safeApprove(bridgeOut, amount);
+        IERC20(token).safeApprove(tokenPool, amount);
         generateReceipt(token, amount, targetChainId, targetAddress);
     }
 
@@ -211,7 +221,7 @@ contract BridgeInImplementation is ProxyStorage {
         string calldata targetAddress
     ) internal {
         bytes32 tokenKey = BridgeInLibrary._generateTokenKey(token, targetChainId);
-        IBridgeOut(bridgeOut).deposit(tokenKey, token, amount);
+        ITokenPool(tokenPool).lock(token,amount,targetChainId,msg.sender);
         tokenReceiptIndex[tokenKey] = tokenReceiptIndex[tokenKey].add(1);
         uint256 receiptIndex = tokenReceiptIndex[tokenKey];
         string memory receiptId = BridgeInLibrary._generateReceiptId(tokenKey, receiptIndex.toString());
@@ -296,26 +306,5 @@ contract BridgeInImplementation is ProxyStorage {
     ) public view returns (uint256) {
         bytes32 tokenKey = BridgeInLibrary._generateTokenKey(token, chainId);
         return totalAmountInReceipts[tokenKey];
-    }
-
-    function deposit(bytes32 tokenKey, address token, uint256 amount) external {
-        require(tokenList.contains(tokenKey), "not support");
-        depositAmount[tokenKey] = depositAmount[tokenKey].add(amount);
-        IERC20(token).safeTransferFrom(msg.sender, address(this), amount);
-        IERC20(token).safeApprove(bridgeOut, amount);
-        IBridgeOut(bridgeOut).deposit(tokenKey, token, amount);
-    }
-
-    function withdraw(
-        bytes32 tokenKey,
-        address token,
-        uint256 amount,
-        address receiverAddress
-    ) external onlyOwner {
-        require(tokenList.contains(tokenKey), "not support");
-        require(depositAmount[tokenKey] >= amount, "deposit not enough");
-        depositAmount[tokenKey] = depositAmount[tokenKey].sub(amount);
-        IBridgeOut(bridgeOut).withdraw(tokenKey, token, amount);
-        IERC20(token).safeTransfer(receiverAddress, amount);
     }
 }

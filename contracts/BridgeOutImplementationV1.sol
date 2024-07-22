@@ -11,6 +11,7 @@ import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import "./Proxy.sol";
 import "./interfaces/LimiterInterface.sol";
 import {BridgeOutLibrary} from './libraries/BridgeOutLibrary.sol';
+import "./interfaces/TokenPoolInterface.sol";
 
 pragma solidity 0.8.9;
 
@@ -44,6 +45,7 @@ contract BridgeOutImplementationV1 is ProxyStorage {
     mapping(bytes32 => uint256) internal tokenDepositAmount;
     address public limiter;
     uint8 public signatureThreshold;
+    address public tokenPool;
 
     struct ReceivedReceipt {
         address asset; // ERC20 Token Address
@@ -116,14 +118,12 @@ contract BridgeOutImplementationV1 is ProxyStorage {
         isPaused = false;
     }
 
-    function setDefaultMerkleTreeDepth(
-        uint256 _defaultMerkleTreeDepth
-    ) external onlyWallet {
+    function setTokenPool(address _tokenPool) external onlyWallet {
         require(
-            _defaultMerkleTreeDepth > 0 && _defaultMerkleTreeDepth <= 20,
-            "invalid input"
+            tokenPool == address(0) && _tokenPool != address(0),
+            "invalid token pool address"
         );
-        defaultMerkleTreeDepth = _defaultMerkleTreeDepth;
+        tokenPool = _tokenPool;
     }
 
     function setLimiter(address _limiter) external onlyWallet {
@@ -174,26 +174,16 @@ contract BridgeOutImplementationV1 is ProxyStorage {
         emit SwapPairAdded(swapId, targetToken.token, targetToken.fromChainId);
     }
 
-    function deposit(bytes32 tokenKey, address token, uint256 amount) external {
-        bytes32 swapId = tokenKeyToSwapIdMap[tokenKey];
-        BridgeOutLibrary.validateToken(targetTokenList,token,tokenKey,swapInfos[swapId].targetToken.token);
-        IERC20(token).safeTransferFrom(
-            address(msg.sender),
-            address(this),
-            amount
-        );
-        tokenDepositAmount[swapId] = tokenDepositAmount[swapId].add(amount);
-    }
-
     function withdraw(
         bytes32 tokenKey,
         address token,
-        uint256 amount
-    ) external onlyBridgeInContract {
+        uint256 amount,
+        address receiverAddress
+    ) external onlyWallet {
         bytes32 swapId = tokenKeyToSwapIdMap[tokenKey];
         BridgeOutLibrary.validateToken(targetTokenList,token,tokenKey,swapInfos[swapId].targetToken.token);
         tokenDepositAmount[swapId] = tokenDepositAmount[swapId].sub(amount);
-        IERC20(token).safeTransfer(address(msg.sender), amount);
+        IERC20(token).safeTransfer(receiverAddress, amount);
     }
 
     function swapToken(
@@ -288,16 +278,14 @@ contract BridgeOutImplementationV1 is ProxyStorage {
         ILimiter(limiter).consumeDailyLimit(swapId, token, targetTokenAmount);
         ILimiter(limiter).consumeTokenBucket(swapId, token, targetTokenAmount);
         if (token == tokenAddress) {
-            INativeToken(tokenAddress).withdraw(targetTokenAmount);
-            (bool success, ) = payable(receiverAddress).call{
-                value: targetTokenAmount
-            }("");
-            require(success, "swap failed");
+            ITokenPool(tokenPool).release(token,targetTokenAmount,swapInfo.targetToken.fromChainId,receiverAddress,true);
+            // INativeToken(tokenAddress).withdraw(targetTokenAmount);
+            // (bool success, ) = payable(receiverAddress).call{
+            //     value: targetTokenAmount
+            // }("");
+            // require(success, "swap failed");
         } else {
-            IERC20(token).safeTransfer(
-                receiverAddress,
-                targetTokenAmount
-            );
+            ITokenPool(tokenPool).release(token,targetTokenAmount,swapInfo.targetToken.fromChainId,receiverAddress,false);
         }
         emit TokenSwapEvent(
             receiverAddress,

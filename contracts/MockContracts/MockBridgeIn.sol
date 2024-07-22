@@ -3,10 +3,22 @@ import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "../interfaces/NativeTokenInterface.sol";
 import "../interfaces/BridgeOutInterface.sol";
 import "../interfaces/LimiterInterface.sol";
+import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
+import "@openzeppelin/contracts/utils/math/SafeMath.sol";
+import "../interfaces/TokenPoolInterface.sol";
 
 
 contract MockBridgeIn {
     using SafeERC20 for IERC20;
+    using EnumerableSet for EnumerableSet.Bytes32Set;
+    using SafeMath for uint256;
+
+    EnumerableSet.Bytes32Set private tokenList;
+
+    struct Token {
+        address tokenAddress;
+        string chainId;
+    }
 
     function depositToBridgeOut(
         address _tokenAddress,
@@ -44,6 +56,32 @@ contract MockBridgeIn {
 
     function consumeLimit(address limiter,bytes32 id,address token,uint256 amount) external {
         ILimiter(limiter).consumeDailyLimit(id,token,amount);
+    }
+
+    function addToken(Token[] calldata tokens) public {
+        require(
+            tokenList.length().add(tokens.length) <= 100 && tokens.length <= 10,
+            "token count exceed"
+        );
+        for (uint256 i = 0; i < tokens.length; i++) {
+            bytes32 tokenKey = sha256(abi.encodePacked(tokens[i].tokenAddress, tokens[i].chainId));
+            require(!tokenList.contains(tokenKey), "tokenKey already added");
+            tokenList.add(tokenKey);
+        }
+    }
+
+    function isSupported(
+        address token,
+        string calldata chainId
+    ) public view returns (bool) {
+        bytes32 tokenKey = sha256(abi.encodePacked(token, chainId));
+        return tokenList.contains(tokenKey);
+    }
+
+    function lock(address token,uint256 amount,string calldata targetChainId,address tokenPool) external payable{
+        IERC20(token).safeTransferFrom(msg.sender, address(this), amount);
+        IERC20(token).safeApprove(tokenPool, amount);
+        ITokenPool(tokenPool).lock(token,amount,targetChainId,msg.sender);
     }
     
 }
