@@ -23,6 +23,7 @@ contract TokenPoolImplementation is ProxyStorage {
 
     address public bridgeIn;
     address public bridgeOut;
+    address public nativeToken;
 
     /// @dev token address -> target chain id -> balance.
     mapping(address => mapping(string => uint256)) internal tokenBalances;
@@ -51,11 +52,13 @@ contract TokenPoolImplementation is ProxyStorage {
 
     function initialize(
         address _bridgeIn,
-        address _bridgeOut
+        address _bridgeOut,
+        address _nativeToken
     ) external onlyOwner {
         require(bridgeIn == address(0), "already initialized");
         bridgeIn = _bridgeIn;
         bridgeOut = _bridgeOut;
+        nativeToken = _nativeToken;
     }
 
     function lock (
@@ -74,13 +77,12 @@ contract TokenPoolImplementation is ProxyStorage {
         address token,
         uint256 amount,
         string calldata targetChainId,
-        address receiver,
-        bool isNative
+        address receiver
     ) external onlyBridgeOut {
         require(amount > 0 ,'invalid amount');
         require(tokenBalances[token][targetChainId] >= amount,'not enough token to release');
         tokenBalances[token][targetChainId] = tokenBalances[token][targetChainId].sub(amount);
-        if (isNative) {
+        if (token == nativeToken) {
             INativeToken(token).withdraw(amount);
             (bool success, ) = payable(receiver).call{
                 value: amount
@@ -97,9 +99,20 @@ contract TokenPoolImplementation is ProxyStorage {
 
     /// @notice Adds liquidity to the pool. The tokens should be approved first.
     /// @param amount The amount of liquidity to provide.
-    function addLiquidity(address token, string calldata fromchainId, uint256 amount) external {
+    function addLiquidity(address token, string calldata fromchainId, uint256 amount) external payable {
         require(IBridgeIn(bridgeIn).isSupported(token,fromchainId),'not support');
-        require(amount > 0,'invalid amount');
+        if (token == nativeToken) {
+            require(msg.value > 0, "balance is not enough.");
+            _addLiquidity(token,fromchainId,msg.value);
+            INativeToken(nativeToken).deposit{value: msg.value}();
+        }else{
+            require(amount > 0,'invalid amount');
+            _addLiquidity(token,fromchainId,amount);
+            IERC20(token).safeTransferFrom(msg.sender, address(this), amount);
+        } 
+    }
+
+    function _addLiquidity(address token, string calldata fromchainId, uint256 amount) internal {
         bytes32 liquidityId = generateLiquidityId(msg.sender,token,fromchainId);
         LiquidityInfo storage info = providerLiquidityInfo[liquidityId];
         if (info.provider == address(0)) {
@@ -108,7 +121,6 @@ contract TokenPoolImplementation is ProxyStorage {
             info.amount = info.amount.add(amount);
         }
         tokenBalances[token][fromchainId] = tokenBalances[token][fromchainId].add(amount);
-        IERC20(token).safeTransferFrom(msg.sender, address(this), amount);
         emit LiquidityAdded(msg.sender,token,fromchainId,amount);
     }
 
@@ -128,7 +140,15 @@ contract TokenPoolImplementation is ProxyStorage {
             info.amount = info.amount.sub(amount);
         }
         tokenBalances[token][targetChainId] = tokenBalances[token][targetChainId].sub(amount);
-        IERC20(token).safeTransfer(msg.sender, amount);
+        if (token == nativeToken) {
+            INativeToken(token).withdraw(amount);
+            (bool success, ) = payable(msg.sender).call{
+                value: amount
+            }("");
+            require(success, "remove liquidity failed");
+        }else{
+            IERC20(token).safeTransfer(msg.sender, amount);
+        }
         emit LiquidityRemoved(msg.sender,token,targetChainId,amount);
     }
 

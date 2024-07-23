@@ -12,6 +12,9 @@ describe("TokenPool", function () {
         // Contracts are deployed using the first signer/account by default
 
         const [owner, admin, account1,otherAccount0,otherAccount1, otherAccount2] = await ethers.getSigners();
+        const WETH = await ethers.getContractFactory("WETH9");
+        const weth = await WETH.deploy();
+
         const MockBridgeIn = await ethers.getContractFactory("MockBridgeIn");
         const bridgeInMock = await MockBridgeIn.deploy();
         const bridgeOutMock = otherAccount1;
@@ -19,10 +22,10 @@ describe("TokenPool", function () {
         const TokenPoolImplementation = await ethers.getContractFactory("TokenPoolImplementation");
         const TokenPool = await ethers.getContractFactory("TokenPool");
         const tokenpoolImplementation = await TokenPoolImplementation.deploy();
-        const TokenPoolProxy = await TokenPool.deploy(bridgeInMock.address,bridgeOutMock.address,tokenpoolImplementation.address);
+        const TokenPoolProxy = await TokenPool.deploy(bridgeInMock.address,bridgeOutMock.address,weth.address,tokenpoolImplementation.address);
         const tokenpool = TokenPoolImplementation.attach(TokenPoolProxy.address);
 
-        return { owner, admin,tokenpool, bridgeInMock, bridgeOutMock,account1,otherAccount0,otherAccount1, otherAccount2 };
+        return { owner, admin,tokenpool, bridgeInMock, bridgeOutMock,account1,otherAccount0,otherAccount1, otherAccount2,weth };
     }
     async function deployTokensFixture() {
         const ELF = await ethers.getContractFactory("ELF");
@@ -75,7 +78,7 @@ describe("TokenPool", function () {
 
                 var releaseAmount = '50000';
 
-                await tokenpool.connect(bridgeOutMock).release(elf.address,releaseAmount,"AELF",account1.address,false);
+                await tokenpool.connect(bridgeOutMock).release(elf.address,releaseAmount,"AELF",account1.address);
                 expect(await elf.balanceOf(account1.address)).to.equal(releaseAmount);
                 expect(await tokenpool.getTokenLiquidity(elf.address,"AELF")).to.equal(amount-releaseAmount);
                 
@@ -96,7 +99,7 @@ describe("TokenPool", function () {
                 var releaseAmount = '200000';
 
                 var error = 'not enough token to release';
-                await expect(tokenpool.connect(bridgeOutMock).release(elf.address,releaseAmount,"AELF",account1.address,false))
+                await expect(tokenpool.connect(bridgeOutMock).release(elf.address,releaseAmount,"AELF",account1.address))
                     .to.be.revertedWith(error);
             });
         });
@@ -131,7 +134,32 @@ describe("TokenPool", function () {
 
                 var liquidityInfo = await tokenpool.getLiquidityInfo(owner.address,elf.address,"AELF");
                 expect(liquidityInfo.amount).to.equal(amount);
-                
+            });
+            it("success native token", async function () {
+                const { owner, admin,tokenpool, bridgeInMock, bridgeOutMock,account1,otherAccount0,otherAccount1, otherAccount2,weth } = await loadFixture(deployTokenPoolFixture);
+                const { elf, usdt } = await loadFixture(deployTokensFixture);
+                var amount = '100000';
+                var tokens = [{
+                    tokenAddress : weth.address,
+                    chainId : "AELF"
+                }]
+                await bridgeInMock.addToken(tokens);
+                var beforeBalance = await owner.getBalance();
+                await tokenpool.addLiquidity(weth.address,"AELF",amount,{ value: '10000000000000000000' });
+                expect(await weth.balanceOf(tokenpool.address)).to.equal('10000000000000000000');
+                var afterBalance = await owner.getBalance();
+                console.log("after balance:",afterBalance);
+                amountMin = new BigNumber(1000000000000000000);
+                amountMax = new BigNumber(1000800000000000000);
+                var actualAmount = (new BigNumber(beforeBalance).minus(new BigNumber(afterBalance)));
+                console.log(actualAmount.toString());
+                expect(actualAmount < amountMax).to.be.true;
+                expect(actualAmount > amountMin).to.be.true;
+                expect(await tokenpool.getTokenLiquidity(weth.address,"AELF")).to.equal('10000000000000000000');
+
+                var liquidityInfo = await tokenpool.getLiquidityInfo(owner.address,weth.address,"AELF");
+                expect(liquidityInfo.amount).to.equal('10000000000000000000');
+
             });
             it("not support token", async function () {
                 const { owner, admin,tokenpool, bridgeInMock, bridgeOutMock,account1} = await loadFixture(deployTokenPoolFixture);
@@ -177,6 +205,44 @@ describe("TokenPool", function () {
                 var liquidityInfo = await tokenpool.getLiquidityInfo(owner.address,elf.address,"AELF");
                 expect(liquidityInfo.amount).to.equal(amount-removeAmount);
                 expect(await tokenpool.getTokenLiquidity(elf.address,"AELF")).to.equal(100000-30000);
+                
+            });
+            it("success native token", async function () {
+                const { owner, admin,tokenpool, bridgeInMock, bridgeOutMock,account1,otherAccount0,otherAccount1, otherAccount2,weth } = await loadFixture(deployTokenPoolFixture);
+                const { elf, usdt } = await loadFixture(deployTokensFixture);
+                var amount = '100000';
+                var tokens = [{
+                    tokenAddress : weth.address,
+                    chainId : "AELF"
+                }]
+                await bridgeInMock.addToken(tokens);
+                var beforeBalance = await owner.getBalance();
+                await tokenpool.addLiquidity(weth.address,"AELF",amount,{ value: '10000000000000000000' });
+                expect(await weth.balanceOf(tokenpool.address)).to.equal('10000000000000000000');
+                var afterBalance = await owner.getBalance();
+                console.log("after balance:",afterBalance);
+                amountMin = new BigNumber(1000000000000000000);
+                amountMax = new BigNumber(1000800000000000000);
+                var actualAmount = (new BigNumber(beforeBalance).minus(new BigNumber(afterBalance)));
+                console.log(actualAmount.toString());
+                expect(actualAmount < amountMax).to.be.true;
+                expect(actualAmount > amountMin).to.be.true;
+                expect(await tokenpool.getTokenLiquidity(weth.address,"AELF")).to.equal('10000000000000000000');
+
+                var liquidityInfo = await tokenpool.getLiquidityInfo(owner.address,weth.address,"AELF");
+                expect(liquidityInfo.amount).to.equal('10000000000000000000');
+
+                var removeAmount = "100000000000000000";
+                await tokenpool.removeLiquidity(weth.address,"AELF",removeAmount);
+                
+
+                var liquidityInfo = await tokenpool.getLiquidityInfo(owner.address,weth.address,"AELF");
+                console.log(liquidityInfo.amount.toString());
+                expect(liquidityInfo.amount).to.equal('9900000000000000000');
+                var afterBalance1 = await owner.getBalance();
+                console.log("after balance:",afterBalance1);
+                expect(afterBalance1 > afterBalance).to.be.true;
+                expect(await tokenpool.getTokenLiquidity(weth.address,"AELF")).to.equal('9900000000000000000');
                 
             });
             it("failed", async function () {

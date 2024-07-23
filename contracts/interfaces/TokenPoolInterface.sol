@@ -12,7 +12,6 @@ interface ITokenPool {
         address token,
         uint256 amount,
         string calldata fromchainId,
-        address receiver,
-        bool isNative
+        address receiver
     ) external;
 }

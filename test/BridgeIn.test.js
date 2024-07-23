@@ -47,7 +47,15 @@ describe("BridgeIn", function () {
 
         await bridgeIn.connect(otherAccount0).setBridgeOut(bridgeOutMock.address);
         await bridgeIn.connect(otherAccount0).setLimiter(limiter.address);
-        return { bridgeIn, owner, otherAccount0, otherAccount1, bridgeOutMock, weth, otherAccount2, limiter, admin };
+
+        const TokenPoolImplementation = await ethers.getContractFactory("TokenPoolImplementation");
+        const TokenPool = await ethers.getContractFactory("TokenPool");
+        const tokenpoolImplementation = await TokenPoolImplementation.deploy();
+        const TokenPoolProxy = await TokenPool.deploy(bridgeIn.address,bridgeOutMock.address,weth.address,tokenpoolImplementation.address);
+        const tokenpool = TokenPoolImplementation.attach(TokenPoolProxy.address);
+        await bridgeIn.connect(otherAccount0).setTokenPool(tokenpool.address);
+
+        return { bridgeIn, owner, otherAccount0, otherAccount1, bridgeOutMock, weth, otherAccount2, limiter, admin, tokenpool };
 
     }
 
@@ -133,7 +141,7 @@ describe("BridgeIn", function () {
 
         describe("create receipt native token",function(){
             it("Should success", async function () {
-                const { bridgeIn, owner, otherAccount0, otherAccount1, bridgeOutMock,weth, otherAccount2, limiter, admin } = await loadFixture(deployBridgeInFixture);
+                const { bridgeIn, owner, otherAccount0, otherAccount1, bridgeOutMock,weth, otherAccount2, limiter, admin,tokenpool } = await loadFixture(deployBridgeInFixture);
             
                 var chainId = "AELF_MAINNET";
                 var tokens = [{
@@ -178,12 +186,12 @@ describe("BridgeIn", function () {
                 amountMax = new BigNumber(1000800000000000000);
                 var actualAmount = (new BigNumber(beforeBalance).minus(new BigNumber(afterBalance)));
                 console.log(actualAmount.toString());
-                // expect(actualAmount.lte(amountMax)).to.be.true;
-                // expect(actualAmount.gte(amountMin)).to.be.true;
                 expect(actualAmount < amountMax).to.be.true;
                 expect(actualAmount > amountMin).to.be.true;
+
+                expect(await tokenpool.getTokenLiquidity(weth.address,chainId)).to.equal('1000000000000000000');
                 
-                expect(await weth.balanceOf(bridgeOutMock.address)).to.equal('1000000000000000000');
+                expect(await weth.balanceOf(tokenpool.address)).to.equal('1000000000000000000');
 
                 {
                     console.log(await time.latest());
@@ -262,7 +270,7 @@ describe("BridgeIn", function () {
             })
 
             it("Should success when token support", async function () {
-                const { bridgeIn, owner, otherAccount0, otherAccount1, bridgeOutMock,weth, otherAccount2, limiter, admin } = await loadFixture(deployBridgeInFixture);
+                const { bridgeIn, owner, otherAccount0, otherAccount1, bridgeOutMock,weth, otherAccount2, limiter, admin, tokenpool } = await loadFixture(deployBridgeInFixture);
                 const { elf, usdt } = await deployTokensFixture();
 
                 var chainId = "AELF_MAINNET"
@@ -296,7 +304,9 @@ describe("BridgeIn", function () {
                 await elf.approve(bridgeIn.address, amount);
                 await bridgeIn.createReceipt(elf.address, amount, chainId, targetAddress);
                 expect(await elf.balanceOf(owner.address)).to.equal(0)
-                expect(await elf.balanceOf(bridgeOutMock.address)).to.equal(amount)
+                expect(await tokenpool.getTokenLiquidity(elf.address,chainId)).to.equal(amount);
+                
+                expect(await elf.balanceOf(tokenpool.address)).to.equal(amount);
                 var tokens = [elf.address];
                 var chainIds = [chainId];
 
@@ -315,7 +325,7 @@ describe("BridgeIn", function () {
             })
 
             it("Should success when deposit with different token", async function () {
-                const { bridgeIn, owner, otherAccount0, otherAccount1, bridgeOutMock,weth, otherAccount2, limiter, admin } = await loadFixture(deployBridgeInFixture);
+                const { bridgeIn, owner, otherAccount0, otherAccount1, bridgeOutMock,weth, otherAccount2, limiter, admin, tokenpool } = await loadFixture(deployBridgeInFixture);
                 const { elf, usdt } = await deployTokensFixture();
 
                 var chainId = "AELF_MAINNET"
@@ -355,7 +365,8 @@ describe("BridgeIn", function () {
                 await elf.approve(bridgeIn.address, amount);
                 await bridgeIn.createReceipt(elf.address, amount, chainId, targetAddress);
                 expect(await elf.balanceOf(owner.address)).to.equal(0)
-                expect(await elf.balanceOf(bridgeOutMock.address)).to.equal(amount)
+                expect(await tokenpool.getTokenLiquidity(elf.address,chainId)).to.equal(amount);
+                expect(await elf.balanceOf(tokenpool.address)).to.equal(amount);
                 var tokens = [elf.address];
                 var chainIds = [chainId];
 
@@ -378,7 +389,8 @@ describe("BridgeIn", function () {
                 await usdt.approve(bridgeIn.address, amount);
                 await bridgeIn.createReceipt(usdt.address, amount, chainId, targetAddress);
                 expect(await usdt.balanceOf(owner.address)).to.equal(0)
-                expect(await usdt.balanceOf(bridgeOutMock.address)).to.equal(amount)
+                expect(await tokenpool.getTokenLiquidity(usdt.address,chainId)).to.equal(amount);
+                expect(await usdt.balanceOf(tokenpool.address)).to.equal(amount);
                 var tokens = [usdt.address];
                 var chainIds = [chainId];
 
@@ -398,7 +410,7 @@ describe("BridgeIn", function () {
             })
 
             it("Should success when different user deposit", async function () { 
-                const { bridgeIn, owner, otherAccount0, otherAccount1, bridgeOutMock,weth, otherAccount2, limiter, admin } = await loadFixture(deployBridgeInFixture);
+                const { bridgeIn, owner, otherAccount0, otherAccount1, bridgeOutMock,weth, otherAccount2, limiter, admin , tokenpool} = await loadFixture(deployBridgeInFixture);
                 const { elf, usdt } = await deployTokensFixture();
 
                 var chainId = "AELF_MAINNET"
@@ -438,7 +450,8 @@ describe("BridgeIn", function () {
                 await elf.approve(bridgeIn.address, amount);
                 await bridgeIn.createReceipt(elf.address, amount, chainId, targetAddress);
                 expect(await elf.balanceOf(owner.address)).to.equal(0)
-                expect(await elf.balanceOf(bridgeOutMock.address)).to.equal(amount)
+                expect(await tokenpool.getTokenLiquidity(elf.address,chainId)).to.equal(amount);
+                expect(await elf.balanceOf(tokenpool.address)).to.equal(amount);
                 var tokens = [elf.address];
                 var chainIds = [chainId];
 
@@ -461,7 +474,8 @@ describe("BridgeIn", function () {
                 await elf.connect(otherAccount0).approve(bridgeIn.address, amount);
                 await bridgeIn.connect(otherAccount0).createReceipt(elf.address, amount, chainId, targetAddress);
                 expect(await elf.balanceOf(otherAccount0.address)).to.equal(0)
-                expect(await elf.balanceOf(bridgeOutMock.address)).to.equal(amount * 2)
+                expect(await tokenpool.getTokenLiquidity(elf.address,chainId)).to.equal(amount*2);
+                expect(await elf.balanceOf(tokenpool.address)).to.equal(amount*2);
                 var tokens = [elf.address];
                 var chainIds = [chainId];
 
@@ -481,7 +495,7 @@ describe("BridgeIn", function () {
             })
 
             it("Should success when different user deposit in different token", async function () {
-                const { bridgeIn, owner, otherAccount0, otherAccount1, bridgeOutMock,weth, otherAccount2, limiter, admin } = await loadFixture(deployBridgeInFixture);
+                const { bridgeIn, owner, otherAccount0, otherAccount1, bridgeOutMock,weth, otherAccount2, limiter, admin, tokenpool } = await loadFixture(deployBridgeInFixture);
                 const { elf, usdt } = await deployTokensFixture();
                 console.log("elf:", elf.address);
                 console.log("usdt:", usdt.address);
@@ -522,7 +536,8 @@ describe("BridgeIn", function () {
                 await elf.approve(bridgeIn.address, amount);
                 await bridgeIn.createReceipt(elf.address, amount, chainId, targetAddress);
                 expect(await elf.balanceOf(owner.address)).to.equal(0)
-                expect(await elf.balanceOf(bridgeOutMock.address)).to.equal(amount)
+                expect(await tokenpool.getTokenLiquidity(elf.address,chainId)).to.equal(amount);
+                expect(await elf.balanceOf(tokenpool.address)).to.equal(amount);
                 var tokens = [elf.address];
                 var chainIds = [chainId];
 
@@ -545,7 +560,8 @@ describe("BridgeIn", function () {
                 await usdt.connect(otherAccount0).approve(bridgeIn.address, amount);
                 await bridgeIn.connect(otherAccount0).createReceipt(usdt.address, amount, chainId, targetAddress);
                 expect(await usdt.balanceOf(otherAccount0.address)).to.equal(0)
-                expect(await usdt.balanceOf(bridgeOutMock.address)).to.equal(amount)
+                expect(await tokenpool.getTokenLiquidity(usdt.address,chainId)).to.equal(amount);
+                expect(await usdt.balanceOf(tokenpool.address)).to.equal(amount);
                 var tokens = [usdt.address];
                 var chainIds = [chainId];
 
@@ -654,9 +670,6 @@ describe("BridgeIn", function () {
                 var isPaused = await bridgeIn.isPaused();
                 expect(isPaused).to.equal(true);
                 console.log(1);
-                var error = 'BridgeOut:paused'
-                await expect(bridgeOutMock.withdraw(_generateTokenKey(elf.address,chainId),elf.address,100))
-                    .to.be.revertedWith(error);
 
                 //revert when pause again
                 var error = "already paused"
@@ -682,7 +695,7 @@ describe("BridgeIn", function () {
             })
 
             it("Should transfer funds to bridgeOut", async function () {
-                const { bridgeIn, owner, otherAccount0, otherAccount1, bridgeOutMock,weth, otherAccount2, limiter, admin } = await loadFixture(deployBridgeInFixture);
+                const { bridgeIn, owner, otherAccount0, otherAccount1, bridgeOutMock,weth, otherAccount2, limiter, admin, tokenpool } = await loadFixture(deployBridgeInFixture);
                 const { elf, usdt } = await deployTokensFixture();
 
                 var chainId = "AELF_MAINNET"
@@ -718,105 +731,106 @@ describe("BridgeIn", function () {
 
                 await bridgeIn.createReceipt(elf.address, amount, chainId, targetAddress);
 
-                expect(await elf.balanceOf(bridgeOutMock.address)).to.equal(amount)
+                expect(await tokenpool.getTokenLiquidity(elf.address,chainId)).to.equal(amount);
+                expect(await elf.balanceOf(tokenpool.address)).to.equal(amount);
 
 
             })
         })
-        describe("deposit and withdraw test",function(){
-            it("should success when deposit",async function(){
-                const { bridgeIn, owner, otherAccount0, otherAccount1, bridgeOutMock } = await loadFixture(deployBridgeInFixture);
-                const { elf, usdt } = await deployTokensFixture();
+        // describe("deposit and withdraw test",function(){
+        //     it("should success when deposit",async function(){
+        //         const { bridgeIn, owner, otherAccount0, otherAccount1, bridgeOutMock } = await loadFixture(deployBridgeInFixture);
+        //         const { elf, usdt } = await deployTokensFixture();
 
-                var chainId = "AELF_MAINNET";
-                var amount = 100;
-                var tokens = [{
-                    tokenAddress : elf.address,
-                    chainId : chainId
-                }]
-                await bridgeIn.connect(otherAccount0).addToken(tokens);
-                //deposit elf
-                await elf.mint(owner.address, amount);
-                expect(await elf.balanceOf(owner.address)).to.equal(amount)
-                await elf.approve(bridgeIn.address, amount);
-                var tokenKey = _generateTokenKey(elf.address,chainId);
-                await bridgeIn.deposit(tokenKey,elf.address,amount);
-                var depositAmount = await bridgeIn.depositAmount(tokenKey);
-                expect(depositAmount).to.equal(amount);
-                var balance = await elf.balanceOf(bridgeOutMock.address);
-                expect(balance).to.equal(amount);
-            })
-            it("should success when withdraw",async function(){
-                const { bridgeIn, owner, otherAccount0, otherAccount1, bridgeOutMock } = await loadFixture(deployBridgeInFixture);
-                const { elf, usdt } = await deployTokensFixture();
+        //         var chainId = "AELF_MAINNET";
+        //         var amount = 100;
+        //         var tokens = [{
+        //             tokenAddress : elf.address,
+        //             chainId : chainId
+        //         }]
+        //         await bridgeIn.connect(otherAccount0).addToken(tokens);
+        //         //deposit elf
+        //         await elf.mint(owner.address, amount);
+        //         expect(await elf.balanceOf(owner.address)).to.equal(amount)
+        //         await elf.approve(bridgeIn.address, amount);
+        //         var tokenKey = _generateTokenKey(elf.address,chainId);
+        //         await bridgeIn.deposit(tokenKey,elf.address,amount);
+        //         var depositAmount = await bridgeIn.depositAmount(tokenKey);
+        //         expect(depositAmount).to.equal(amount);
+        //         var balance = await elf.balanceOf(bridgeOutMock.address);
+        //         expect(balance).to.equal(amount);
+        //     })
+        //     it("should success when withdraw",async function(){
+        //         const { bridgeIn, owner, otherAccount0, otherAccount1, bridgeOutMock } = await loadFixture(deployBridgeInFixture);
+        //         const { elf, usdt } = await deployTokensFixture();
 
-                var chainId = "AELF_MAINNET";
-                var amount = 100;
-                var tokens = [{
-                    tokenAddress : elf.address,
-                    chainId : chainId
-                }]
-                await bridgeIn.connect(otherAccount0).addToken(tokens);
-                //deposit elf
-                await elf.mint(owner.address, amount);
-                expect(await elf.balanceOf(owner.address)).to.equal(amount)
-                await elf.approve(bridgeIn.address, amount);
-                var tokenKey = _generateTokenKey(elf.address,chainId);
+        //         var chainId = "AELF_MAINNET";
+        //         var amount = 100;
+        //         var tokens = [{
+        //             tokenAddress : elf.address,
+        //             chainId : chainId
+        //         }]
+        //         await bridgeIn.connect(otherAccount0).addToken(tokens);
+        //         //deposit elf
+        //         await elf.mint(owner.address, amount);
+        //         expect(await elf.balanceOf(owner.address)).to.equal(amount)
+        //         await elf.approve(bridgeIn.address, amount);
+        //         var tokenKey = _generateTokenKey(elf.address,chainId);
 
-                await bridgeIn.deposit(tokenKey,elf.address,amount);
-                var depositAmount = await bridgeIn.depositAmount(tokenKey);
-                expect(depositAmount).to.equal(amount);
-                var balanceSender = await elf.balanceOf(owner.address);
-                expect(balanceSender).to.equal(0);
-                var balance = await elf.balanceOf(bridgeOutMock.address);
-                expect(balance).to.equal(amount);
+        //         await bridgeIn.deposit(tokenKey,elf.address,amount);
+        //         var depositAmount = await bridgeIn.depositAmount(tokenKey);
+        //         expect(depositAmount).to.equal(amount);
+        //         var balanceSender = await elf.balanceOf(owner.address);
+        //         expect(balanceSender).to.equal(0);
+        //         var balance = await elf.balanceOf(bridgeOutMock.address);
+        //         expect(balance).to.equal(amount);
 
-                var amountWithdraw = 50;
+        //         var amountWithdraw = 50;
 
-                await bridgeIn.withdraw(tokenKey,elf.address,amountWithdraw,owner.address);
-                depositAmount = await bridgeIn.depositAmount(tokenKey);
-                expect(depositAmount).to.equal(amount-amountWithdraw);
-                var balance = await elf.balanceOf(bridgeOutMock.address);
-                expect(balance).to.equal(amount-amountWithdraw);
-                var balanceSender = await elf.balanceOf(owner.address);
-                expect(balanceSender).to.equal(amountWithdraw);
+        //         await bridgeIn.withdraw(tokenKey,elf.address,amountWithdraw,owner.address);
+        //         depositAmount = await bridgeIn.depositAmount(tokenKey);
+        //         expect(depositAmount).to.equal(amount-amountWithdraw);
+        //         var balance = await elf.balanceOf(bridgeOutMock.address);
+        //         expect(balance).to.equal(amount-amountWithdraw);
+        //         var balanceSender = await elf.balanceOf(owner.address);
+        //         expect(balanceSender).to.equal(amountWithdraw);
 
-            })
-            it("should revert when deposit/withdraw",async function(){
-                const { bridgeIn, owner, otherAccount0, otherAccount1, bridgeOutMock } = await loadFixture(deployBridgeInFixture);
-                const { elf, usdt } = await deployTokensFixture();
+        //     })
+        //     it("should revert when deposit/withdraw",async function(){
+        //         const { bridgeIn, owner, otherAccount0, otherAccount1, bridgeOutMock } = await loadFixture(deployBridgeInFixture);
+        //         const { elf, usdt } = await deployTokensFixture();
 
-                var chainId = "AELF_MAINNET";
-                var amount = 100;
-                await elf.mint(owner.address, amount);
-                expect(await elf.balanceOf(owner.address)).to.equal(amount)
-                await elf.approve(bridgeIn.address, amount);
-                var tokenKey = _generateTokenKey(elf.address,chainId);
-                var error = 'not support';
-                await expect(bridgeIn.deposit(tokenKey,elf.address,amount))
-                    .to.be.revertedWith(error);
+        //         var chainId = "AELF_MAINNET";
+        //         var amount = 100;
+        //         await elf.mint(owner.address, amount);
+        //         expect(await elf.balanceOf(owner.address)).to.equal(amount)
+        //         await elf.approve(bridgeIn.address, amount);
+        //         var tokenKey = _generateTokenKey(elf.address,chainId);
+        //         var error = 'not support';
+        //         await expect(bridgeIn.deposit(tokenKey,elf.address,amount))
+        //             .to.be.revertedWith(error);
 
-                var error = 'not support';
-                await expect(bridgeIn.withdraw(tokenKey,elf.address,amount,bridgeOutMock.address))
-                    .to.be.revertedWith(error);
+        //         var error = 'not support';
+        //         await expect(bridgeIn.withdraw(tokenKey,elf.address,amount,bridgeOutMock.address))
+        //             .to.be.revertedWith(error);
 
-                    var tokens = [{
-                        tokenAddress : elf.address,
-                        chainId : chainId
-                    }]
-                    await bridgeIn.connect(otherAccount0).addToken(tokens);
-                //deposit elf
-                await bridgeIn.deposit(tokenKey,elf.address,amount);
-                var depositAmount = await bridgeIn.depositAmount(tokenKey);
-                expect(depositAmount).to.equal(amount);
-                var balance = await elf.balanceOf(bridgeOutMock.address);
-                expect(balance).to.equal(amount);
-                var amountWithdraw = 150;
-                var error = 'deposit not enough';
-                await expect(bridgeIn.withdraw(tokenKey,elf.address,amountWithdraw,bridgeOutMock.address))
-                    .to.be.revertedWith(error);
-            })
-        })
+        //             var tokens = [{
+        //                 tokenAddress : elf.address,
+        //                 chainId : chainId
+        //             }]
+        //             await bridgeIn.connect(otherAccount0).addToken(tokens);
+        //         //deposit elf
+        //         await bridgeIn.deposit(tokenKey,elf.address,amount);
+        //         var depositAmount = await bridgeIn.depositAmount(tokenKey);
+        //         expect(depositAmount).to.equal(amount);
+        //         var balance = await elf.balanceOf(bridgeOutMock.address);
+        //         expect(balance).to.equal(amount);
+        //         var amountWithdraw = 150;
+        //         var error = 'deposit not enough';
+        //         await expect(bridgeIn.withdraw(tokenKey,elf.address,amountWithdraw,bridgeOutMock.address))
+        //             .to.be.revertedWith(error);
+        //     })
+        // })
         describe("pause controller test",function(){
             it("should success",async function(){
                 const { bridgeIn, owner, otherAccount0, otherAccount1, bridgeOutMock, otherAccount2 } = await loadFixture(deployBridgeInFixture);

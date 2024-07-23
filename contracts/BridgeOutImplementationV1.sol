@@ -118,6 +118,16 @@ contract BridgeOutImplementationV1 is ProxyStorage {
         isPaused = false;
     }
 
+    function setDefaultMerkleTreeDepth(
+        uint256 _defaultMerkleTreeDepth
+    ) external onlyWallet {
+        require(
+            _defaultMerkleTreeDepth > 0 && _defaultMerkleTreeDepth <= 20,
+            "invalid input"
+        );
+        defaultMerkleTreeDepth = _defaultMerkleTreeDepth;
+    }
+
     function setTokenPool(address _tokenPool) external onlyWallet {
         require(
             tokenPool == address(0) && _tokenPool != address(0),
@@ -175,15 +185,13 @@ contract BridgeOutImplementationV1 is ProxyStorage {
     }
 
     function withdraw(
-        bytes32 tokenKey,
-        address token,
-        uint256 amount,
+        address[] calldata token,
+        uint256[] calldata amount,
         address receiverAddress
     ) external onlyWallet {
-        bytes32 swapId = tokenKeyToSwapIdMap[tokenKey];
-        BridgeOutLibrary.validateToken(targetTokenList,token,tokenKey,swapInfos[swapId].targetToken.token);
-        tokenDepositAmount[swapId] = tokenDepositAmount[swapId].sub(amount);
-        IERC20(token).safeTransfer(receiverAddress, amount);
+        for(uint256 i = 0;i<token.length;i++){
+            IERC20(token[i]).safeTransfer(receiverAddress, amount[i]);
+        }
     }
 
     function swapToken(
@@ -267,26 +275,10 @@ contract BridgeOutImplementationV1 is ProxyStorage {
         SwapAmounts storage swapAmouts = ledger[receiptInfo.receiptHash];
         require(swapAmouts.receiver == address(0), "already claimed");
         swapAmouts.receiver = receiverAddress;
-        require(
-            targetTokenAmount <= tokenDepositAmount[swapId],
-            "deposit not enough"
-        );
-        tokenDepositAmount[swapId] = tokenDepositAmount[swapId].sub(
-            targetTokenAmount
-        );
         address token = swapInfo.targetToken.token;
         ILimiter(limiter).consumeDailyLimit(swapId, token, targetTokenAmount);
         ILimiter(limiter).consumeTokenBucket(swapId, token, targetTokenAmount);
-        if (token == tokenAddress) {
-            ITokenPool(tokenPool).release(token,targetTokenAmount,swapInfo.targetToken.fromChainId,receiverAddress,true);
-            // INativeToken(tokenAddress).withdraw(targetTokenAmount);
-            // (bool success, ) = payable(receiverAddress).call{
-            //     value: targetTokenAmount
-            // }("");
-            // require(success, "swap failed");
-        } else {
-            ITokenPool(tokenPool).release(token,targetTokenAmount,swapInfo.targetToken.fromChainId,receiverAddress,false);
-        }
+        ITokenPool(tokenPool).release(token,targetTokenAmount,swapInfo.targetToken.fromChainId,receiverAddress);
         emit TokenSwapEvent(
             receiverAddress,
             token,
