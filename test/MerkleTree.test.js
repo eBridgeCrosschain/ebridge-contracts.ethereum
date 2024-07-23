@@ -157,7 +157,6 @@ describe("MerkleTree", function () {
                 var pathLength = 10;
                 await merkleTree.createSpace(regimentId, pathLength);
                 var { leavesNode } = createLeavesNode(2);
-                await regiment.DeleteRegimentMember(regimentId, owner.address);
                 var error = "Invalid sapceId"
                 var invalidSpaceId = regimentId;
                 await expect(merkleTree.recordMerkleTree(invalidSpaceId, leavesNode))
