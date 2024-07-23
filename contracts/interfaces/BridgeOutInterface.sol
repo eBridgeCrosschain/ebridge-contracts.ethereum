@@ -13,6 +13,12 @@ interface IBridgeOut {
         uint256 amount
     ) external;
 
+    function assetsMigrator(
+        bytes32 swapHashId,
+        address token,
+        uint256 amount
+    ) external returns (uint256);
+
     function restart() external;
 
     function pause() external;

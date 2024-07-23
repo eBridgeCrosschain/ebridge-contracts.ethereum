@@ -95,12 +95,17 @@ contract BridgeInImplementation is ProxyStorage {
         multiSigWallet = _wallet;
     }
 
-    function setBridgeOut(address _bridgeOut) external onlyWallet {
+    function setBridgeOutAndLimiter(address _bridgeOut,address _limiter) external onlyWallet {
         require(
             bridgeOut == address(0) && _bridgeOut != address(0),
             "invalid bridge out address"
         );
+        require(
+            limiter == address(0) && _limiter != address(0),
+            "invalid limiter address"
+        );
         bridgeOut = _bridgeOut;
+        limiter = _limiter;
     }
 
     function setTokenPool(address _tokenPool) external onlyWallet {
@@ -109,14 +114,6 @@ contract BridgeInImplementation is ProxyStorage {
             "invalid token pool address"
         );
         tokenPool = _tokenPool;
-    }
-
-    function setLimiter(address _limiter) external onlyWallet {
-        require(
-            limiter == address(0) && _limiter != address(0),
-            "invalid limiter address"
-        );
-        limiter = _limiter;
     }
 
     function changePauseController(
@@ -132,11 +129,8 @@ contract BridgeInImplementation is ProxyStorage {
             "token count exceed"
         );
         for (uint256 i = 0; i < tokens.length; i++) {
-            bytes32 tokenKey = BridgeInLibrary._generateTokenKey(
-                tokens[i].tokenAddress,
-                tokens[i].chainId
-            );
-            require(!tokenList.contains(tokenKey), "tokenKey already added");
+            bytes32 tokenKey = _getTokenKey(tokens[i].tokenAddress, tokens[i].chainId);
+            _checkTokenNotExist(tokenKey);
             tokenList.add(tokenKey);
             emit TokenAdded(tokens[i].tokenAddress, tokens[i].chainId);
         }
@@ -145,11 +139,8 @@ contract BridgeInImplementation is ProxyStorage {
     function removeToken(Token[] calldata tokens) public onlyWallet {
         require(tokens.length <= MaxTokenCountPerAddOrRemove, "input token count exceed");
         for (uint256 i = 0; i < tokens.length; i++) {
-            bytes32 tokenKey = BridgeInLibrary._generateTokenKey(
-                tokens[i].tokenAddress,
-                tokens[i].chainId
-            );
-            require(tokenList.contains(tokenKey), "tokenKey not exist");
+            bytes32 tokenKey = _getTokenKey(tokens[i].tokenAddress, tokens[i].chainId);
+            _checkTokenSupport(tokenKey);
             tokenList.remove(tokenKey);
             emit TokenRemoved(tokens[i].tokenAddress, tokens[i].chainId);
         }
@@ -171,7 +162,7 @@ contract BridgeInImplementation is ProxyStorage {
         address token,
         string calldata chainId
     ) public view returns (bool) {
-        bytes32 tokenKey = BridgeInLibrary._generateTokenKey(token, chainId);
+        bytes32 tokenKey = _getTokenKey(token, chainId);
         return tokenList.contains(tokenKey);
     }
 
@@ -179,9 +170,6 @@ contract BridgeInImplementation is ProxyStorage {
         string calldata targetChainId,
         string calldata targetAddress
     ) external payable whenNotPaused {
-        consumeReceiptLimit(tokenAddress,msg.value,targetChainId);
-        INativeToken(tokenAddress).deposit{value: msg.value}();
-        IERC20(tokenAddress).safeApprove(tokenPool, msg.value);
         generateReceipt(tokenAddress, msg.value, targetChainId, targetAddress);
     }
 
@@ -192,11 +180,17 @@ contract BridgeInImplementation is ProxyStorage {
         string calldata targetChainId,
         string calldata targetAddress
     ) external whenNotPaused {
-        consumeReceiptLimit(token,amount,targetChainId);
-        // Deposit token to this contract
-        IERC20(token).safeTransferFrom(msg.sender, address(this), amount);
-        IERC20(token).safeApprove(tokenPool, amount);
         generateReceipt(token, amount, targetChainId, targetAddress);
+    }
+    
+    function _approveAndLockToken(address token,uint256 amount,string calldata targetChainId,bytes32 tokenKey) internal {
+        if (tokenPool == address(0)) {
+            _approve(token,bridgeOut,amount);
+            IBridgeOut(bridgeOut).deposit(tokenKey, token, amount);
+        }else{
+            _approve(token,tokenPool,amount);
+            _lock(token,amount,targetChainId,msg.sender);
+        }
     }
 
     function consumeReceiptLimit(
@@ -204,11 +198,8 @@ contract BridgeInImplementation is ProxyStorage {
         uint256 amount,
         string calldata targetChainId
     ) internal{
-        bytes32 tokenKey = BridgeInLibrary._generateTokenKey(token, targetChainId);
-        require(
-            tokenList.contains(tokenKey),
-            "Token is not support in that chain"
-        );
+        bytes32 tokenKey = _getTokenKey(token, targetChainId);
+        _checkTokenSupport(tokenKey);
         require(amount > 0, "invalid amount");
         ILimiter(limiter).consumeDailyLimit(tokenKey,token,amount);
         ILimiter(limiter).consumeTokenBucket(tokenKey,token,amount);
@@ -220,8 +211,14 @@ contract BridgeInImplementation is ProxyStorage {
         string calldata targetChainId,
         string calldata targetAddress
     ) internal {
-        bytes32 tokenKey = BridgeInLibrary._generateTokenKey(token, targetChainId);
-        ITokenPool(tokenPool).lock(token,amount,targetChainId,msg.sender);
+        consumeReceiptLimit(token,amount,targetChainId);
+        bytes32 tokenKey = _getTokenKey(token, targetChainId);
+        if (token == tokenAddress){
+            INativeToken(tokenAddress).deposit{value: msg.value}();
+        }else{
+            IERC20(token).safeTransferFrom(msg.sender, address(this), amount);
+        }
+        _approveAndLockToken(token,amount,targetChainId,tokenKey);
         tokenReceiptIndex[tokenKey] = tokenReceiptIndex[tokenKey].add(1);
         uint256 receiptIndex = tokenReceiptIndex[tokenKey];
         string memory receiptId = BridgeInLibrary._generateReceiptId(tokenKey, receiptIndex.toString());
@@ -249,7 +246,7 @@ contract BridgeInImplementation is ProxyStorage {
         address token,
         string calldata targetChainId
     ) external view returns (string[] memory receipt_ids) {
-        bytes32 tokenKey = BridgeInLibrary._generateTokenKey(token, targetChainId);
+        bytes32 tokenKey = _getTokenKey(token, targetChainId);
         uint256 index = ownerToReceiptsIndexMap[user][tokenKey];
         receipt_ids = new string[](index);
         for (uint256 i = 0; i < index; i++) {
@@ -264,11 +261,11 @@ contract BridgeInImplementation is ProxyStorage {
     ) external view returns (uint256[] memory indexes) {
         require(
             tokens.length == targetChainIds.length,
-            "Invalid tokens/targetChainIds input"
+            "invalid input"
         );
         indexes = new uint256[](tokens.length);
         for (uint256 i = 0; i < tokens.length; i++) {
-            bytes32 tokenKey = BridgeInLibrary._generateTokenKey(tokens[i], targetChainIds[i]);
+            bytes32 tokenKey = _getTokenKey(tokens[i], targetChainIds[i]);
             uint256 index = tokenReceiptIndex[tokenKey];
             indexes[i] = index;
         }
@@ -281,7 +278,7 @@ contract BridgeInImplementation is ProxyStorage {
         uint256 fromIndex,
         uint256 endIndex
     ) public view returns (Receipt[] memory _receipts) {
-        bytes32 tokenKey = BridgeInLibrary._generateTokenKey(token, targetChainId);
+        bytes32 tokenKey = _getTokenKey(token, targetChainId);
         if (tokenReceiptIndex[tokenKey] == 0) {
             return _receipts;
         }
@@ -304,7 +301,61 @@ contract BridgeInImplementation is ProxyStorage {
         address token,
         string memory chainId
     ) public view returns (uint256) {
-        bytes32 tokenKey = BridgeInLibrary._generateTokenKey(token, chainId);
+        bytes32 tokenKey = _getTokenKey(token, chainId);
         return totalAmountInReceipts[tokenKey];
+    }
+    
+
+    function _getTokenKey(address token,string memory chainId) private pure returns (bytes32){
+        return BridgeInLibrary._generateTokenKey(token, chainId);
+    }
+
+    function _checkTokenSupport(bytes32 tokenKey) internal view {
+        BridgeInLibrary.checkTokenSupport(tokenList,tokenKey);
+    }
+
+    function _checkTokenNotExist(bytes32 tokenKey) internal view {
+        BridgeInLibrary.checkTokenNotExist(tokenList,tokenKey);
+    }
+
+    function assetsMigrator(
+        Token[] calldata tokens,
+        address receiverAddress
+    ) external onlyWallet {
+        for (uint i = 0; i < tokens.length; i++) {
+            bytes32 tokenKey = _getTokenKey(tokens[i].tokenAddress, tokens[i].chainId);
+            _checkTokenSupport(tokenKey);
+            uint256 amount = depositAmount[tokenKey];
+            if (amount > 0) {
+                depositAmount[tokenKey] = 0;
+                uint256 lockAmount = IBridgeOut(bridgeOut).assetsMigrator(tokenKey, tokens[i].tokenAddress, amount);
+                if (tokens[i].tokenAddress == tokenAddress) {
+                    INativeToken(tokens[i].tokenAddress).withdraw(amount);
+                    (bool success, ) = payable(receiverAddress).call{
+                        value: amount
+                    }("");
+                    require(success, "failed");
+                }else{
+                    _transfer(tokens[i].tokenAddress,receiverAddress,amount);
+                }
+                if(lockAmount > 0){
+                     _approve(tokens[i].tokenAddress,tokenPool, amount);
+                    _lock(tokens[i].tokenAddress,amount,tokens[i].chainId,address(this));
+                }
+            }
+        }
+    }
+
+    function _transfer(address token,address receiver,uint256 amount) internal {
+        IERC20(token).safeTransfer(receiver, amount);
+    }
+
+
+    function _approve(address token,address spender,uint256 amount) internal {
+        IERC20(token).safeApprove(spender, amount);
+    }
+
+    function _lock(address token,uint256 amount,string calldata chainId,address sender) internal {
+        ITokenPool(tokenPool).lock(token,amount,chainId,sender);
     }
 }

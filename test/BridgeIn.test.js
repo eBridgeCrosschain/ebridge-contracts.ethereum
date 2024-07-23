@@ -45,8 +45,7 @@ describe("BridgeIn", function () {
         const LimiterProxy = await Limiter.deploy(bridgeIn.address,bridgeOutMock.address,admin.address,limiterImplementation.address);
         const limiter = LimiterImplementation.attach(LimiterProxy.address);
 
-        await bridgeIn.connect(otherAccount0).setBridgeOut(bridgeOutMock.address);
-        await bridgeIn.connect(otherAccount0).setLimiter(limiter.address);
+        await bridgeIn.connect(otherAccount0).setBridgeOutAndLimiter(bridgeOutMock.address,limiter.address);
 
         const TokenPoolImplementation = await ethers.getContractFactory("TokenPoolImplementation");
         const TokenPool = await ethers.getContractFactory("TokenPool");
@@ -131,7 +130,7 @@ describe("BridgeIn", function () {
                     .to.be.revertedWith(error);
 
                 await bridgeIn.connect(otherAccount0).removeToken(tokens);
-                error = "tokenKey not exist"
+                error = "not support"
                 await expect(bridgeIn.connect(otherAccount0).removeToken(tokens))
                     .to.be.revertedWith(error);
                 isSupported = await bridgeIn.isSupported(elf.address, chainId);
@@ -250,7 +249,7 @@ describe("BridgeIn", function () {
                 }]
                 await limiter.connect(admin).setDailyLimit(configs);
 
-                var error0 = "Token is not support in that chain";
+                var error0 = "not support";
                 var amount = 100;
                 var targetAddress = "AELF_123"
                 await expect(bridgeIn.createReceipt(usdt.address, amount, chainId, targetAddress))

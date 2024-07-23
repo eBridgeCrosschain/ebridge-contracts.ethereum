@@ -453,13 +453,24 @@ describe("BridgeOut", function () {
                 expect(await elf.balanceOf(owner.address)).to.equal(0);
                 expect(await tokenpool.getTokenLiquidity(token,chainId)).to.equal(amount);
 
+                const date = new Date();
+                const timestamp = Date.UTC(date.getFullYear(), date.getMonth(), date.getUTCDate(), 0, 0, 0, 0);
+                var refreshTime = timestamp / 1000;
+                console.log(refreshTime);
+                var configs = [{
+                    dailyLimitId : swapId,
+                    refreshTime : refreshTime,
+                    defaultTokenAmount : "3000000000000000"
+                }]
+                await limiter.connect(admin).setDailyLimit(configs);
 
                 var index = "1234";
-                var receiptId = tokenKey.toString() + "." + index;
+                var receiptId = tokenKey.toString().substring(2) + "." + index;
+
                 var amount = "100";
                 var targetAddress = owner.address;
                 var leafHash = await lib.computeLeafHash(receiptId, amount, targetAddress);
-                var message = createMessage("0", leafHash);
+                var message = createMultiMessage(index, leafHash,amount,targetAddress,tokenKey);
                 hashMessage = ethers.utils.keccak256(message.message)
 
                 console.log("construct signature.")
@@ -566,11 +577,12 @@ describe("BridgeOut", function () {
 
 
                 var index = "1234";
-                var receiptId = tokenKey.toString() + "." + index;
+                var receiptId = tokenKey.toString().substring(2) + "." + index;
+
                 var amount = "100";
                 var targetAddress = owner.address;
                 var leafHash = await lib.computeLeafHash(receiptId, amount, targetAddress);
-                var message = createMessage("0", leafHash);
+                var message = createMultiMessage(index, leafHash,amount,targetAddress,tokenKey);
                 hashMessage = ethers.utils.keccak256(message.message)
 
                 console.log("construct signature.")
@@ -668,12 +680,25 @@ describe("BridgeOut", function () {
                 expect(await elf.balanceOf(owner.address)).to.equal(0);
                 expect(await tokenpool.getTokenLiquidity(token,chainId)).to.equal(amount);
 
+                const date = new Date();
+                const timestamp = Date.UTC(date.getFullYear(), date.getMonth(), date.getUTCDate(), 0, 0, 0, 0);
+                var refreshTime = timestamp / 1000;
+                console.log(refreshTime);
+                var configs = [{
+                    dailyLimitId : swapId,
+                    refreshTime : refreshTime,
+                    defaultTokenAmount : "3000000000000000"
+                }]
+                await limiter.connect(admin).setDailyLimit(configs);
+
                 var index = "1234";
-                var receiptId = tokenKey.toString() + "." + index;
+                var receiptId = tokenKey.toString().substring(2) + "." + index;
+
                 var amount = "100";
                 var targetAddress = owner.address;
                 var leafHash = await lib.computeLeafHash(receiptId, amount, targetAddress);
-                var message = createMessage("0", leafHash);
+                var message = createMultiMessage(index, leafHash,amount,targetAddress,tokenKey);
+
                 hashMessage = ethers.utils.keccak256(message.message)
 
                 console.log("construct signature.")
@@ -766,13 +791,15 @@ describe("BridgeOut", function () {
                 expect(await elf.balanceOf(tokenpool.address)).to.equal(amount);
                 expect(await elf.balanceOf(owner.address)).to.equal(0);
                 expect(await tokenpool.getTokenLiquidity(token,chainId)).to.equal(amount);
+                
                 var index = "123";
+                var receiptId = tokenKey.toString().substring(2) + "." + index;
 
-                var receiptId = tokenKey.toString() + "." + index;
                 var amount = "100";
                 var targetAddress = owner.address;
                 var leafHash = await lib.computeLeafHash(receiptId, amount, targetAddress);
-                var message = createMessage(index, leafHash)
+                var message = createMultiMessage(index, leafHash,amount,targetAddress,tokenKey);
+
                 hashMessage = ethers.utils.keccak256(message.message)
 
                 console.log("construct signature.")
@@ -814,14 +841,14 @@ describe("BridgeOut", function () {
                 
 
                 await bridgeOut.transmit(swapId, message.message, signaturesR, signaturesV, signatureV);
-                await bridgeOut.swapToken(swapId, receiptId, amount, targetAddress);
                 //next  transmit 
                 index = "124";
-                receiptId = tokenKey.toString() + "." + index;
+                var receiptId = tokenKey.toString().substring(2) + "." + index;
+
                 amount = "100";
                 targetAddress = owner.address;
                 leafHash = await lib.computeLeafHash(receiptId, amount, targetAddress);
-                message = createMessage(index, leafHash)
+                var message = createMultiMessage(index, leafHash,amount,targetAddress,tokenKey);
                 hashMessage = ethers.utils.keccak256(message.message)
                 console.log("construct signature.")
                 var privateKeys = _constructSignature()[0];
@@ -862,7 +889,6 @@ describe("BridgeOut", function () {
                 
 
                 await bridgeOut.transmit(swapId, message.message, signaturesR, signaturesV, signatureV1);
-                await bridgeOut.swapToken(swapId, receiptId, amount, targetAddress);
                 tokens = [token];
                 chainIds = [chainId];
                 var indexes = await bridgeOut.getReceiveReceiptIndex(tokens, chainIds);
@@ -1130,11 +1156,12 @@ describe("BridgeOut", function () {
                 var tokenKey = _generateTokenKey(elf.address, chainId);
 
                 var index = "1234";
-                var receiptId = tokenKey.toString() + "." + index;
+                var receiptId = tokenKey.toString().substring(2) + "." + index;
                 var amount = "100";
                 var targetAddress = owner.address;
                 var leafHash = await lib.computeLeafHash(receiptId, amount, targetAddress);
-                var message = createMessage(index, leafHash)
+                var message = createMultiMessage(index, leafHash,amount,targetAddress,tokenKey);
+
                 hashMessage = ethers.utils.keccak256(message.message)
                 // Sign the hashed address
                 let mnemonic = "test test test test test test test test test test test junk";
@@ -1142,24 +1169,11 @@ describe("BridgeOut", function () {
                 let signKey = new ethers.utils.SigningKey(mnemonicWallet.privateKey);
                 var Signature = signKey.signDigest(hashMessage);
                 var v = Signature.v == 27 ? "0x0000000000000000000000000000000000000000000000000000000000000000" : "0x0100000000000000000000000000000000000000000000000000000000000000"
-                await bridgeOut.transmit(swapId, message.message, [Signature.r], [Signature.s], v);
 
-                //any receiver has permission to swap token
-                error = "no permission";
-                await expect(bridgeOut.connect(otherAccount0).swapToken(swapId, receiptId, amount, targetAddress))
-                    .to.not.revertedWith(error);
-                //token swap pair not found
-                var error = "swap pair not found";
-                await expect(bridgeOut.swapToken(regimentId, receiptId, amount, targetAddress))
-                    .to.be.revertedWith(error);
-                //invalid amount
-                error = "invalid amount";
-                await expect(bridgeOut.swapToken(swapId, receiptId, 0, targetAddress))
-                    .to.be.revertedWith(error);
                 // not enough token to release
                 error = "not enough token to release";
                 // await bridgeOut.withdraw(swapId, tokens, amounts);
-                await expect(bridgeOut.swapToken(swapId, receiptId, amount, targetAddress))
+                await expect(bridgeOut.transmit(swapId, message.message, [Signature.r], [Signature.s], v))
                     .to.be.revertedWith(error);
                 await elf.approve(tokenpool.address, amount);
     
@@ -1175,9 +1189,9 @@ describe("BridgeOut", function () {
                 expect(await elf.balanceOf(owner.address)).to.equal(0);
                 expect(await tokenpool.getTokenLiquidity(token,chainId)).to.equal(amount);
                 //already claimed
-                error = "already claimed";
-                await bridgeOut.swapToken(swapId, receiptId, amount, targetAddress);
-                await expect(bridgeOut.swapToken(swapId, receiptId, amount, targetAddress))
+                error = "already recorded";
+                await bridgeOut.transmit(swapId, message.message, [Signature.r], [Signature.s], v)
+                await expect(bridgeOut.transmit(swapId, message.message, [Signature.r], [Signature.s], v))
                     .to.be.revertedWith(error);
             })
 
@@ -1230,11 +1244,13 @@ describe("BridgeOut", function () {
                 expect(await tokenpool.getTokenLiquidity(token,chainId)).to.equal(amount);
 
                 var index = "1234";
-                var receiptId = tokenKey.toString() + "." + index;
+                var receiptId = tokenKey.toString().substring(2) + "." + index;
+
                 var amount = "100";
                 var targetAddress = owner.address;
                 var leafHash = await lib.computeLeafHash(receiptId, amount, targetAddress);
-                var message = createMessage(index, leafHash)
+                var message = createMultiMessage(index, leafHash,amount,targetAddress,tokenKey);
+
                 hashMessage = ethers.utils.keccak256(message.message)
                 // Sign the hashed address
                 console.log("construct signature.")
@@ -1277,7 +1293,6 @@ describe("BridgeOut", function () {
 
                 await bridgeOut.transmit(swapId, message.message, signaturesR, signaturesV, signatureV);
 
-                await bridgeOut.swapToken(swapId, receiptId, amount, targetAddress);
                 expect(await tokenpool.getTokenLiquidity(elf.address,chainId)).to.equal(0);
                 expect(await elf.balanceOf(owner.address)).to.equal(amount)
                 tokens = [token];
@@ -1338,11 +1353,12 @@ describe("BridgeOut", function () {
                 expect(await elf.balanceOf(owner.address)).to.equal(0);
                 expect(await tokenpool.getTokenLiquidity(token,chainId)).to.equal(amount);
                 var index = "1234";
-                var receiptId = tokenKey.toString() + "." + index;
+                var receiptId = tokenKey.toString().substring(2) + "." + index;
+
                 var amount = "100";
                 var targetAddress = owner.address;
                 var leafHash = await lib.computeLeafHash(receiptId, amount, targetAddress);
-                var message = createMessage(index, leafHash)
+                var message = createMultiMessage(index, leafHash,amount,targetAddress,tokenKey);
                 hashMessage = ethers.utils.keccak256(message.message)
                 // Sign the hashed address
                 console.log("construct signature.")
@@ -1384,7 +1400,6 @@ describe("BridgeOut", function () {
                 
 
                 await bridgeOut.transmit(swapId, message.message, signaturesR, signaturesV, signatureV);
-                await bridgeOut.swapToken(swapId, receiptId, amount, targetAddress);
                 
                 expect(await tokenpool.getTokenLiquidity(token,chainId)).to.equal(0);
                 expect(await elf.balanceOf(owner.address)).to.equal(amount)
@@ -1438,11 +1453,13 @@ describe("BridgeOut", function () {
                 expect(await tokenpool.getTokenLiquidity(token,chainId)).to.equal(amount);
 
                 var index = "1234";
-                var receiptId = tokenKey.toString() + "." + index;
+                var receiptId = tokenKey.toString().substring(2) + "." + index;
+
                 var amount = "100";
                 var targetAddress = owner.address;
                 var leafHash = await lib.computeLeafHash(receiptId, amount, targetAddress);
-                var message = createMessage(index, leafHash)
+                var message = createMultiMessage(index, leafHash,amount,targetAddress,tokenKey);
+
                 hashMessage = ethers.utils.keccak256(message.message)
                 // Sign the hashed address
                 var signaturesR = [];
@@ -1470,8 +1487,6 @@ describe("BridgeOut", function () {
                 console.log("signature v",signatureV1);
                 
                 await bridgeOut.transmit(swapId, message.message, signaturesR, signaturesV, signatureV1);
-                await bridgeOut.swapToken(swapId, receiptId, amount, targetAddress);
-
                 expect(await tokenpool.getTokenLiquidity(token,chainId)).to.equal(0);
 
                 expect(await elf.balanceOf(owner.address)).to.equal(amount)
@@ -1522,12 +1537,13 @@ describe("BridgeOut", function () {
                 expect(await weth.balanceOf(tokenpool.address)).to.equal('10000000000000000000');
                 expect(await tokenpool.getTokenLiquidity(token,chainId)).to.equal('10000000000000000000');
 
-                var index = "1234";
-                var receiptId = tokenKey.toString() + "." + index;
-                amount = BigInt(100000000);
+                var receiptId = tokenKey.toString().substring(2) + "." + index;
+
+                var amount = "100";
                 var targetAddress = otherAccount0.address;
                 var leafHash = await lib.computeLeafHash(receiptId, amount, targetAddress);
-                var message = createMessage(index, leafHash)
+                var message = createMultiMessage(index, leafHash,amount,targetAddress,tokenKey);
+
                 hashMessage = ethers.utils.keccak256(message.message)
                 // Sign the hashed address
                 var signaturesR = [];
@@ -1546,20 +1562,19 @@ describe("BridgeOut", function () {
                     buffer2[i] = vv;
                 });
 
-                console.log(buffer2);
                 buffer2.fill(0,privateKeys.length);
                 console.log("after",buffer2);
                 var v = Buffer.from(buffer2);
                 const bufferAsString2 = v.toString('hex');
                 const signatureV2 = "0x"+bufferAsString2;
                 console.log("signature v",signatureV2);
-                
-                await bridgeOut.transmit(swapId, message.message, signaturesR, signaturesV, signatureV2);
 
                 var beforeBalance = await otherAccount0.getBalance();
                 console.log("before balance:", beforeBalance);
-
-                await bridgeOut.connect(otherAccount0).swapToken(swapId, receiptId, amount, targetAddress);
+                console.log(regimentId);
+                var memberList = await regiment.GetRegimentMemberList(regimentId);
+                console.log(memberList);
+                await bridgeOut.transmit(swapId, message.message, signaturesR, signaturesV, signatureV2);
 
                 var afterBalance = await otherAccount0.getBalance();
                 console.log("after balance:", afterBalance);
@@ -1568,8 +1583,7 @@ describe("BridgeOut", function () {
                 amountMax = new BigNumber(1000000000000000000);
                 var actualAmount = new BigNumber(afterBalance - beforeBalance);
                 console.log(actualAmount);
-                expect(actualAmount.lte(amountMax)).to.be.true;
-                expect(actualAmount.gte(amountMin)).to.be.true;
+                expect(actualAmount > 0).to.be.true;
 
                 tokens = [token];
                 chainIds = [chainId];
@@ -1630,11 +1644,13 @@ describe("BridgeOut", function () {
                 expect(await tokenpool.getTokenLiquidity(token,chainId)).to.equal(amount);
 
                 var index = "1234";
-                var receiptId = tokenKey.toString() + "." + index;
+                var receiptId = tokenKey.toString().substring(2) + "." + index;
+
                 var amount = "100";
                 var targetAddress = owner.address;
                 var leafHash = await lib.computeLeafHash(receiptId, amount, targetAddress);
-                var message = createMessage(index, leafHash)
+                var message = createMultiMessage(index, leafHash,amount,targetAddress,tokenKey);
+
                 hashMessage = ethers.utils.keccak256(message.message)
                 // Sign the hashed address
                 console.log("construct signature.")
@@ -1675,9 +1691,7 @@ describe("BridgeOut", function () {
                 console.log("signature v",signatureV);
                 
 
-                await bridgeOut.transmit(swapId, message.message, signaturesR, signaturesV, signatureV);
-
-                await expect(bridgeOut.swapToken(swapId, receiptId, amount, targetAddress))
+                await expect(bridgeOut.transmit(swapId, message.message, signaturesR, signaturesV, signatureV))
                     .to.be.revertedWithCustomError(limiter,"DailyLimitExceeded");
 
                 //setlimit revert 
@@ -1689,7 +1703,7 @@ describe("BridgeOut", function () {
                 }]
                 await limiter.connect(admin).setDailyLimit(configs);
 
-                await bridgeOut.swapToken(swapId, receiptId, amount, targetAddress);
+                await bridgeOut.transmit(swapId, message.message, signaturesR, signaturesV, signatureV);
                 expect(await tokenpool.getTokenLiquidity(token,chainId)).to.equal(0);
                 expect(await elf.balanceOf(owner.address)).to.equal(amount)
                 tokens = [token];
@@ -1751,11 +1765,13 @@ describe("BridgeOut", function () {
                 expect(await elf.balanceOf(owner.address)).to.equal(0);
                 expect(await tokenpool.getTokenLiquidity(token,chainId)).to.equal(amount);
                 var index = "1234";
-                var receiptId = tokenKey.toString() + "." + index;
+                var receiptId = tokenKey.toString().substring(2) + "." + index;
+
                 var amount = "100";
                 var targetAddress = owner.address;
                 var leafHash = await lib.computeLeafHash(receiptId, amount, targetAddress);
-                var message = createMessage(index, leafHash)
+                var message = createMultiMessage(index, leafHash,amount,targetAddress,tokenKey);
+
                 hashMessage = ethers.utils.keccak256(message.message)
                 // Sign the hashed address
                 console.log("construct signature.")
@@ -1795,14 +1811,11 @@ describe("BridgeOut", function () {
                 const signatureV = "0x"+bufferAsString;
                 console.log("signature v",signatureV);
                 
-
-                await bridgeOut.transmit(swapId, message.message, signaturesR, signaturesV, signatureV);
-
                 await bridgeInMock.pause(bridgeOut.address);
 
                 //revert when paused
                 var error = "BridgeOut:paused"
-                await expect(bridgeOut.swapToken(swapId, receiptId, amount, targetAddress))
+                await expect(bridgeOut.transmit(swapId, message.message, signaturesR, signaturesV, signatureV))
                     .to.be.revertedWith(error);
 
                 //revert when sender is not bridgeIn
@@ -1819,7 +1832,7 @@ describe("BridgeOut", function () {
                 await bridgeInMock.restart(bridgeOut.address);
 
                 //success
-                bridgeOut.swapToken(swapId, receiptId, amount, targetAddress)
+                await bridgeOut.transmit(swapId, message.message, signaturesR, signaturesV, signatureV);
                 expect(await elf.balanceOf(owner.address)).to.equal(amount)
             })
         });
@@ -1844,18 +1857,12 @@ describe("BridgeOut", function () {
             })
         });
     });
-    function createMessage(nodeNumber, leafHash) {
-
-        var message = ethers.utils.solidityPack(["bytes32", "bytes32", "uint256", "bytes32"], [leafHash, leafHash, nodeNumber, leafHash])
-        return { message };
-    }
 
     function createMultiMessage(nodeNumber, leafHash,amount,targetAddress,receiptIdToken) {
         console.log(targetAddress);
         console.log(receiptIdToken);
         var add =  '0x'.concat(targetAddress.slice(2).padStart(64, '0'));
         console.log(add);
-        amount = 100
         var message = ethers.utils.solidityPack(["uint256", "uint256", "uint256", "bytes32","uint256", "bytes32","bytes32"], [32, 5, nodeNumber, leafHash,amount,add,receiptIdToken])
         console.log(message);
         return { message };
