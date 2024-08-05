@@ -56,10 +56,23 @@ describe("TokenPool", function () {
                 await elf.mint(owner.address, amount1);
                 expect(await elf.balanceOf(owner.address)).to.equal(amount1)
                 await elf.approve(bridgeInMock.address, amount);
-                await bridgeInMock.lock(elf.address,amount,"AELF",tokenpool.address);
+                var tx = await bridgeInMock.lock(elf.address,amount,"AELF",tokenpool.address);
                 expect(await elf.balanceOf(tokenpool.address)).to.equal(amount);
                 expect(await elf.balanceOf(owner.address)).to.equal(amount1-amount);
                 expect(await tokenpool.getTokenLiquidity(elf.address,"AELF")).to.equal(amount);
+                const receipt = await tx.wait();
+                const interface = new ethers.utils.Interface(["event Locked(address indexed sender, address indexed token, string chainId, uint256 indexed amount)"]);
+                let event;
+                for (const log of receipt.logs) {
+                    if (log.address === tokenpool.address && log.topics[0] === interface.getEventTopic("Locked")) {
+                        event = interface.decodeEventLog("Locked", log.data, log.topics);
+                        console.log(event);
+                    }
+                };
+                expect(event.sender).to.equal(owner.address);
+                expect(event.token).to.equal(elf.address);
+                expect(event.amount).to.equal(amount);
+                expect(event.chainId).to.equal("AELF");
             });
         });
         describe("release",async function () {
@@ -78,9 +91,23 @@ describe("TokenPool", function () {
 
                 var releaseAmount = '50000';
 
-                await tokenpool.connect(bridgeOutMock).release(elf.address,releaseAmount,"AELF",account1.address);
+                var tx = await tokenpool.connect(bridgeOutMock).release(elf.address,releaseAmount,"AELF",account1.address);
                 expect(await elf.balanceOf(account1.address)).to.equal(releaseAmount);
                 expect(await tokenpool.getTokenLiquidity(elf.address,"AELF")).to.equal(amount-releaseAmount);
+                
+                const receipt = await tx.wait();
+                const interface = new ethers.utils.Interface(["event Released(address indexed receiver, address indexed token, string chainId, uint256 indexed amount)"]);
+                let event;
+                for (const log of receipt.logs) {
+                    if (log.address === tokenpool.address && log.topics[0] === interface.getEventTopic("Released")) {
+                        event = interface.decodeEventLog("Released", log.data, log.topics);
+                        console.log(event);
+                    }
+                };
+                expect(event.receiver).to.equal(account1.address);
+                expect(event.token).to.equal(elf.address);
+                expect(event.amount).to.equal(releaseAmount);
+                expect(event.chainId).to.equal("AELF");
                 
             });
             it("not enough token to release", async function () {
@@ -102,6 +129,19 @@ describe("TokenPool", function () {
                 await expect(tokenpool.connect(bridgeOutMock).release(elf.address,releaseAmount,"AELF",account1.address))
                     .to.be.revertedWith(error);
             });
+            it("permission error", async function () {
+                const { owner, admin,tokenpool, bridgeInMock, bridgeOutMock,account1} = await loadFixture(deployTokenPoolFixture);
+                const { elf, usdt } = await loadFixture(deployTokensFixture);
+                var amount1 = '20000000';
+                var amount = '100000';
+                await elf.mint(owner.address, amount1);
+                expect(await elf.balanceOf(owner.address)).to.equal(amount1)
+                await elf.approve(bridgeInMock.address, amount);
+                await expect(tokenpool.connect(owner).lock(elf.address,amount,"AELF",tokenpool.address))
+                .to.be.revertedWithCustomError(tokenpool,"PermissionsError");
+                await expect(tokenpool.connect(owner).release(elf.address,amount,"AELF",tokenpool.address))
+                .to.be.revertedWithCustomError(tokenpool,"PermissionsError");
+            });
         });
         describe("add liquidity",async function () {
             it("success", async function () {
@@ -120,10 +160,24 @@ describe("TokenPool", function () {
                 }]
                 await bridgeInMock.addToken(tokens);
 
-                await tokenpool.addLiquidity(elf.address,"AELF",amount);
+                var tx = await tokenpool.addLiquidity(elf.address,"AELF",amount);
                 expect(await elf.balanceOf(tokenpool.address)).to.equal(amount);
                 expect(await elf.balanceOf(owner.address)).to.equal(amount1-amount);
                 expect(await tokenpool.getTokenLiquidity(elf.address,"AELF")).to.equal(amount);
+
+                const receipt = await tx.wait();
+                const interface = new ethers.utils.Interface(["event LiquidityAdded(address indexed provider, address indexed token, string chainId, uint256 indexed amount)"]);
+                let event;
+                for (const log of receipt.logs) {
+                    if (log.address === tokenpool.address && log.topics[0] === interface.getEventTopic("LiquidityAdded")) {
+                        event = interface.decodeEventLog("LiquidityAdded", log.data, log.topics);
+                        console.log(event);
+                    }
+                };
+                expect(event.provider).to.equal(owner.address);
+                expect(event.token).to.equal(elf.address);
+                expect(event.amount).to.equal(amount);
+                expect(event.chainId).to.equal("AELF");
 
                 var liquidityInfo = await tokenpool.getLiquidityInfo(owner.address,elf.address,"AELF");
                 expect(liquidityInfo.amount).to.equal(amount);
@@ -199,7 +253,21 @@ describe("TokenPool", function () {
                 expect(liquidityInfo.amount).to.equal(amount);
 
                 var removeAmount = "30000";
-                await tokenpool.removeLiquidity(elf.address,"AELF",removeAmount);
+                var tx = await tokenpool.removeLiquidity(elf.address,"AELF",removeAmount);
+
+                const receipt = await tx.wait();
+                const interface = new ethers.utils.Interface(["event LiquidityRemoved(address indexed provider, address indexed token, string chainId, uint256 indexed amount)"]);
+                let event;
+                for (const log of receipt.logs) {
+                    if (log.address === tokenpool.address && log.topics[0] === interface.getEventTopic("LiquidityRemoved")) {
+                        event = interface.decodeEventLog("LiquidityRemoved", log.data, log.topics);
+                        console.log(event);
+                    }
+                };
+                expect(event.provider).to.equal(owner.address);
+                expect(event.token).to.equal(elf.address);
+                expect(event.amount).to.equal(removeAmount);
+                expect(event.chainId).to.equal("AELF");
                 
 
                 var liquidityInfo = await tokenpool.getLiquidityInfo(owner.address,elf.address,"AELF");
