@@ -192,7 +192,7 @@ describe("TokenPool", function () {
             it("success native token", async function () {
                 const { owner, admin,tokenpool, bridgeInMock, bridgeOutMock,account1,otherAccount0,otherAccount1, otherAccount2,weth } = await loadFixture(deployTokenPoolFixture);
                 const { elf, usdt } = await loadFixture(deployTokensFixture);
-                var amount = '100000';
+                var amount = '10000000000000000000';
                 var tokens = [{
                     tokenAddress : weth.address,
                     chainId : "AELF"
@@ -278,7 +278,7 @@ describe("TokenPool", function () {
             it("success native token", async function () {
                 const { owner, admin,tokenpool, bridgeInMock, bridgeOutMock,account1,otherAccount0,otherAccount1, otherAccount2,weth } = await loadFixture(deployTokenPoolFixture);
                 const { elf, usdt } = await loadFixture(deployTokensFixture);
-                var amount = '100000';
+                var amount = '10000000000000000000';
                 var tokens = [{
                     tokenAddress : weth.address,
                     chainId : "AELF"

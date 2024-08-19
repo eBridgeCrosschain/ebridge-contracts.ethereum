@@ -170,6 +170,8 @@ contract BridgeInImplementation is ProxyStorage {
         string calldata targetChainId,
         string calldata targetAddress
     ) external payable whenNotPaused {
+        consumeReceiptLimit(tokenAddress,msg.value,targetChainId);
+        INativeToken(tokenAddress).deposit{value: msg.value}();
         generateReceipt(tokenAddress, msg.value, targetChainId, targetAddress);
     }
 
@@ -180,6 +182,8 @@ contract BridgeInImplementation is ProxyStorage {
         string calldata targetChainId,
         string calldata targetAddress
     ) external whenNotPaused {
+        consumeReceiptLimit(token,amount,targetChainId);
+        IERC20(token).safeTransferFrom(msg.sender, address(this), amount);
         generateReceipt(token, amount, targetChainId, targetAddress);
     }
     
@@ -211,13 +215,7 @@ contract BridgeInImplementation is ProxyStorage {
         string calldata targetChainId,
         string calldata targetAddress
     ) internal {
-        consumeReceiptLimit(token,amount,targetChainId);
         bytes32 tokenKey = _getTokenKey(token, targetChainId);
-        if (token == tokenAddress){
-            INativeToken(tokenAddress).deposit{value: msg.value}();
-        }else{
-            IERC20(token).safeTransferFrom(msg.sender, address(this), amount);
-        }
         _approveAndLockToken(token,amount,targetChainId,tokenKey);
         tokenReceiptIndex[tokenKey] = tokenReceiptIndex[tokenKey].add(1);
         uint256 receiptIndex = tokenReceiptIndex[tokenKey];

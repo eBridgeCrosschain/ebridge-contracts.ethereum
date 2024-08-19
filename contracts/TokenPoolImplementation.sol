@@ -101,12 +101,11 @@ contract TokenPoolImplementation is ProxyStorage {
     /// @param amount The amount of liquidity to provide.
     function addLiquidity(address token, string calldata fromchainId, uint256 amount) external payable {
         require(IBridgeIn(bridgeIn).isSupported(token,fromchainId),'not support');
-        if (token == nativeToken) {
-            require(msg.value > 0, "balance is not enough.");
+        require(amount > 0,'invalid amount');
+        if (token == nativeToken && msg.value == amount) {
             _addLiquidity(token,fromchainId,msg.value);
             INativeToken(nativeToken).deposit{value: msg.value}();
         }else{
-            require(amount > 0,'invalid amount');
             _addLiquidity(token,fromchainId,amount);
             IERC20(token).safeTransferFrom(msg.sender, address(this), amount);
         } 

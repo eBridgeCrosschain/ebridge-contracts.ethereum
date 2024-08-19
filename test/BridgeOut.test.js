@@ -1521,7 +1521,7 @@ describe("BridgeOut", function () {
                 }]
                 await limiter.connect(admin).setDailyLimit(configs);
 
-                amount = '100000000';
+                amount = '10000000000000000000';
                 tokens = token;
                 amounts = amount;
 

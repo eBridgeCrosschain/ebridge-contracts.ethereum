@@ -56,7 +56,7 @@ library BridgeOutLibrary {
         );
     }
 
-    function verifySignatureAndDecodeReport (Report memory report,bytes32 regimentId,address regiment) external returns (ReceiptInfo memory){
+    function verifySignatureAndDecodeReport (Report memory report,bytes32 regimentId,address regiment) external view returns (ReceiptInfo memory){
         require(
             IRegiment(regiment).IsRegimentMember(regimentId, msg.sender),
             "no permission to transmit"
