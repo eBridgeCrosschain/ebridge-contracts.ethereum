@@ -12,22 +12,17 @@ describe("Limiter", function () {
         // Contracts are deployed using the first signer/account by default
 
         const [owner, admin, account1, otherAccount2] = await ethers.getSigners();
-        const BridgeInLibrary = await ethers.getContractFactory("BridgeInLibrary");
-        const bridgeInLibrary = await BridgeInLibrary.deploy();
         const MockBridgeIn = await ethers.getContractFactory("MockBridgeIn");
         const bridgeInMock = await MockBridgeIn.deploy();
         const MockBridgeOut = await ethers.getContractFactory("MockBridgeOut");
         const bridgeOutMock = await MockBridgeOut.deploy();
-        const LimiterImplementation = await ethers.getContractFactory("LimiterImplementation",{
-            libraries:{
-                BridgeInLibrary : bridgeInLibrary.address
-            }
-        });
+        const LimiterImplementation = await ethers.getContractFactory("LimiterImplementation");
 
         const Limiter = await ethers.getContractFactory("Limiter");
         const limiterImplementation = await LimiterImplementation.deploy();
-        const LimiterProxy = await Limiter.deploy(bridgeInMock.address,bridgeOutMock.address,admin.address,limiterImplementation.address);
+        const LimiterProxy = await Limiter.deploy(admin.address,limiterImplementation.address);
         const limiter = LimiterImplementation.attach(LimiterProxy.address);
+        await limiter.connect(admin).setBridge(bridgeInMock.address,bridgeOutMock.address);
 
         return { owner, admin, limiter, bridgeInMock, bridgeOutMock,account1 };
     }

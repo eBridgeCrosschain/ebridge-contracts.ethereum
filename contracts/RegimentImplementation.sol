@@ -89,9 +89,6 @@ contract RegimentImplementation is ProxyStorage {
             require(initialMemberList[i] != address(0), "invalid member");
             memberList.add(initialMemberList[i]);
         }
-        if (!memberList.contains(manager)) {
-            memberList.add(manager);
-        }
         require(
             memberList.length() <= memberJoinLimit,
             "Too many initial members."
@@ -146,7 +143,6 @@ contract RegimentImplementation is ProxyStorage {
             memberList.contains(leaveMemberAddress),
             "member already leaved"
         );
-        require(leaveMemberAddress != regimentInfo.manager,"Manager cannot be removed from the regiment");
         memberList.remove(leaveMemberAddress);
         emit RegimentMemberLeft(regimentId, leaveMemberAddress);
     }
@@ -192,15 +188,6 @@ contract RegimentImplementation is ProxyStorage {
         RegimentInfo storage regimentInfo = regimentInfoMap[regimentId];
         require(msg.sender == regimentInfo.manager, "no permission");
         require(newManagerAddress != address(0), "invalid manager address");
-        EnumerableSet.AddressSet storage memberList = regimentMemberListMap[
-            regimentId
-        ];
-        require(
-            memberList.contains(regimentInfo.manager) && !memberList.contains(newManagerAddress),
-            "invalid manager."
-        );
-        memberList.remove(regimentInfo.manager);
-        memberList.add(newManagerAddress);
         regimentInfo.manager = newManagerAddress;
     }
 

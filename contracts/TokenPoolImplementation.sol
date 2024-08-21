@@ -24,6 +24,7 @@ contract TokenPoolImplementation is ProxyStorage {
     address public bridgeIn;
     address public bridgeOut;
     address public nativeToken;
+    address public admin;
 
     /// @dev token address -> target chain id -> balance.
     mapping(address => mapping(string => uint256)) internal tokenBalances;
@@ -34,6 +35,11 @@ contract TokenPoolImplementation is ProxyStorage {
         address token;
         string targetChainId;
         uint256 amount;
+    }
+
+    modifier onlyAdmin() {
+        require(msg.sender == admin, 'no permission');
+        _;
     }
 
     /// @notice Checks permission
@@ -51,14 +57,23 @@ contract TokenPoolImplementation is ProxyStorage {
     }
 
     function initialize(
-        address _bridgeIn,
-        address _bridgeOut,
-        address _nativeToken
+        address _nativeToken,
+        address _admin
     ) external onlyOwner {
-        require(bridgeIn == address(0), "already initialized");
+        require(nativeToken == address(0), "already initialized");
+        nativeToken = _nativeToken;
+        admin = _admin;
+    }
+
+    function changeAdmin(address _admin) external onlyAdmin{
+        require(_admin != address(0), "invalid input");
+        admin = _admin;
+    }
+
+    function setBridge (address _bridgeIn, address _bridgeOut) external onlyAdmin {
+        require(_bridgeIn != address(0) && _bridgeOut != address(0), 'invalid input');
         bridgeIn = _bridgeIn;
         bridgeOut = _bridgeOut;
-        nativeToken = _nativeToken;
     }
 
     function lock (

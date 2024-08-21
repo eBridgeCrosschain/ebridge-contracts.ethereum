@@ -22,8 +22,9 @@ describe("TokenPool", function () {
         const TokenPoolImplementation = await ethers.getContractFactory("TokenPoolImplementation");
         const TokenPool = await ethers.getContractFactory("TokenPool");
         const tokenpoolImplementation = await TokenPoolImplementation.deploy();
-        const TokenPoolProxy = await TokenPool.deploy(bridgeInMock.address,bridgeOutMock.address,weth.address,tokenpoolImplementation.address);
+        const TokenPoolProxy = await TokenPool.deploy(admin.address,weth.address,tokenpoolImplementation.address);
         const tokenpool = TokenPoolImplementation.attach(TokenPoolProxy.address);
+        await tokenpool.connect(admin).setBridge(bridgeInMock.address,bridgeOutMock.address);
 
         return { owner, admin,tokenpool, bridgeInMock, bridgeOutMock,account1,otherAccount0,otherAccount1, otherAccount2,weth };
     }

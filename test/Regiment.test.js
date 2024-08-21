@@ -92,7 +92,7 @@ describe("Regiment", function () {
                 await expect(regiment.connect(otherAccount0).CreateRegiment(_manager, _initialMemberList))
                     .to.be.revertedWith(error);
                 //"Too many initial members."
-                _initialMemberList = createAddress(10).address;
+                _initialMemberList = createAddress(11).address;
                 var error = "Too many initial members."
                 await expect(regiment.CreateRegiment(_manager, _initialMemberList))
                     .to.be.revertedWith(error);
@@ -119,7 +119,7 @@ describe("Regiment", function () {
 
                     expect(isRegimentMember).to.equal(true);
                     var regimentMemberList = await regiment.GetRegimentMemberList(event.regimentId);
-                    expect(regimentMemberList[2]).to.equal(_newAMember);
+                    expect(regimentMemberList[1]).to.equal(_newAMember);
 
 
                 });
@@ -162,6 +162,7 @@ describe("Regiment", function () {
 
                     //Regiment member reached the limit
                     var error = "Regiment member reached the limit"
+                    await regiment.AddRegimentMember(regimentId,otherAccount0.address);
                     await expect(regiment.AddRegimentMember(regimentId, _newAMember))
                         .to.be.revertedWith(error);
 
@@ -464,7 +465,7 @@ describe("Regiment", function () {
                             var isRegimentMembers = await regiment.IsRegimentMembers(event.regimentId, members);
                             expect(isRegimentMembers).to.equal(true);
 
-                            members = [owner.address, otherAccount1.address]
+                            members = [otherAccount1.address]
                             var isRegimentMembers = await regiment.IsRegimentMembers(event.regimentId, members);
                             expect(isRegimentMembers).to.equal(true);
 
@@ -473,7 +474,7 @@ describe("Regiment", function () {
                             await expect(regiment.IsRegimentMembers(event.regimentId, members))
                                 .to.be.revertedWith(error);
 
-                            var members = [otherAccount0.address, otherAccount1.address, owner.address]
+                            var members = [otherAccount0.address, otherAccount1.address]
                             isRegimentMembers = await regiment.IsRegimentMembers(event.regimentId, members);
                             expect(isRegimentMembers).to.equal(true);
                         });

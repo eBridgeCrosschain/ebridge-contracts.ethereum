@@ -13,23 +13,42 @@ describe("MultiSigWallet", function () {
         const [owner, account, account1, account2, account3, account4] = await ethers.getSigners();
         const BridgeInLib = await ethers.getContractFactory("BridgeInLibrary");
         const lib = await BridgeInLib.deploy();
+        const BridgeOutMock = await ethers.getContractFactory("MockBridgeOut");
+        const bridgeOutMock = await BridgeOutMock.deploy();
+
         const BridgeInImplementation = await ethers.getContractFactory("BridgeInImplementation",{
             libraries : {
                 BridgeInLibrary:lib.address
             }
         });
-        const BridgeOutMock = await ethers.getContractFactory("MockBridgeOut");
-        const BridgeIn = await ethers.getContractFactory("BridgeIn");
         const MultiSigWallet = await ethers.getContractFactory("MultiSigWallet");
-
-
         var members = [account.address, account1.address, account2.address, account3.address, account4.address];
         var required = 3;
         const multiSigWallet = await MultiSigWallet.deploy(members, required);
-        const bridgeOutMock = await BridgeOutMock.deploy();
+
+        const LimiterImplementation = await ethers.getContractFactory("LimiterImplementation");
+
+        const Limiter = await ethers.getContractFactory("Limiter");
+        const limiterImplementation = await LimiterImplementation.deploy();
+        const LimiterProxy = await Limiter.deploy(account1.address,limiterImplementation.address);
+        const limiter = LimiterImplementation.attach(LimiterProxy.address);
+
+        const TokenPoolImplementation = await ethers.getContractFactory("TokenPoolImplementation");
+        const TokenPool = await ethers.getContractFactory("TokenPool");
+        const tokenpoolImplementation = await TokenPoolImplementation.deploy();
+        const TokenPoolProxy = await TokenPool.deploy(account1.address,weth.address,tokenpoolImplementation.address);
+        const tokenpool = TokenPoolImplementation.attach(TokenPoolProxy.address);
+        
+
+        const BridgeIn = await ethers.getContractFactory("BridgeIn");
         const bridgeInImplementation = await BridgeInImplementation.deploy();
-        const bridgeInProxy = await BridgeIn.deploy(multiSigWallet.address,weth.address,account1.address, bridgeInImplementation.address);
+        const bridgeInProxy = await BridgeIn.deploy(multiSigWallet.address, weth.address, account1.address,limiter.address,tokenpool.address,bridgeInImplementation.address);
         const bridgeIn = BridgeInImplementation.attach(bridgeInProxy.address);
+
+        await limiter.connect(account1).setBridge(bridgeIn.address,bridgeOutMock.address);
+        await tokenpool.connect(account1).setBridge(bridgeIn.address,bridgeOutMock.address);
+
+
         const _memberJoinLimit = 10;
         const _regimentLimit = 20;
         const _maximumAdminsCount = 3;
@@ -142,10 +161,10 @@ describe("MultiSigWallet", function () {
             it("Should executeTransaction success", async function () {
                 const { bridgeIn, multiSigWallet, owner, account, account1, account2,bridgeOutMock } = await loadFixture(deployMultiSigWalletFixture);
                 let ABI1 = [
-                    "function setBridgeOutAndLimiter(address _bridgeOut,address _limiter)"
+                    "function setBridgeOut(address _bridgeOut)"
                 ];
                 let iface1 = new ethers.utils.Interface(ABI1);
-                var data1 = iface1.encodeFunctionData("setBridgeOutAndLimiter",[bridgeOutMock.address,owner.address]);
+                var data1 = iface1.encodeFunctionData("setBridgeOut",[bridgeOutMock.address]);
                 await multiSigWallet.connect(account1).submitTransaction(bridgeIn.address, 0, data1);
                 var transactionId = 0;
                 await multiSigWallet.connect(account).confirmTransaction(transactionId);

@@ -4,18 +4,16 @@ pragma solidity 0.8.9;
 
 contract Limiter is Proxy {
   constructor(
-    address _bridgeIn,
-    address _bridgeOut,
     address _admin,
     address _implementation
   ) Proxy(_implementation) {
     require(
-      _bridgeIn != address(0) && _bridgeOut != address(0) && _admin != address(0),
+      _admin != address(0),
       'invalid input'
     );
     delegateTo(
       _implementation,
-      abi.encodeWithSignature('initialize(address,address,address)', _bridgeIn, _bridgeOut, _admin)
+      abi.encodeWithSignature('initialize(address)', _admin)
     );
   }
 
@@ -28,6 +26,8 @@ contract Limiter is Proxy {
     }
     return returnData;
   }
+
+  receive() external payable {}
 
   fallback() external payable {
     // delegate all other functions to current implementation

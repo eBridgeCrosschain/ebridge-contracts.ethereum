@@ -1,5 +1,4 @@
 // SPDX-License-Identifier: MIT
-import "./interfaces/MerkleTreeInterface.sol";
 import "./interfaces/RegimentInterface.sol";
 import "./interfaces/NativeTokenInterface.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
@@ -22,15 +21,12 @@ contract BridgeOutImplementationV1 is ProxyStorage {
     using EnumerableSet for EnumerableSet.AddressSet;
     using BridgeOutLibrary for BridgeOutLibrary.Report;
 
-    address private merkleTree;
     address public regiment;
     address public bridgeIn;
-    uint256 public defaultMerkleTreeDepth = 3;
     uint256 public constant MaxQueryRange = 100;
     uint256 public constant MaxTokenKeyCount = 200;
     bool public isPaused;
     address public tokenAddress;
-    address public approveController;
     address public multiSigWallet;
     EnumerableSet.Bytes32Set private targetTokenList;
 
@@ -40,11 +36,7 @@ contract BridgeOutImplementationV1 is ProxyStorage {
     mapping(bytes32 => mapping(uint256 => ReceivedReceipt))
         internal receivedReceiptsMap;
     mapping(bytes32 => uint256) internal receivedReceiptIndex;
-    mapping(string => bool) internal receiptApproveMap;
-    mapping(address => uint256) public tokenAmountLimit;
-    mapping(bytes32 => uint256) internal tokenDepositAmount;
     address public limiter;
-    uint8 public signatureThreshold;
     address public tokenPool;
 
     struct ReceivedReceipt {
@@ -65,7 +57,6 @@ contract BridgeOutImplementationV1 is ProxyStorage {
     struct SwapInfo {
         bytes32 swapId;
         bytes32 regimentId;
-        bytes32 spaceId;
         SwapTargetToken targetToken;
     }
     struct SwapAmounts {
@@ -83,7 +74,6 @@ contract BridgeOutImplementationV1 is ProxyStorage {
         bytes32 receiptHash
     );
 
-
     modifier onlyBridgeInContract() {
         require(msg.sender == bridgeIn, "no permission");
         _;
@@ -98,20 +88,20 @@ contract BridgeOutImplementationV1 is ProxyStorage {
     }
 
     function initialize(
-        address _merkleTree,
         address _regiment,
         address _bridgeIn,
         address _tokenAddress,
-        address _approveController,
-        address _multiSigWallet
+        address _multiSigWallet,
+        address _limiter,
+        address _tokenPool
     ) external onlyOwner {
-        require(merkleTree == address(0), "already initialized");
-        merkleTree = _merkleTree;
+        require(regiment == address(0), "already initialized");
         regiment = _regiment;
         bridgeIn = _bridgeIn;
         tokenAddress = _tokenAddress;
-        approveController = _approveController;
         multiSigWallet = _multiSigWallet;
+        limiter = _limiter;
+        tokenPool = _tokenPool;
     }
 
     function pause() external onlyBridgeInContract {
@@ -120,32 +110,6 @@ contract BridgeOutImplementationV1 is ProxyStorage {
 
     function restart() public onlyBridgeInContract {
         isPaused = false;
-    }
-
-    function setDefaultMerkleTreeDepth(
-        uint256 _defaultMerkleTreeDepth
-    ) external onlyWallet {
-        require(
-            _defaultMerkleTreeDepth > 0 && _defaultMerkleTreeDepth <= 20,
-            "invalid input"
-        );
-        defaultMerkleTreeDepth = _defaultMerkleTreeDepth;
-    }
-
-    function setTokenPool(address _tokenPool) external onlyWallet {
-        require(
-            tokenPool == address(0) && _tokenPool != address(0),
-            "invalid token pool address"
-        );
-        tokenPool = _tokenPool;
-    }
-
-    function setLimiter(address _limiter) external onlyWallet {
-        require(
-            limiter == address(0) && _limiter != address(0),
-            "invalid limiter address"
-        );
-        limiter = _limiter;
     }
 
     function changeMultiSignWallet(address _multiSigWallet) external onlyOwner {
@@ -176,27 +140,12 @@ contract BridgeOutImplementationV1 is ProxyStorage {
             targetToken.originShare > 0 && targetToken.targetShare > 0,
             "invalid swap ratio"
         );
-        bytes32 spaceId = IMerkleTree(merkleTree).createSpace(
-            regimentId,
-            defaultMerkleTreeDepth
-        );
         bytes32 swapId = keccak256(msg.data);
-        swapInfos[swapId] = SwapInfo(swapId, regimentId, spaceId, targetToken);
+        swapInfos[swapId] = SwapInfo(swapId, regimentId, targetToken);
         targetTokenList.add(tokenKey);
         tokenKeyToSwapIdMap[tokenKey] = swapId;
 
         emit SwapPairAdded(swapId, targetToken.token, targetToken.fromChainId);
-    }
-
-    function deposit(bytes32 tokenKey, address token, uint256 amount) external {
-        bytes32 swapId = tokenKeyToSwapIdMap[tokenKey];
-        BridgeOutLibrary.validateToken(targetTokenList,token,tokenKey,swapInfos[swapId].targetToken.token);
-        IERC20(token).safeTransferFrom(
-            address(msg.sender),
-            address(this),
-            amount
-        );
-        tokenDepositAmount[swapId] = tokenDepositAmount[swapId].add(amount);
     }
 
     function transmit(
@@ -239,29 +188,7 @@ contract BridgeOutImplementationV1 is ProxyStorage {
         address token = swapInfo.targetToken.token;
         ILimiter(limiter).consumeDailyLimit(swapId, token, targetTokenAmount);
         ILimiter(limiter).consumeTokenBucket(swapId, token, targetTokenAmount);
-        if (tokenPool == address(0)) {
-            require(
-                targetTokenAmount <= tokenDepositAmount[swapId],
-                "deposit not enough"
-            );
-            tokenDepositAmount[swapId] = tokenDepositAmount[swapId].sub(
-                targetTokenAmount
-            );
-            if (token == tokenAddress) {
-                INativeToken(tokenAddress).withdraw(targetTokenAmount);
-                (bool success, ) = payable(receiverAddress).call{
-                    value: targetTokenAmount
-                }("");
-                require(success, "swap failed");
-            } else {
-                IERC20(token).safeTransfer(
-                    receiverAddress,
-                    targetTokenAmount
-                );
-            }
-        }else{
-            ITokenPool(tokenPool).release(token,targetTokenAmount,swapInfo.targetToken.fromChainId,receiverAddress);
-        }
+        ITokenPool(tokenPool).release(token,targetTokenAmount,swapInfo.targetToken.fromChainId,receiverAddress);
         emit TokenSwapEvent(
             receiverAddress,
             token,
@@ -343,10 +270,6 @@ contract BridgeOutImplementationV1 is ProxyStorage {
         return _receipts;
     }
 
-    function getDepositAmount(bytes32 swapId) public view returns (uint256) {
-        return tokenDepositAmount[swapId];
-    }
-
     function getSwapInfo(
         bytes32 swapId
     )
@@ -355,36 +278,12 @@ contract BridgeOutImplementationV1 is ProxyStorage {
         returns (
             string memory fromChainId,
             bytes32 regimentId,
-            bytes32 spaceId,
             address token
         )
     {
         fromChainId = swapInfos[swapId].targetToken.fromChainId;
         regimentId = swapInfos[swapId].regimentId;
-        spaceId = swapInfos[swapId].spaceId;
         token = swapInfos[swapId].targetToken.token;
-    }
-
-    function assetsMigrator(
-        bytes32 tokenKey,
-        address token,
-        uint256 amount
-    ) external onlyBridgeInContract returns (uint256){
-        bytes32 swapId = tokenKeyToSwapIdMap[tokenKey];
-        BridgeOutLibrary.validateToken(targetTokenList,token,tokenKey,swapInfos[swapId].targetToken.token);
-        uint256 balance = IERC20(token).balanceOf(address(this));
-        if (balance > 0 && tokenDepositAmount[swapId] > 0) {
-            uint256 diff = balance.sub(amount);
-            uint256 withdrawAmount = diff > 0 ? amount : balance;
-            IERC20(token).safeTransfer(address(msg.sender), withdrawAmount);
-            if (diff > 0){
-                return diff;
-            }else{
-                return 0;
-            }
-        }
-        tokenDepositAmount[swapId] = 0;
-        return 0;
     }
 
 }

@@ -31,31 +31,6 @@ library BridgeOutLibrary {
         bytes32 receiptIdToken;
     }
 
-    function verifyMerkleTree(
-        bytes32 spaceId,
-        address merkleTree,
-        uint256 leafNodeIndex,
-        bytes32 _leafHash
-    ) external view {
-        bytes32[] memory _merkelTreePath;
-        bool[] memory _isLeftNode;
-        (, , _merkelTreePath, _isLeftNode) = IMerkleTree(merkleTree)
-            .getMerklePath(spaceId, leafNodeIndex);
-        require(
-            IMerkleTree(merkleTree).merkleProof(
-                spaceId,
-                IMerkleTree(merkleTree).getLeafLocatedMerkleTreeIndex(
-                    spaceId,
-                    leafNodeIndex
-                ),
-                _leafHash,
-                _merkelTreePath,
-                _isLeftNode
-            ),
-            "failed to swap token"
-        );
-    }
-
     function verifySignatureAndDecodeReport (Report memory report,bytes32 regimentId,address regiment) external view returns (ReceiptInfo memory){
         require(
             IRegiment(regiment).IsRegimentMember(regimentId, msg.sender),
@@ -94,18 +69,14 @@ library BridgeOutLibrary {
         uint256 receiptIndex = 0;
         bytes32 targetAddress;
         ReceiptInfo memory receiptInfo;
-        if (_report.length > 128) {
-            (, , receiptIndex, receiptInfo.receiptHash,receiptInfo.amount,targetAddress,receiptInfo.receiptIdToken) = abi.decode(
+        (, , receiptIndex, receiptInfo.receiptHash,receiptInfo.amount,targetAddress,receiptInfo.receiptIdToken) = abi.decode(
                 _report,(uint256, uint256, uint256, bytes32,uint256,bytes32,bytes32));
-            receiptInfo.receiveAddress = address(uint160(uint256(targetAddress)));
-            receiptInfo.receiptId = string(abi.encodePacked(receiptInfo.receiptIdToken.toHexWithoutPrefixes(), '.', receiptIndex.toString()));
+        receiptInfo.receiveAddress = address(uint160(uint256(targetAddress)));
+        receiptInfo.receiptId = string(abi.encodePacked(receiptInfo.receiptIdToken.toHexWithoutPrefixes(), '.', receiptIndex.toString()));
 
-            bytes32 leafHash = computeLeafHash(receiptInfo.receiptId,receiptInfo.amount,receiptInfo.receiveAddress);
-            require (leafHash == receiptInfo.receiptHash,"verification failed");
-        }else{
-            (, , receiptIndex, receiptInfo.receiptHash) = abi.decode(
-                _report, (uint256, uint256, uint256, bytes32));
-        }   
+        bytes32 leafHash = computeLeafHash(receiptInfo.receiptId,receiptInfo.amount,receiptInfo.receiveAddress);
+        require (leafHash == receiptInfo.receiptHash,"verification failed");
+         
         return receiptInfo;
     }
 

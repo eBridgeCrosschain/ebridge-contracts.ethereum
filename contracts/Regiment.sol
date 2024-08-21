@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MIT
 import "./Proxy.sol";
 
 pragma solidity 0.8.9;
@@ -32,6 +33,8 @@ contract Regiment is Proxy {
         }
         return returnData;
     }
+
+    receive() external payable {}
 
     fallback() external payable {
         // delegate all other functions to current implementation

@@ -4,22 +4,20 @@ pragma solidity 0.8.9;
 
 contract TokenPool is Proxy {
     constructor(
-        address _bridgeIn,
-        address _bridgeOut,
+        address _admin,
         address _nativeToken,
         address _implementation
     ) Proxy(_implementation) {
         require(
-            _bridgeIn != address(0) && _bridgeOut != address(0),
+            _admin != address(0) && _nativeToken != address(0),
             "invalid input"
         );
         delegateTo(
             _implementation,
             abi.encodeWithSignature(
-                "initialize(address,address,address)",
-                _bridgeIn,
-                _bridgeOut,
-                _nativeToken
+                "initialize(address,address)",
+                _nativeToken,
+                _admin
             )
         );
     }

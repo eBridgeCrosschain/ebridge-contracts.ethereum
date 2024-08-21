@@ -9,8 +9,8 @@ describe("BridgeOut", function () {
     async function deployBridgeOutFixture() {
         // Contracts are deployed using the first signer/account by default
 
-        const { merkleTree, regimentId, regiment }
-            = await deployMerkleTreeFixture()
+        const { regiment,ownerRegiment,regimentId  }
+            = await deployRegimentFixture()
         const WETH = await ethers.getContractFactory("WETH9");
         const weth = await WETH.deploy();
         const LIB = await ethers.getContractFactory("BridgeOutLibrary");
@@ -18,6 +18,20 @@ describe("BridgeOut", function () {
         const BridgeInLib = await ethers.getContractFactory("BridgeInLibrary");
         const bridgeInLib = await BridgeInLib.deploy();
         const [owner, otherAccount0, otherAccount1,otherAccount2,admin,otherAccount3,otherAccount4] = await ethers.getSigners();
+
+        const LimiterImplementation = await ethers.getContractFactory("LimiterImplementation");
+
+        const Limiter = await ethers.getContractFactory("Limiter");
+        const limiterImplementation = await LimiterImplementation.deploy();
+        const LimiterProxy = await Limiter.deploy(admin.address,limiterImplementation.address);
+        const limiter = LimiterImplementation.attach(LimiterProxy.address);
+
+        const TokenPoolImplementation = await ethers.getContractFactory("TokenPoolImplementation");
+        const TokenPool = await ethers.getContractFactory("TokenPool");
+        const tokenpoolImplementation = await TokenPoolImplementation.deploy();
+        const TokenPoolProxy = await TokenPool.deploy(admin.address,weth.address,tokenpoolImplementation.address);
+        const tokenpool = TokenPoolImplementation.attach(TokenPoolProxy.address);
+
         const MockBridgeIn = await ethers.getContractFactory("MockBridgeIn");
 
         const BridgeOut = await ethers.getContractFactory("BridgeOut");
@@ -31,30 +45,15 @@ describe("BridgeOut", function () {
 
         const bridgeInMock = await MockBridgeIn.deploy();
         const bridgeOutImplementation = await BridgeOutImplementation.deploy();
-        const bridgeOutProxy = await BridgeOut.deploy(merkleTree.address, regiment.address, bridgeInMock.address, otherAccount0.address, multiSigWalletMocAddress, weth.address, bridgeOutImplementation.address);
+        const bridgeOutProxy = await BridgeOut.deploy(regiment.address, bridgeInMock.address, multiSigWalletMocAddress, weth.address, limiter.address, tokenpool.address, bridgeOutImplementation.address);
         const bridgeOut = BridgeOutImplementation.attach(bridgeOutProxy.address);
 
-        const LimiterImplementation = await ethers.getContractFactory("LimiterImplementation",{
-            libraries:{
-                BridgeInLibrary : bridgeInLib.address
-            }
-        });
 
-        const Limiter = await ethers.getContractFactory("Limiter");
-        const limiterImplementation = await LimiterImplementation.deploy();
-        const LimiterProxy = await Limiter.deploy(bridgeInMock.address,bridgeOut.address,admin.address,limiterImplementation.address);
-        const limiter = LimiterImplementation.attach(LimiterProxy.address);
+        await limiter.connect(admin).setBridge(bridgeInMock.address,bridgeOut.address);
+        await tokenpool.connect(admin).setBridge(bridgeInMock.address,bridgeOut.address);
 
-        const TokenPoolImplementation = await ethers.getContractFactory("TokenPoolImplementation");
-        const TokenPool = await ethers.getContractFactory("TokenPool");
-        const tokenpoolImplementation = await TokenPoolImplementation.deploy();
-        const TokenPoolProxy = await TokenPool.deploy(bridgeInMock.address,bridgeOut.address,weth.address,tokenpoolImplementation.address);
-        const tokenpool = TokenPoolImplementation.attach(TokenPoolProxy.address);
-        await bridgeOut.connect(otherAccount2).setTokenPool(tokenpool.address);
 
-        await bridgeOut.connect(otherAccount2).setDefaultMerkleTreeDepth(10);
-        await bridgeOut.connect(otherAccount2).setLimiter(limiter.address);
-        return { merkleTree, regimentId, regiment, bridgeOut, bridgeOutProxy, owner, otherAccount0, otherAccount1, bridgeInMock, weth, lib, otherAccount2, admin, limiter,otherAccount4, tokenpool };
+        return { regimentId, regiment, bridgeOut, bridgeOutProxy, owner, otherAccount0, otherAccount1, bridgeInMock, weth, lib, otherAccount2, admin, limiter,otherAccount4, tokenpool };
 
     }
 
@@ -97,18 +96,6 @@ describe("BridgeOut", function () {
 
         return { regiment, owner, regimentId };
     }
-    async function deployMerkleTreeFixture() {
-        // Contracts are deployed using the first signer/account by default
-        const { regiment, owner, regimentId } = await loadFixture(deployRegimentFixture);
-
-        const MerkleTreeImplementation = await ethers.getContractFactory("MerkleTreeImplementation");
-        const MerkleTree = await ethers.getContractFactory("MerkleTree");
-        const merkleTreeImplementation = await MerkleTreeImplementation.deploy();
-        const merkleTreeProxy = await MerkleTree.deploy(regiment.address,merkleTreeImplementation.address);
-        const merkleTree = MerkleTreeImplementation.attach(merkleTreeProxy.address);
-    
-        return { merkleTree, owner, regimentId, regiment };
-    }
 
     describe("deploy", function () {
         describe("owner test", function () {
@@ -130,11 +117,7 @@ describe("BridgeOut", function () {
                 const { bridgeOutProxy, owner } = await loadFixture(deployBridgeOutFixture);
                 const LIB = await ethers.getContractFactory("MockBridgeOutLib");
                 const lib = await LIB.deploy();
-                const MockBridgeOut = await ethers.getContractFactory("MockBridgeOutTestLib",{
-                    libraries:{
-                        BridgeOutLibrary : lib.address
-                    }
-                });
+                const MockBridgeOut = await ethers.getContractFactory("MockBridgeOutTestLib");
                 const mockBridgeOut = await MockBridgeOut.deploy();
                 await bridgeOutProxy.updateImplementation(mockBridgeOut.address);
                 var implementation = await bridgeOutProxy.implementation();
@@ -147,7 +130,7 @@ describe("BridgeOut", function () {
         describe("createSwap test", function () {
             it("Should revert when no permission", async function () {
                 const { elf, usdt } = await deployTokensFixture()
-                const { merkleTree, regimentId, regiment, bridgeOut, owner, otherAccount0, otherAccount1 } = await loadFixture(deployBridgeOutFixture);
+                const {  regimentId, regiment, bridgeOut, owner, otherAccount0, otherAccount1 } = await loadFixture(deployBridgeOutFixture);
 
                 var token = elf.address;
                 var fromChainId = "AELF_MAINNET";
@@ -165,7 +148,7 @@ describe("BridgeOut", function () {
 
             it("Should revert when target token already exist", async function () {
                 const { elf, usdt } = await deployTokensFixture()
-                const { merkleTree, regimentId, regiment, bridgeOut, owner, otherAccount0, otherAccount1 } = await loadFixture(deployBridgeOutFixture);
+                const {  regimentId, regiment, bridgeOut, owner, otherAccount0, otherAccount1 } = await loadFixture(deployBridgeOutFixture);
                 _newAdmins = [bridgeOut.address];
                 await regiment.AddAdmins(regimentId, _newAdmins);
                 var token = elf.address;
@@ -185,7 +168,7 @@ describe("BridgeOut", function () {
 
             it("Should revert when invalid swap ratio", async function () {
                 const { elf, usdt } = await deployTokensFixture()
-                const { merkleTree, regimentId, regiment, bridgeOut, owner, otherAccount0, otherAccount1 } = await loadFixture(deployBridgeOutFixture);
+                const {  regimentId, regiment, bridgeOut, owner, otherAccount0, otherAccount1 } = await loadFixture(deployBridgeOutFixture);
                 _newAdmins = [bridgeOut.address];
                 await regiment.AddAdmins(regimentId, _newAdmins);
                 var token = elf.address;
@@ -203,7 +186,7 @@ describe("BridgeOut", function () {
 
             it("Should createSwap success in different chain", async function () {
                 const { elf, usdt } = await deployTokensFixture()
-                const { merkleTree, regimentId, regiment, bridgeOut, owner, otherAccount0, otherAccount1 } = await loadFixture(deployBridgeOutFixture);
+                const {  regimentId, regiment, bridgeOut, owner, otherAccount0, otherAccount1 } = await loadFixture(deployBridgeOutFixture);
 
                 var chainId = "AELF_MAINNET";
                 _newAdmins = [bridgeOut.address];
@@ -245,176 +228,10 @@ describe("BridgeOut", function () {
             });
         })
 
-        // describe("deposit test", function () {
-        //     it("Should revert in following case when deposit", async function () {
-
-        //         const { merkleTree, regimentId, regiment, bridgeOut, owner, otherAccount0, otherAccount1 } = await loadFixture(deployBridgeOutFixture);
-        //         const { elf, usdt } = await deployTokensFixture()
-        //         var chainId = "AELF_MAINNET";
-        //         _newAdmins = [bridgeOut.address];
-        //         amount = 1000000000;
-        //         await regiment.AddAdmins(regimentId, _newAdmins);
-        //         var token = elf.address;
-
-        //         var targetToken = {
-        //             token,
-        //             fromChainId: chainId,
-        //             originShare: "100",
-        //             targetShare: "100"
-        //         }
-        //         await bridgeOut.createSwap(targetToken, regimentId);
-        //         var swapId = await bridgeOut.getSwapId(elf.address, chainId);
-        //         var tokenKey = _generateTokenKey(elf.address, chainId);
-        //         //swap not exist
-        //         error = "target token not exist";
-        //         var tokenKeyUsdt = _generateTokenKey(usdt.address, chainId);
-        //         await expect(bridgeOut.deposit(tokenKeyUsdt, usdt.address, amount))
-        //             .to.be.revertedWith(error);
-
-        //         //invalid token
-        //         error = "invalid token";
-        //         targetToken = {
-        //             token: usdt.address,
-        //             fromChainId: chainId,
-        //             originShare: "100",
-        //             targetShare: "100"
-        //         }
-
-        //         await bridgeOut.createSwap(targetToken, regimentId);
-        //         await expect(bridgeOut.deposit(tokenKey, usdt.address, amount))
-        //             .to.be.revertedWith(error);
-
-        //         //ERC20: insufficient allowance
-        //         error = "ERC20: insufficient allowance";
-        //         tokens = token;
-        //         amounts = 100;
-        //         await expect(bridgeOut.deposit(tokenKey, tokens, amounts))
-        //             .to.be.revertedWith(error);
-        //         //ERC20: insufficient balance
-        //         error = "ERC20: transfer amount exceeds balance";
-        //         await elf.approve(bridgeOut.address, amount);
-        //         await expect(bridgeOut.deposit(tokenKey, token, amount))
-        //             .to.be.revertedWith(error);
-
-        //     });
-        //     it("Should deposit successful", async function () {
-
-        //         const { merkeTree, regimentId, regiment, bridgeOut, owner, otherAccount0, otherAccount1 } = await loadFixture(deployBridgeOutFixture);
-        //         const { elf, usdt } = await deployTokensFixture()
-        //         var chainId = "AELF_MAINNET";
-        //         _newAdmins = [bridgeOut.address];
-        //         await regiment.AddAdmins(regimentId, _newAdmins);
-        //         var token = elf.address;
-
-        //         var targetToken = {
-        //             token,
-        //             fromChainId: chainId,
-        //             originShare: "100",
-        //             targetShare: "100"
-        //         }
-        //         await bridgeOut.createSwap(targetToken, regimentId);
-        //         var swapId = await bridgeOut.getSwapId(elf.address, chainId);
-        //         var tokenKey = _generateTokenKey(elf.address, chainId);
-        //         amount = 100;
-        //         await elf.mint(owner.address, amount);
-        //         expect(await elf.balanceOf(bridgeOut.address)).to.equal(0)
-        //         await elf.approve(bridgeOut.address, amount);
-
-        //         await bridgeOut.deposit(tokenKey, token, amount);
-        //         expect(await elf.balanceOf(bridgeOut.address)).to.equal(amount)
-        //         expect(await elf.balanceOf(owner.address)).to.equal(0)
-        //         var depositAmount = await bridgeOut.getDepositAmount(swapId)
-        //         expect(depositAmount).to.equal(amount)
-        //     })
-
-        // });
-
-
-        // describe("withdraw test", function () {
-        //     it("Should revert in following case", async function () {
-        //         const { elf, usdt } = await deployTokensFixture()
-        //         const { merkleTree, regimentId, regiment, bridgeOut, owner, otherAccount0, otherAccount1, bridgeInMock } = await loadFixture(deployBridgeOutFixture);
-        //         var chainId = "AELF_MAINNET";
-        //         _newAdmins = [bridgeOut.address];
-        //         await regiment.AddAdmins(regimentId, _newAdmins);
-        //         var token = elf.address;
-        //         var targetToken = {
-        //             token,
-        //             fromChainId: chainId,
-        //             originShare: "100",
-        //             targetShare: "100"
-        //         }
-        //         await bridgeOut.createSwap(targetToken, regimentId);
-        //         var swapId = await bridgeOut.getSwapId(elf.address, chainId);
-        //         var tokenKey = _generateTokenKey(elf.address, chainId);
-        //         amount = 1000000;
-
-        //         //swap not exist
-        //         error = "target token not exist";
-        //         var tokenKeyUsdt = _generateTokenKey(usdt.address, chainId);
-        //         await expect(bridgeInMock.withdraw(bridgeOut.address, tokenKeyUsdt, usdt.address, amount))
-        //             .to.be.revertedWith(error);
-
-        //         //invalid token
-        //         error = "invalid token";
-        //         targetToken = {
-        //             token: usdt.address,
-        //             fromChainId: chainId,
-        //             originShare: "100",
-        //             targetShare: "100"
-        //         }
-        //         await bridgeOut.createSwap(targetToken, regimentId);
-        //         await expect(bridgeInMock.withdraw(bridgeOut.address, tokenKey, usdt.address, amount))
-        //             .to.be.revertedWith(error);
-        //         //no permission.
-        //         error = "no permission";
-        //         await expect(bridgeOut.withdraw(tokenKey, token, amount))
-        //             .to.be.revertedWith(error);
-
-        //     });
-
-        //     it("Should withdraw successful", async function () {
-
-        //         const { merkleTree, regimentId, regiment, bridgeOut, owner, otherAccount0, otherAccount1, bridgeInMock } = await loadFixture(deployBridgeOutFixture);
-        //         const { elf, usdt } = await deployTokensFixture()
-        //         var chainId = "AELF_MAINNET";
-        //         var amounts = 1000000000;
-        //         _newAdmins = [bridgeOut.address];
-        //         await regiment.AddAdmins(regimentId, _newAdmins);
-        //         var token = elf.address;
-        //         var targetToken = {
-        //             token,
-        //             fromChainId: chainId,
-        //             originShare: "100",
-        //             targetShare: "100"
-        //         }
-        //         await bridgeOut.createSwap(targetToken, regimentId);
-        //         var swapId = await bridgeOut.getSwapId(elf.address, chainId);
-        //         var tokenKey = _generateTokenKey(elf.address, chainId);
-        //         amount = 100;
-
-        //         await elf.mint(owner.address, amount);
-        //         expect(await elf.balanceOf(bridgeOut.address)).to.equal(0)
-        //         await elf.approve(bridgeOut.address, amounts);
-
-        //         await bridgeOut.deposit(tokenKey, token, amount);
-        //         expect(await elf.balanceOf(bridgeOut.address)).to.equal(amount)
-        //         expect(await elf.balanceOf(owner.address)).to.equal(0)
-
-        //         var depositAmount = await bridgeOut.getDepositAmount(swapId)
-        //         expect(depositAmount).to.equal(amount)
-
-        //         await bridgeInMock.withdraw(bridgeOut.address, tokenKey, token, amount);
-        //         expect(await elf.balanceOf(owner.address)).to.equal(amount)
-        //         expect(await elf.balanceOf(bridgeOut.address)).to.equal(0)
-        //         var depositAmount = await bridgeOut.getDepositAmount(swapId)
-        //         expect(depositAmount).to.equal(0)
-        //     });
-        // })
 
         describe("transmit test", function () {
             it("Should tramsmit failed when trigger error", async function () {
-                const { merkleTree, regimentId, regiment, bridgeOut, bridgeOutProxy, owner, otherAccount0, otherAccount1, bridgeInMock, weth, lib, otherAccount2, admin, limiter,otherAccount4, tokenpool } = await loadFixture(deployBridgeOutFixture);
+                const {  regimentId, regiment, bridgeOut, bridgeOutProxy, owner, otherAccount0, otherAccount1, bridgeInMock, weth, lib, otherAccount2, admin, limiter,otherAccount4, tokenpool } = await loadFixture(deployBridgeOutFixture);
                 const { elf, usdt } = await deployTokensFixture()
                 var chainId = "AELF_MAINNET";
                 _newAdmins = [bridgeOut.address];
@@ -538,7 +355,7 @@ describe("BridgeOut", function () {
 
             })
             it("Should tramsmit failed when threshold > 0",async function (){
-                const { merkleTree, regimentId, regiment, bridgeOut, bridgeOutProxy, owner, otherAccount0, otherAccount1, bridgeInMock, weth, lib, otherAccount2, admin, limiter,otherAccount4, tokenpool } = await loadFixture(deployBridgeOutFixture);
+                const {  regimentId, regiment, bridgeOut, bridgeOutProxy, owner, otherAccount0, otherAccount1, bridgeInMock, weth, lib, otherAccount2, admin, limiter,otherAccount4, tokenpool } = await loadFixture(deployBridgeOutFixture);
                 const { elf, usdt } = await deployTokensFixture()
                 var chainId = "AELF_MAINNET";
                 _newAdmins = [bridgeOut.address];
@@ -643,7 +460,7 @@ describe("BridgeOut", function () {
             })
             it("Should tramsmit correctly", async function () {
 
-                const { merkleTree, regimentId, regiment, bridgeOut, bridgeOutProxy, owner, otherAccount0, otherAccount1, bridgeInMock, weth, lib, otherAccount2, admin, limiter,otherAccount4, tokenpool } = await loadFixture(deployBridgeOutFixture);
+                const {  regimentId, regiment, bridgeOut, bridgeOutProxy, owner, otherAccount0, otherAccount1, bridgeInMock, weth, lib, otherAccount2, admin, limiter,otherAccount4, tokenpool } = await loadFixture(deployBridgeOutFixture);
                 const { elf, usdt } = await deployTokensFixture()
                 var chainId = "AELF_MAINNET";
                 _newAdmins = [bridgeOut.address];
@@ -745,7 +562,7 @@ describe("BridgeOut", function () {
 
             })
             it("Should getReceivedReceiptInfos correctly when transmited muti messages", async function () {
-                const { merkleTree, regimentId, regiment, bridgeOut, bridgeOutProxy, owner, otherAccount0, otherAccount1, bridgeInMock, weth, lib, otherAccount2, admin, limiter,otherAccount4, tokenpool } = await loadFixture(deployBridgeOutFixture);
+                const {  regimentId, regiment, bridgeOut, bridgeOutProxy, owner, otherAccount0, otherAccount1, bridgeInMock, weth, lib, otherAccount2, admin, limiter,otherAccount4, tokenpool } = await loadFixture(deployBridgeOutFixture);
                 const { elf, usdt } = await deployTokensFixture()
                 var chainId = "AELF_MAINNET";
                 _newAdmins = [bridgeOut.address];
@@ -903,7 +720,7 @@ describe("BridgeOut", function () {
             })
             it("Should tramsmit and receive successful", async function () {
 
-                const { merkleTree, regimentId, regiment, bridgeOut, bridgeOutProxy, owner, otherAccount0, otherAccount1, bridgeInMock, weth, lib, otherAccount2, admin, limiter,otherAccount4, tokenpool } = await loadFixture(deployBridgeOutFixture);
+                const {  regimentId, regiment, bridgeOut, bridgeOutProxy, owner, otherAccount0, otherAccount1, bridgeInMock, weth, lib, otherAccount2, admin, limiter,otherAccount4, tokenpool } = await loadFixture(deployBridgeOutFixture);
                 const { elf, usdt } = await deployTokensFixture()
                 var chainId = "AELF_MAINNET";
                 _newAdmins = [bridgeOut.address];
@@ -1015,7 +832,7 @@ describe("BridgeOut", function () {
             })
             it("Should tramsmit and receive failed", async function () {
 
-                const { merkleTree, regimentId, regiment, bridgeOut, bridgeOutProxy, owner, otherAccount0, otherAccount1, bridgeInMock, weth, lib, otherAccount2, admin, limiter,otherAccount4, tokenpool } = await loadFixture(deployBridgeOutFixture);
+                const {  regimentId, regiment, bridgeOut, bridgeOutProxy, owner, otherAccount0, otherAccount1, bridgeInMock, weth, lib, otherAccount2, admin, limiter,otherAccount4, tokenpool } = await loadFixture(deployBridgeOutFixture);
                 const { elf, usdt } = await deployTokensFixture()
                 var chainId = "AELF_MAINNET";
                 _newAdmins = [bridgeOut.address];
@@ -1120,7 +937,7 @@ describe("BridgeOut", function () {
         });
         describe("swapToken test", function () {
             it("Should revert when trigger error", async function () {
-                const { merkleTree, regimentId, regiment, bridgeOut, bridgeOutProxy, owner, otherAccount0, otherAccount1, bridgeInMock, weth, lib, otherAccount2, admin, limiter,otherAccount4, tokenpool } = await loadFixture(deployBridgeOutFixture);
+                const {  regimentId, regiment, bridgeOut, bridgeOutProxy, owner, otherAccount0, otherAccount1, bridgeInMock, weth, lib, otherAccount2, admin, limiter,otherAccount4, tokenpool } = await loadFixture(deployBridgeOutFixture);
                 const { elf, usdt } = await deployTokensFixture()
                 var chainId = "AELF_MAINNET";
                 _newAdmins = [bridgeOut.address];
@@ -1196,7 +1013,7 @@ describe("BridgeOut", function () {
             })
 
             it("Should swapToken correctly with test token", async function () {
-                const { merkleTree, regimentId, regiment, bridgeOut, bridgeOutProxy, owner, otherAccount0, otherAccount1, bridgeInMock, weth, lib, otherAccount2, admin, limiter,otherAccount4, tokenpool } = await loadFixture(deployBridgeOutFixture);
+                const {  regimentId, regiment, bridgeOut, bridgeOutProxy, owner, otherAccount0, otherAccount1, bridgeInMock, weth, lib, otherAccount2, admin, limiter,otherAccount4, tokenpool } = await loadFixture(deployBridgeOutFixture);
                 const { elf, usdt } = await deployTokensFixture()
                 var chainId = "AELF_MAINNET";
                 _newAdmins = [bridgeOut.address];
@@ -1306,7 +1123,7 @@ describe("BridgeOut", function () {
             })
 
             it("Should swapToken correctly with muti test token", async function () {
-                const { merkleTree, regimentId, regiment, bridgeOut, bridgeOutProxy, owner, otherAccount0, otherAccount1, bridgeInMock, weth, lib, otherAccount2, admin, limiter,otherAccount4, tokenpool } = await loadFixture(deployBridgeOutFixture);
+                const {  regimentId, regiment, bridgeOut, bridgeOutProxy, owner, otherAccount0, otherAccount1, bridgeInMock, weth, lib, otherAccount2, admin, limiter,otherAccount4, tokenpool } = await loadFixture(deployBridgeOutFixture);
                 const { elf, usdt } = await deployTokensFixture()
                 var chainId = "AELF_MAINNET";
                 _newAdmins = [bridgeOut.address];
@@ -1596,7 +1413,7 @@ describe("BridgeOut", function () {
             })
 
             it("Should swapToken revert with test token amount beyond the limit", async function () {
-                const { merkleTree, regimentId, regiment, bridgeOut, bridgeOutProxy, owner, otherAccount0, otherAccount1, bridgeInMock, weth, lib, otherAccount2, admin, limiter,otherAccount4, tokenpool } = await loadFixture(deployBridgeOutFixture);
+                const {  regimentId, regiment, bridgeOut, bridgeOutProxy, owner, otherAccount0, otherAccount1, bridgeInMock, weth, lib, otherAccount2, admin, limiter,otherAccount4, tokenpool } = await loadFixture(deployBridgeOutFixture);
                 const { elf, usdt } = await deployTokensFixture()
                 var chainId = "AELF_MAINNET";
                 _newAdmins = [bridgeOut.address];
@@ -1717,7 +1534,7 @@ describe("BridgeOut", function () {
             })
 
             it("Should revert when pause", async function () {
-                const { merkleTree, regimentId, regiment, bridgeOut, bridgeOutProxy, owner, otherAccount0, otherAccount1, bridgeInMock, weth, lib, otherAccount2, admin, limiter,otherAccount4, tokenpool } = await loadFixture(deployBridgeOutFixture);
+                const {  regimentId, regiment, bridgeOut, bridgeOutProxy, owner, otherAccount0, otherAccount1, bridgeInMock, weth, lib, otherAccount2, admin, limiter,otherAccount4, tokenpool } = await loadFixture(deployBridgeOutFixture);
                 const { elf, usdt } = await deployTokensFixture()
                 var chainId = "AELF_MAINNET";
                 _newAdmins = [bridgeOut.address];
@@ -1839,7 +1656,7 @@ describe("BridgeOut", function () {
         describe("computeLeafHash test", function () {
             it("Should computeLeafHash successful", async function () {
 
-                const { merkleTree, regimentId, regiment, bridgeOut, owner, otherAccount0, otherAccount1, lib } = await loadFixture(deployBridgeOutFixture);
+                const { regimentId, regiment, bridgeOut, owner, otherAccount0, otherAccount1, lib } = await loadFixture(deployBridgeOutFixture);
                 const { elf, usdt } = await deployTokensFixture()
                 var chainId = "AELF_MAINNET";
                 var tokenKey = _generateTokenKey(elf.address, chainId);

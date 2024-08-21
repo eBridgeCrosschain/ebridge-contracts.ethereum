@@ -7,21 +7,27 @@ contract BridgeIn is Proxy {
         address _multiSigWallet,
         address _tokenAddress,
         address _pauseController,
+        address _limiter,
+        address _tokenPool,
         address _implementation
     ) Proxy(_implementation) {
         require(
             _multiSigWallet != address(0) &&
                 _tokenAddress != address(0) &&
-                _pauseController != address(0),
+                _pauseController != address(0) && 
+                _limiter != address(0) && 
+                _tokenPool != address(0),
             "invalid input"
         );
         delegateTo(
             _implementation,
             abi.encodeWithSignature(
-                "initialize(address,address,address)",
+                "initialize(address,address,address,address,address)",
                 _multiSigWallet,
                 _tokenAddress,
-                _pauseController
+                _pauseController,
+                _limiter,
+                _tokenPool
             )
         );
     }
