@@ -318,28 +318,16 @@ contract BridgeInImplementation is ProxyStorage {
 
     function assetsMigrator(
         Token[] calldata tokens,
-        address receiverAddress
+        address provider
     ) external onlyWallet {
         for (uint i = 0; i < tokens.length; i++) {
             bytes32 tokenKey = _getTokenKey(tokens[i].tokenAddress, tokens[i].chainId);
             _checkTokenSupport(tokenKey);
             uint256 amount = depositAmount[tokenKey];
             if (amount > 0) {
+                ITokenPool(tokenPool).migrator(provider,tokens[i].tokenAddress,amount);
                 depositAmount[tokenKey] = 0;
-                uint256 lockAmount = IBridgeOut(bridgeOut).assetsMigrator(tokenKey, tokens[i].tokenAddress, amount);
-                if (tokens[i].tokenAddress == tokenAddress) {
-                    INativeToken(tokens[i].tokenAddress).withdraw(amount);
-                    (bool success, ) = payable(receiverAddress).call{
-                        value: amount
-                    }("");
-                    require(success, "failed");
-                }else{
-                    _transfer(tokens[i].tokenAddress,receiverAddress,amount);
-                }
-                if(lockAmount > 0){
-                     _approve(tokens[i].tokenAddress,tokenPool, amount);
-                    _lock(tokens[i].tokenAddress,amount,tokens[i].chainId,address(this));
-                }
+                IBridgeOut(bridgeOut).assetsMigrator(tokenKey, tokens[i].tokenAddress, amount);
             }
         }
     }

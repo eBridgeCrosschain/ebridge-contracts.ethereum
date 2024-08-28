@@ -48,7 +48,7 @@ describe("BridgeOut", function () {
         const TokenPoolImplementation = await ethers.getContractFactory("TokenPoolImplementation");
         const TokenPool = await ethers.getContractFactory("TokenPool");
         const tokenpoolImplementation = await TokenPoolImplementation.deploy();
-        const TokenPoolProxy = await TokenPool.deploy(bridgeInMock.address,bridgeOut.address,weth.address,tokenpoolImplementation.address);
+        const TokenPoolProxy = await TokenPool.deploy(bridgeInMock.address,bridgeOut.address,weth.address,admin.address,tokenpoolImplementation.address);
         const tokenpool = TokenPoolImplementation.attach(TokenPoolProxy.address);
         await bridgeOut.connect(otherAccount2).setTokenPool(tokenpool.address);
 
@@ -447,11 +447,10 @@ describe("BridgeOut", function () {
                 }]
                 await bridgeInMock.addToken(tokens);
 
-                await tokenpool.addLiquidity(token,chainId,amount);
+                await tokenpool.addLiquidity(token,amount);
 
                 expect(await elf.balanceOf(tokenpool.address)).to.equal(amount);
                 expect(await elf.balanceOf(owner.address)).to.equal(0);
-                expect(await tokenpool.getTokenLiquidity(token,chainId)).to.equal(amount);
 
                 const date = new Date();
                 const timestamp = Date.UTC(date.getFullYear(), date.getMonth(), date.getUTCDate(), 0, 0, 0, 0);
@@ -569,11 +568,10 @@ describe("BridgeOut", function () {
                 }]
                 await bridgeInMock.addToken(tokens);
 
-                await tokenpool.addLiquidity(token,chainId,amount);
+                await tokenpool.addLiquidity(token,amount);
 
                 expect(await elf.balanceOf(tokenpool.address)).to.equal(amount);
                 expect(await elf.balanceOf(owner.address)).to.equal(0);
-                expect(await tokenpool.getTokenLiquidity(token,chainId)).to.equal(amount);
 
 
                 var index = "1234";
@@ -674,11 +672,10 @@ describe("BridgeOut", function () {
                 }]
                 await bridgeInMock.addToken(tokens);
 
-                await tokenpool.addLiquidity(token,chainId,amount);
+                await tokenpool.addLiquidity(token,amount);
 
                 expect(await elf.balanceOf(tokenpool.address)).to.equal(amount);
                 expect(await elf.balanceOf(owner.address)).to.equal(0);
-                expect(await tokenpool.getTokenLiquidity(token,chainId)).to.equal(amount);
 
                 const date = new Date();
                 const timestamp = Date.UTC(date.getFullYear(), date.getMonth(), date.getUTCDate(), 0, 0, 0, 0);
@@ -786,11 +783,10 @@ describe("BridgeOut", function () {
                 }]
                 await bridgeInMock.addToken(tokens);
 
-                await tokenpool.addLiquidity(token,chainId,amount);
+                await tokenpool.addLiquidity(token,amount);
 
                 expect(await elf.balanceOf(tokenpool.address)).to.equal(amount);
                 expect(await elf.balanceOf(owner.address)).to.equal(0);
-                expect(await tokenpool.getTokenLiquidity(token,chainId)).to.equal(amount);
                 
                 var index = "123";
                 var receiptId = tokenKey.toString().substring(2) + "." + index;
@@ -934,11 +930,10 @@ describe("BridgeOut", function () {
                 }]
                 await bridgeInMock.addToken(tokens);
 
-                await tokenpool.addLiquidity(token,chainId,amount);
+                await tokenpool.addLiquidity(token,amount);
 
                 expect(await elf.balanceOf(tokenpool.address)).to.equal(amount);
                 expect(await elf.balanceOf(owner.address)).to.equal(0);
-                expect(await tokenpool.getTokenLiquidity(token,chainId)).to.equal(amount);
 
                 const date = new Date();
                 const timestamp = Date.UTC(date.getFullYear(), date.getMonth(), date.getUTCDate(), 0, 0, 0, 0);
@@ -1003,7 +998,6 @@ describe("BridgeOut", function () {
                 console.log(result);
                 var isReceiptRecorded = await bridgeOut.isReceiptRecorded(leafHash);
                 expect(isReceiptRecorded).to.equal(true)
-                expect(await tokenpool.getTokenLiquidity(token,chainId)).to.equal(0);
                 expect(await elf.balanceOf(owner.address)).to.equal(amount)
                 tokens = [token];
                 chainIds = [chainId];
@@ -1046,11 +1040,10 @@ describe("BridgeOut", function () {
                 }]
                 await bridgeInMock.addToken(tokens);
 
-                await tokenpool.addLiquidity(token,chainId,amount);
+                await tokenpool.addLiquidity(token,amount);
 
                 expect(await elf.balanceOf(tokenpool.address)).to.equal(amount);
                 expect(await elf.balanceOf(owner.address)).to.equal(0);
-                expect(await tokenpool.getTokenLiquidity(token,chainId)).to.equal(amount);
 
                 const date = new Date();
                 const timestamp = Date.UTC(date.getFullYear(), date.getMonth(), date.getUTCDate(), 0, 0, 0, 0);
@@ -1171,10 +1164,8 @@ describe("BridgeOut", function () {
                 var v = Signature.v == 27 ? "0x0000000000000000000000000000000000000000000000000000000000000000" : "0x0100000000000000000000000000000000000000000000000000000000000000"
 
                 // not enough token to release
-                error = "not enough token to release";
-                // await bridgeOut.withdraw(swapId, tokens, amounts);
                 await expect(bridgeOut.transmit(swapId, message.message, [Signature.r], [Signature.s], v))
-                    .to.be.revertedWith(error);
+                    .to.be.revertedWithCustomError(tokenpool,"InsufficientLiquidity");
                 await elf.approve(tokenpool.address, amount);
     
                 var tokens = [{
@@ -1183,11 +1174,10 @@ describe("BridgeOut", function () {
                 }]
                 await bridgeInMock.addToken(tokens);
     
-                await tokenpool.addLiquidity(token,chainId,amount);
+                await tokenpool.addLiquidity(token,amount);
     
                 expect(await elf.balanceOf(tokenpool.address)).to.equal(amount);
                 expect(await elf.balanceOf(owner.address)).to.equal(0);
-                expect(await tokenpool.getTokenLiquidity(token,chainId)).to.equal(amount);
                 //already claimed
                 error = "already recorded";
                 await bridgeOut.transmit(swapId, message.message, [Signature.r], [Signature.s], v)
@@ -1237,11 +1227,10 @@ describe("BridgeOut", function () {
                 }]
                 await bridgeInMock.addToken(tokens);
 
-                await tokenpool.addLiquidity(token,chainId,amount);
+                await tokenpool.addLiquidity(token,amount);
 
                 expect(await elf.balanceOf(tokenpool.address)).to.equal(amount);
                 expect(await elf.balanceOf(owner.address)).to.equal(0);
-                expect(await tokenpool.getTokenLiquidity(token,chainId)).to.equal(amount);
 
                 var index = "1234";
                 var receiptId = tokenKey.toString().substring(2) + "." + index;
@@ -1293,7 +1282,6 @@ describe("BridgeOut", function () {
 
                 await bridgeOut.transmit(swapId, message.message, signaturesR, signaturesV, signatureV);
 
-                expect(await tokenpool.getTokenLiquidity(elf.address,chainId)).to.equal(0);
                 expect(await elf.balanceOf(owner.address)).to.equal(amount)
                 tokens = [token];
                 chainIds = [chainId];
@@ -1347,11 +1335,10 @@ describe("BridgeOut", function () {
                 }]
                 await bridgeInMock.addToken(tokens);
     
-                await tokenpool.addLiquidity(token,chainId,amount);
+                await tokenpool.addLiquidity(token,amount);
     
                 expect(await elf.balanceOf(tokenpool.address)).to.equal(amount);
                 expect(await elf.balanceOf(owner.address)).to.equal(0);
-                expect(await tokenpool.getTokenLiquidity(token,chainId)).to.equal(amount);
                 var index = "1234";
                 var receiptId = tokenKey.toString().substring(2) + "." + index;
 
@@ -1401,8 +1388,9 @@ describe("BridgeOut", function () {
 
                 await bridgeOut.transmit(swapId, message.message, signaturesR, signaturesV, signatureV);
                 
-                expect(await tokenpool.getTokenLiquidity(token,chainId)).to.equal(0);
                 expect(await elf.balanceOf(owner.address)).to.equal(amount)
+                expect(await elf.balanceOf(tokenpool.address)).to.equal(0)
+
                 tokens = [token];
                 chainIds = [chainId];
                 var indexes = await bridgeOut.getReceiveReceiptIndex(tokens, chainIds);
@@ -1446,11 +1434,10 @@ describe("BridgeOut", function () {
                 }]
                 await bridgeInMock.addToken(tokens);
     
-                await tokenpool.addLiquidity(token,chainId,amount);
+                await tokenpool.addLiquidity(token,amount);
     
                 expect(await usdt.balanceOf(tokenpool.address)).to.equal(amount);
                 expect(await usdt.balanceOf(owner.address)).to.equal(0);
-                expect(await tokenpool.getTokenLiquidity(token,chainId)).to.equal(amount);
 
                 var index = "1234";
                 var receiptId = tokenKey.toString().substring(2) + "." + index;
@@ -1487,8 +1474,7 @@ describe("BridgeOut", function () {
                 console.log("signature v",signatureV1);
                 
                 await bridgeOut.transmit(swapId, message.message, signaturesR, signaturesV, signatureV1);
-                expect(await tokenpool.getTokenLiquidity(token,chainId)).to.equal(0);
-
+                expect(await elf.balanceOf(tokenpool.address)).to.equal(0)
                 expect(await elf.balanceOf(owner.address)).to.equal(amount)
                 tokens = [token];
                 chainIds = [chainId];
@@ -1532,10 +1518,9 @@ describe("BridgeOut", function () {
                 }]
                 await bridgeInMock.addToken(tokens);
 
-                await tokenpool.addLiquidity(token,chainId,amount,{ value: '10000000000000000000' });
+                await tokenpool.addLiquidity(token,amount,{ value: '10000000000000000000' });
                 // await bridgeInMock.depositToBridgeOut(weth.address, bridgeOut.address, chainId, { value: '10000000000000000000' });
                 expect(await weth.balanceOf(tokenpool.address)).to.equal('10000000000000000000');
-                expect(await tokenpool.getTokenLiquidity(token,chainId)).to.equal('10000000000000000000');
 
                 var receiptId = tokenKey.toString().substring(2) + "." + index;
 
@@ -1637,11 +1622,10 @@ describe("BridgeOut", function () {
                 }]
                 await bridgeInMock.addToken(tokens);
     
-                await tokenpool.addLiquidity(token,chainId,amount);
+                await tokenpool.addLiquidity(token,amount);
     
                 expect(await elf.balanceOf(tokenpool.address)).to.equal(amount);
                 expect(await elf.balanceOf(owner.address)).to.equal(0);
-                expect(await tokenpool.getTokenLiquidity(token,chainId)).to.equal(amount);
 
                 var index = "1234";
                 var receiptId = tokenKey.toString().substring(2) + "." + index;
@@ -1704,8 +1688,9 @@ describe("BridgeOut", function () {
                 await limiter.connect(admin).setDailyLimit(configs);
 
                 await bridgeOut.transmit(swapId, message.message, signaturesR, signaturesV, signatureV);
-                expect(await tokenpool.getTokenLiquidity(token,chainId)).to.equal(0);
                 expect(await elf.balanceOf(owner.address)).to.equal(amount)
+                expect(await elf.balanceOf(tokenpool.address)).to.equal(0)
+
                 tokens = [token];
                 chainIds = [chainId];
                 var indexes = await bridgeOut.getReceiveReceiptIndex(tokens, chainIds);
@@ -1759,11 +1744,10 @@ describe("BridgeOut", function () {
                 }]
                 await bridgeInMock.addToken(tokens);
     
-                await tokenpool.addLiquidity(token,chainId,amount);
+                await tokenpool.addLiquidity(token,amount);
     
                 expect(await elf.balanceOf(tokenpool.address)).to.equal(amount);
                 expect(await elf.balanceOf(owner.address)).to.equal(0);
-                expect(await tokenpool.getTokenLiquidity(token,chainId)).to.equal(amount);
                 var index = "1234";
                 var receiptId = tokenKey.toString().substring(2) + "." + index;
 

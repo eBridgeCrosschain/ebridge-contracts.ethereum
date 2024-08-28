@@ -22,7 +22,7 @@ describe("TokenPool", function () {
         const TokenPoolImplementation = await ethers.getContractFactory("TokenPoolImplementation");
         const TokenPool = await ethers.getContractFactory("TokenPool");
         const tokenpoolImplementation = await TokenPoolImplementation.deploy();
-        const TokenPoolProxy = await TokenPool.deploy(bridgeInMock.address,bridgeOutMock.address,weth.address,tokenpoolImplementation.address);
+        const TokenPoolProxy = await TokenPool.deploy(bridgeInMock.address,bridgeOutMock.address,weth.address,admin.address,tokenpoolImplementation.address);
         const tokenpool = TokenPoolImplementation.attach(TokenPoolProxy.address);
 
         return { owner, admin,tokenpool, bridgeInMock, bridgeOutMock,account1,otherAccount0,otherAccount1, otherAccount2,weth };
@@ -59,7 +59,6 @@ describe("TokenPool", function () {
                 var tx = await bridgeInMock.lock(elf.address,amount,"AELF",tokenpool.address);
                 expect(await elf.balanceOf(tokenpool.address)).to.equal(amount);
                 expect(await elf.balanceOf(owner.address)).to.equal(amount1-amount);
-                expect(await tokenpool.getTokenLiquidity(elf.address,"AELF")).to.equal(amount);
                 const receipt = await tx.wait();
                 const interface = new ethers.utils.Interface(["event Locked(address indexed sender, address indexed token, string chainId, uint256 indexed amount)"]);
                 let event;
@@ -72,7 +71,6 @@ describe("TokenPool", function () {
                 expect(event.sender).to.equal(owner.address);
                 expect(event.token).to.equal(elf.address);
                 expect(event.amount).to.equal(amount);
-                expect(event.chainId).to.equal("AELF");
             });
         });
         describe("release",async function () {
@@ -87,13 +85,12 @@ describe("TokenPool", function () {
                 await bridgeInMock.lock(elf.address,amount,"AELF",tokenpool.address);
                 expect(await elf.balanceOf(tokenpool.address)).to.equal(amount);
                 expect(await elf.balanceOf(owner.address)).to.equal(amount1-amount);
-                expect(await tokenpool.getTokenLiquidity(elf.address,"AELF")).to.equal(amount);
 
                 var releaseAmount = '50000';
 
                 var tx = await tokenpool.connect(bridgeOutMock).release(elf.address,releaseAmount,"AELF",account1.address);
                 expect(await elf.balanceOf(account1.address)).to.equal(releaseAmount);
-                expect(await tokenpool.getTokenLiquidity(elf.address,"AELF")).to.equal(amount-releaseAmount);
+                expect(await elf.balanceOf(tokenpool.address)).to.equal(amount-releaseAmount);
                 
                 const receipt = await tx.wait();
                 const interface = new ethers.utils.Interface(["event Released(address indexed receiver, address indexed token, string chainId, uint256 indexed amount)"]);
@@ -107,7 +104,6 @@ describe("TokenPool", function () {
                 expect(event.receiver).to.equal(account1.address);
                 expect(event.token).to.equal(elf.address);
                 expect(event.amount).to.equal(releaseAmount);
-                expect(event.chainId).to.equal("AELF");
                 
             });
             it("not enough token to release", async function () {
@@ -121,13 +117,12 @@ describe("TokenPool", function () {
                 await bridgeInMock.lock(elf.address,amount,"AELF",tokenpool.address);
                 expect(await elf.balanceOf(tokenpool.address)).to.equal(amount);
                 expect(await elf.balanceOf(owner.address)).to.equal(amount1-amount);
-                expect(await tokenpool.getTokenLiquidity(elf.address,"AELF")).to.equal(amount);
 
                 var releaseAmount = '200000';
 
-                var error = 'not enough token to release';
                 await expect(tokenpool.connect(bridgeOutMock).release(elf.address,releaseAmount,"AELF",account1.address))
-                    .to.be.revertedWith(error);
+                .to.be.revertedWithCustomError(tokenpool,"InsufficientLiquidity");
+
             });
             it("permission error", async function () {
                 const { owner, admin,tokenpool, bridgeInMock, bridgeOutMock,account1} = await loadFixture(deployTokenPoolFixture);
@@ -160,13 +155,12 @@ describe("TokenPool", function () {
                 }]
                 await bridgeInMock.addToken(tokens);
 
-                var tx = await tokenpool.addLiquidity(elf.address,"AELF",amount);
+                var tx = await tokenpool.addLiquidity(elf.address,amount);
                 expect(await elf.balanceOf(tokenpool.address)).to.equal(amount);
                 expect(await elf.balanceOf(owner.address)).to.equal(amount1-amount);
-                expect(await tokenpool.getTokenLiquidity(elf.address,"AELF")).to.equal(amount);
 
                 const receipt = await tx.wait();
-                const interface = new ethers.utils.Interface(["event LiquidityAdded(address indexed provider, address indexed token, string chainId, uint256 indexed amount)"]);
+                const interface = new ethers.utils.Interface(["event LiquidityAdded(address indexed provider, address indexed token, uint256 indexed amount)"]);
                 let event;
                 for (const log of receipt.logs) {
                     if (log.address === tokenpool.address && log.topics[0] === interface.getEventTopic("LiquidityAdded")) {
@@ -174,20 +168,17 @@ describe("TokenPool", function () {
                         console.log(event);
                     }
                 };
-                expect(event.provider).to.equal(owner.address);
                 expect(event.token).to.equal(elf.address);
                 expect(event.amount).to.equal(amount);
-                expect(event.chainId).to.equal("AELF");
 
-                var liquidityInfo = await tokenpool.getLiquidityInfo(owner.address,elf.address,"AELF");
-                expect(liquidityInfo.amount).to.equal(amount);
+                var liquidity = await tokenpool.getUserLiquidity(owner.address,elf.address);
+                expect(liquidity).to.equal(amount);
 
                 await bridgeInMock.lock(elf.address,amount,"AELF",tokenpool.address);
                 expect(await elf.balanceOf(tokenpool.address)).to.equal('200000');
-                expect(await tokenpool.getTokenLiquidity(elf.address,"AELF")).to.equal('200000');
 
-                var liquidityInfo = await tokenpool.getLiquidityInfo(owner.address,elf.address,"AELF");
-                expect(liquidityInfo.amount).to.equal(amount);
+                var liquidity = await tokenpool.getUserLiquidity(owner.address,elf.address);
+                expect(liquidity).to.equal(amount);
             });
             it("success native token", async function () {
                 const { owner, admin,tokenpool, bridgeInMock, bridgeOutMock,account1,otherAccount0,otherAccount1, otherAccount2,weth } = await loadFixture(deployTokenPoolFixture);
@@ -199,7 +190,7 @@ describe("TokenPool", function () {
                 }]
                 await bridgeInMock.addToken(tokens);
                 var beforeBalance = await owner.getBalance();
-                await tokenpool.addLiquidity(weth.address,"AELF",amount,{ value: '10000000000000000000' });
+                await tokenpool.addLiquidity(weth.address,amount,{ value: '10000000000000000000' });
                 expect(await weth.balanceOf(tokenpool.address)).to.equal('10000000000000000000');
                 var afterBalance = await owner.getBalance();
                 console.log("after balance:",afterBalance);
@@ -209,23 +200,11 @@ describe("TokenPool", function () {
                 console.log(actualAmount.toString());
                 expect(actualAmount < amountMax).to.be.true;
                 expect(actualAmount > amountMin).to.be.true;
-                expect(await tokenpool.getTokenLiquidity(weth.address,"AELF")).to.equal('10000000000000000000');
+                expect(await weth.balanceOf(tokenpool.address)).to.equal('10000000000000000000');
 
-                var liquidityInfo = await tokenpool.getLiquidityInfo(owner.address,weth.address,"AELF");
-                expect(liquidityInfo.amount).to.equal('10000000000000000000');
+                var liquidity = await tokenpool.getUserLiquidity(owner.address,weth.address);
+                expect(liquidity).to.equal('10000000000000000000');
 
-            });
-            it("not support token", async function () {
-                const { owner, admin,tokenpool, bridgeInMock, bridgeOutMock,account1} = await loadFixture(deployTokenPoolFixture);
-                const { elf, usdt } = await loadFixture(deployTokensFixture);
-                var amount1 = '20000000';
-                var amount = '100000';
-                await elf.mint(owner.address, amount1);
-                expect(await elf.balanceOf(owner.address)).to.equal(amount1)
-                await elf.approve(tokenpool.address, amount);
-                var error = 'not support';
-                await expect(tokenpool.addLiquidity(elf.address,"AELF",amount))
-                    .to.be.revertedWith(error);
             });
         });
         describe("remove liquidity",async function () {
@@ -244,19 +223,18 @@ describe("TokenPool", function () {
                 }]
                 await bridgeInMock.addToken(tokens);
 
-                await tokenpool.addLiquidity(elf.address,"AELF",amount);
+                await tokenpool.addLiquidity(elf.address,amount);
                 expect(await elf.balanceOf(tokenpool.address)).to.equal(amount);
                 expect(await elf.balanceOf(owner.address)).to.equal(20000000-100000);
-                expect(await tokenpool.getTokenLiquidity(elf.address,"AELF")).to.equal(amount);
 
-                var liquidityInfo = await tokenpool.getLiquidityInfo(owner.address,elf.address,"AELF");
-                expect(liquidityInfo.amount).to.equal(amount);
+                var liquidity = await tokenpool.getUserLiquidity(owner.address,elf.address);
+                expect(liquidity).to.equal(amount);
 
                 var removeAmount = "30000";
-                var tx = await tokenpool.removeLiquidity(elf.address,"AELF",removeAmount);
+                var tx = await tokenpool.removeLiquidity(elf.address,removeAmount);
 
                 const receipt = await tx.wait();
-                const interface = new ethers.utils.Interface(["event LiquidityRemoved(address indexed provider, address indexed token, string chainId, uint256 indexed amount)"]);
+                const interface = new ethers.utils.Interface(["event LiquidityRemoved(address indexed provider, address indexed token, uint256 indexed amount)"]);
                 let event;
                 for (const log of receipt.logs) {
                     if (log.address === tokenpool.address && log.topics[0] === interface.getEventTopic("LiquidityRemoved")) {
@@ -264,15 +242,14 @@ describe("TokenPool", function () {
                         console.log(event);
                     }
                 };
-                expect(event.provider).to.equal(owner.address);
                 expect(event.token).to.equal(elf.address);
                 expect(event.amount).to.equal(removeAmount);
-                expect(event.chainId).to.equal("AELF");
                 
 
-                var liquidityInfo = await tokenpool.getLiquidityInfo(owner.address,elf.address,"AELF");
-                expect(liquidityInfo.amount).to.equal(amount-removeAmount);
-                expect(await tokenpool.getTokenLiquidity(elf.address,"AELF")).to.equal(100000-30000);
+                var liquidity = await tokenpool.getUserLiquidity(owner.address,elf.address);
+                expect(liquidity).to.equal(amount-removeAmount);
+                expect(await elf.balanceOf(tokenpool.address)).to.equal(100000-30000);
+                
                 
             });
             it("success native token", async function () {
@@ -285,7 +262,7 @@ describe("TokenPool", function () {
                 }]
                 await bridgeInMock.addToken(tokens);
                 var beforeBalance = await owner.getBalance();
-                await tokenpool.addLiquidity(weth.address,"AELF",amount,{ value: '10000000000000000000' });
+                await tokenpool.addLiquidity(weth.address,amount,{ value: '10000000000000000000' });
                 expect(await weth.balanceOf(tokenpool.address)).to.equal('10000000000000000000');
                 var afterBalance = await owner.getBalance();
                 console.log("after balance:",afterBalance);
@@ -295,22 +272,20 @@ describe("TokenPool", function () {
                 console.log(actualAmount.toString());
                 expect(actualAmount < amountMax).to.be.true;
                 expect(actualAmount > amountMin).to.be.true;
-                expect(await tokenpool.getTokenLiquidity(weth.address,"AELF")).to.equal('10000000000000000000');
 
-                var liquidityInfo = await tokenpool.getLiquidityInfo(owner.address,weth.address,"AELF");
-                expect(liquidityInfo.amount).to.equal('10000000000000000000');
+                var liquidity = await tokenpool.getUserLiquidity(owner.address,weth.address);
+                expect(liquidity).to.equal('10000000000000000000');
 
                 var removeAmount = "100000000000000000";
-                await tokenpool.removeLiquidity(weth.address,"AELF",removeAmount);
+                await tokenpool.removeLiquidity(weth.address,removeAmount);
                 
 
-                var liquidityInfo = await tokenpool.getLiquidityInfo(owner.address,weth.address,"AELF");
-                console.log(liquidityInfo.amount.toString());
-                expect(liquidityInfo.amount).to.equal('9900000000000000000');
+                var liquidity = await tokenpool.getUserLiquidity(owner.address,weth.address);
+                console.log(liquidity.toString());
+                expect(liquidity).to.equal('9900000000000000000');
                 var afterBalance1 = await owner.getBalance();
                 console.log("after balance:",afterBalance1);
                 expect(afterBalance1 > afterBalance).to.be.true;
-                expect(await tokenpool.getTokenLiquidity(weth.address,"AELF")).to.equal('9900000000000000000');
                 
             });
             it("failed", async function () {
@@ -331,26 +306,25 @@ describe("TokenPool", function () {
                 }]
                 await bridgeInMock.addToken(tokens);
 
-                await tokenpool.addLiquidity(elf.address,"AELF",amount);
+                await tokenpool.addLiquidity(elf.address,amount);
                 expect(await elf.balanceOf(tokenpool.address)).to.equal('250000');
                 expect(await elf.balanceOf(owner.address)).to.equal(20000000-100000-150000);
-                expect(await tokenpool.getTokenLiquidity(elf.address,"AELF")).to.equal('250000');
 
-                var liquidityInfo = await tokenpool.getLiquidityInfo(owner.address,elf.address,"AELF");
-                expect(liquidityInfo.amount).to.equal(amount);
+                var liquidity = await tokenpool.getUserLiquidity(owner.address,elf.address);
+                expect(liquidity).to.equal(amount);
 
                 var removeAmount = "260000";
-                await expect(tokenpool.removeLiquidity(elf.address,"AELF",removeAmount))
-                .to.be.revertedWithCustomError(tokenpool,"InsufficientUsableLiquidity");
+                await expect(tokenpool.removeLiquidity(elf.address,removeAmount))
+                .to.be.revertedWithCustomError(tokenpool,"InsufficientLiquidity");
 
             
                 var removeAmount = "130000";
-                await expect(tokenpool.removeLiquidity(elf.address,"AELF",removeAmount))
+                await expect(tokenpool.removeLiquidity(elf.address,removeAmount))
                 .to.be.revertedWithCustomError(tokenpool,"WithdrawalTooHigh");
 
                 var removeAmount = "130000";
-                await expect(tokenpool.connect(account1).removeLiquidity(elf.address,"AELF",removeAmount))
-                .to.be.revertedWithCustomError(tokenpool,"NoLiquidityFound");
+                await expect(tokenpool.connect(account1).removeLiquidity(elf.address,removeAmount))
+                .to.be.revertedWithCustomError(tokenpool,"WithdrawalTooHigh");
             });
         })
     });

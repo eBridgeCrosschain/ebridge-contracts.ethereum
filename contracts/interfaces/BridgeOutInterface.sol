@@ -17,7 +17,7 @@ interface IBridgeOut {
         bytes32 swapHashId,
         address token,
         uint256 amount
-    ) external returns (uint256);
+    ) external;
 
     function restart() external;
 

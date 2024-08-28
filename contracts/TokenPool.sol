@@ -7,6 +7,7 @@ contract TokenPool is Proxy {
         address _bridgeIn,
         address _bridgeOut,
         address _nativeToken,
+        address _admin,
         address _implementation
     ) Proxy(_implementation) {
         require(
@@ -16,9 +17,10 @@ contract TokenPool is Proxy {
         delegateTo(
             _implementation,
             abi.encodeWithSignature(
-                "initialize(address,address,address)",
+                "initialize(address,address,address,address)",
                 _bridgeIn,
                 _bridgeOut,
+                _admin,
                 _nativeToken
             )
         );

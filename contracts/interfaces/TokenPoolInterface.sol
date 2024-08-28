@@ -14,4 +14,8 @@ interface ITokenPool {
         string calldata fromchainId,
         address receiver
     ) external;
+
+    function migrator (
+        address provider,address token,uint256 amount
+    ) external;
 }

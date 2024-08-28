@@ -367,24 +367,15 @@ contract BridgeOutImplementationV1 is ProxyStorage {
 
     function assetsMigrator(
         bytes32 tokenKey,
-        address token,
-        uint256 amount
-    ) external onlyBridgeInContract returns (uint256){
+        address token
+    ) external onlyBridgeInContract {
         bytes32 swapId = tokenKeyToSwapIdMap[tokenKey];
         BridgeOutLibrary.validateToken(targetTokenList,token,tokenKey,swapInfos[swapId].targetToken.token);
         uint256 balance = IERC20(token).balanceOf(address(this));
-        if (balance > 0 && tokenDepositAmount[swapId] > 0) {
-            uint256 diff = balance.sub(amount);
-            uint256 withdrawAmount = diff > 0 ? amount : balance;
-            IERC20(token).safeTransfer(address(msg.sender), withdrawAmount);
-            if (diff > 0){
-                return diff;
-            }else{
-                return 0;
-            }
+        if (balance > 0) {            
+            IERC20(token).safeTransfer(address(tokenPool), balance);
         }
         tokenDepositAmount[swapId] = 0;
-        return 0;
     }
 
 }
