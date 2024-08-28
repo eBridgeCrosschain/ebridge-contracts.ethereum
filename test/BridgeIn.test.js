@@ -190,8 +190,6 @@ describe("BridgeIn", function () {
                 expect(actualAmount < amountMax).to.be.true;
                 expect(actualAmount > amountMin).to.be.true;
 
-                expect(await tokenpool.getTokenLiquidity(weth.address,chainId)).to.equal('1000000000000000000');
-                
                 expect(await weth.balanceOf(tokenpool.address)).to.equal('1000000000000000000');
 
                 {
@@ -305,8 +303,7 @@ describe("BridgeIn", function () {
                 await elf.approve(bridgeIn.address, amount);
                 await bridgeIn.createReceipt(elf.address, amount, chainId, targetAddress);
                 expect(await elf.balanceOf(owner.address)).to.equal(0)
-                expect(await tokenpool.getTokenLiquidity(elf.address,chainId)).to.equal(amount);
-                
+            
                 expect(await elf.balanceOf(tokenpool.address)).to.equal(amount);
                 var tokens = [elf.address];
                 var chainIds = [chainId];
@@ -366,7 +363,6 @@ describe("BridgeIn", function () {
                 await elf.approve(bridgeIn.address, amount);
                 await bridgeIn.createReceipt(elf.address, amount, chainId, targetAddress);
                 expect(await elf.balanceOf(owner.address)).to.equal(0)
-                expect(await tokenpool.getTokenLiquidity(elf.address,chainId)).to.equal(amount);
                 expect(await elf.balanceOf(tokenpool.address)).to.equal(amount);
                 var tokens = [elf.address];
                 var chainIds = [chainId];
@@ -390,7 +386,6 @@ describe("BridgeIn", function () {
                 await usdt.approve(bridgeIn.address, amount);
                 await bridgeIn.createReceipt(usdt.address, amount, chainId, targetAddress);
                 expect(await usdt.balanceOf(owner.address)).to.equal(0)
-                expect(await tokenpool.getTokenLiquidity(usdt.address,chainId)).to.equal(amount);
                 expect(await usdt.balanceOf(tokenpool.address)).to.equal(amount);
                 var tokens = [usdt.address];
                 var chainIds = [chainId];
@@ -451,7 +446,6 @@ describe("BridgeIn", function () {
                 await elf.approve(bridgeIn.address, amount);
                 await bridgeIn.createReceipt(elf.address, amount, chainId, targetAddress);
                 expect(await elf.balanceOf(owner.address)).to.equal(0)
-                expect(await tokenpool.getTokenLiquidity(elf.address,chainId)).to.equal(amount);
                 expect(await elf.balanceOf(tokenpool.address)).to.equal(amount);
                 var tokens = [elf.address];
                 var chainIds = [chainId];
@@ -475,7 +469,6 @@ describe("BridgeIn", function () {
                 await elf.connect(otherAccount0).approve(bridgeIn.address, amount);
                 await bridgeIn.connect(otherAccount0).createReceipt(elf.address, amount, chainId, targetAddress);
                 expect(await elf.balanceOf(otherAccount0.address)).to.equal(0)
-                expect(await tokenpool.getTokenLiquidity(elf.address,chainId)).to.equal(amount*2);
                 expect(await elf.balanceOf(tokenpool.address)).to.equal(amount*2);
                 var tokens = [elf.address];
                 var chainIds = [chainId];
@@ -537,7 +530,6 @@ describe("BridgeIn", function () {
                 await elf.approve(bridgeIn.address, amount);
                 await bridgeIn.createReceipt(elf.address, amount, chainId, targetAddress);
                 expect(await elf.balanceOf(owner.address)).to.equal(0)
-                expect(await tokenpool.getTokenLiquidity(elf.address,chainId)).to.equal(amount);
                 expect(await elf.balanceOf(tokenpool.address)).to.equal(amount);
                 var tokens = [elf.address];
                 var chainIds = [chainId];
@@ -561,7 +553,6 @@ describe("BridgeIn", function () {
                 await usdt.connect(otherAccount0).approve(bridgeIn.address, amount);
                 await bridgeIn.connect(otherAccount0).createReceipt(usdt.address, amount, chainId, targetAddress);
                 expect(await usdt.balanceOf(otherAccount0.address)).to.equal(0)
-                expect(await tokenpool.getTokenLiquidity(usdt.address,chainId)).to.equal(amount);
                 expect(await usdt.balanceOf(tokenpool.address)).to.equal(amount);
                 var tokens = [usdt.address];
                 var chainIds = [chainId];
@@ -731,8 +722,7 @@ describe("BridgeIn", function () {
                 expect(await elf.balanceOf(bridgeOutMock.address)).to.equal(0)
 
                 await bridgeIn.createReceipt(elf.address, amount, chainId, targetAddress);
-
-                expect(await tokenpool.getTokenLiquidity(elf.address,chainId)).to.equal(amount);
+                
                 expect(await elf.balanceOf(tokenpool.address)).to.equal(amount);
 
 
