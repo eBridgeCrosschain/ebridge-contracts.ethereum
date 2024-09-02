@@ -163,7 +163,7 @@ contract TokenPoolImplementation is ProxyStorage {
         for(uint i = 0;i < tokens.length;i++){
             bytes32 liquidityId = generateLiquidityId(provider,tokens[i],targetChainIds[i]);
             LiquidityInfo storage info = providerLiquidityInfo[liquidityId];
-            liquidityProviderBalances[provider][tokens[i]] = info.amount;
+            liquidityProviderBalances[provider][tokens[i]] = liquidityProviderBalances[provider][tokens[i]].add(info.amount);
             info.amount = 0;
         }
     }
