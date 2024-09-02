@@ -6,10 +6,7 @@ contract MockBridgeOut {
   using SafeERC20 for IERC20;
   bool isPaused = false;
   mapping(bytes32 => bytes32) internal tokenKeyToSwapIdMap;
-
-  function deposit(bytes32 swapHashId, address token, uint256 amount) external {
-    IERC20(token).safeTransferFrom(address(msg.sender), address(this), amount);
-  }
+  mapping(bytes32 => uint256) public tokenDepositAmount;
 
   function pause() external {
     isPaused = true;
@@ -37,4 +34,24 @@ contract MockBridgeOut {
   function consumeLimit(address limiter, bytes32 id, address token, uint256 amount) external {
     ILimiter(limiter).consumeTokenBucket(id, token, amount);
   }
+
+  function deposit(bytes32 tokenKey, address token, uint256 amount) external {
+        bytes32 swapId = tokenKeyToSwapIdMap[tokenKey];
+        IERC20(token).safeTransferFrom(address(msg.sender), address(this), amount);
+        tokenDepositAmount[swapId] = tokenDepositAmount[swapId] + amount;
+  }
+
+  function assetsMigratorTest(
+        bytes32 tokenKey,
+        address token,
+        address tokenpool
+    ) external {
+        bytes32 swapId = tokenKeyToSwapIdMap[tokenKey];
+        uint256 balance = IERC20(token).balanceOf(address(this));
+        if (balance > 0) {            
+            IERC20(token).safeTransfer(address(tokenpool), balance);
+        }
+        tokenDepositAmount[swapId] = 0;
+    }
+
 }

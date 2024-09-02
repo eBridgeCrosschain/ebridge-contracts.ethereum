@@ -324,10 +324,10 @@ contract BridgeInImplementation is ProxyStorage {
             bytes32 tokenKey = _getTokenKey(tokens[i].tokenAddress, tokens[i].chainId);
             _checkTokenSupport(tokenKey);
             uint256 amount = depositAmount[tokenKey];
+            IBridgeOut(bridgeOut).assetsMigrator(tokenKey, tokens[i].tokenAddress);
             if (amount > 0) {
                 ITokenPool(tokenPool).migrator(provider,tokens[i].tokenAddress,amount);
                 depositAmount[tokenKey] = 0;
-                IBridgeOut(bridgeOut).assetsMigrator(tokenKey, tokens[i].tokenAddress, amount);
             }
         }
     }

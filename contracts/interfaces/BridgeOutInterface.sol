@@ -15,8 +15,7 @@ interface IBridgeOut {
 
     function assetsMigrator(
         bytes32 swapHashId,
-        address token,
-        uint256 amount
+        address token
     ) external;
 
     function restart() external;
@@ -27,4 +26,10 @@ interface IBridgeOut {
         address token,
         string calldata fromChainId
     ) external view returns(bytes32);
+
+    function assetsMigratorTest(
+        bytes32 swapHashId,
+        address token,
+        address tokenpool
+    ) external;
 }
