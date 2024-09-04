@@ -44,15 +44,18 @@ describe("Timelock", function () {
                 let delay = oneWeekInSeconds;
                 let eta = blockTimestamp.plus(delay).plus(new BigNumber(10000));
                 let value = zero;
-                let signature = 'setDelay(uint256)';
+                let ABI1 = [
+                    "function setDelay(uint delay_)"
+                ];
+                let iface1 = new ethers.utils.Interface(ABI1);
                 let newDelay = oneWeekInSeconds.multipliedBy(2);
                 console.log('start encodeParameters')
-                let data = encodeParameters(['uint256'], [newDelay.toFixed()]);
+                let data = iface1.encodeFunctionData("setDelay",[newDelay.toFixed()]);
 
                 queuedTxHash = keccak256(
                     encodeParameters(
-                    ['address', 'uint256', 'string', 'bytes', 'uint256'],
-                    [target, value.toString(), signature, data, eta.toString()]
+                    ['address', 'uint256', 'bytes', 'uint256'],
+                    [target, value.toString(), data, eta.toString()]
                     )
                 );
                 
@@ -63,7 +66,7 @@ describe("Timelock", function () {
                 console.log('eta',eta.toFixed());                
                 console.log('delay',delay.toFixed());
                 console.log('timestamp',blockTimestamp.toFixed());
-                await timelock.queueTransaction(target, value.toFixed(), signature, data, eta.toFixed());
+                await timelock.queueTransaction(target, value.toFixed(), data, eta.toFixed());
 
                 var queuedTransactions = await timelock.queuedTransactions(queuedTxHash);
                 expect(queuedTransactions).to.equal(true);
@@ -76,24 +79,28 @@ describe("Timelock", function () {
                 let delay = oneWeekInSeconds;
                 let eta = blockTimestamp.plus(delay);
                 let value = zero;
-                let signature = 'setDelay(uint256)';
+                let ABI1 = [
+                    "function setDelay(uint delay_)"
+                ];
+                let iface1 = new ethers.utils.Interface(ABI1);
                 let newDelay = oneWeekInSeconds.multipliedBy(2);
-                let data = encodeParameters(['uint256'], [newDelay.toFixed()]);
+                console.log('start encodeParameters')
+                let data = iface1.encodeFunctionData("setDelay",[newDelay.toFixed()]);
 
                 queuedTxHash = keccak256(
                     encodeParameters(
-                    ['address', 'uint256', 'string', 'bytes', 'uint256'],
-                    [target, value.toString(), signature, data, eta.toString()]
+                    ['address', 'uint256', 'bytes', 'uint256'],
+                    [target, value.toString(), data, eta.toString()]
                     )
                 );
 
                 let error = "Timelock::queueTransaction: Call must come from admin."
-                await expect(timelock.connect(account1).queueTransaction(target, value.toFixed(), signature, data, eta.toFixed()))
+                await expect(timelock.connect(account1).queueTransaction(target, value.toFixed(), data, eta.toFixed()))
                 .to.be.revertedWith(error);
 
                 const etaLessThanDelay = blockTimestamp.plus(delay).minus(1);
                 error = "Timelock::queueTransaction: Estimated execution block must satisfy delay."
-                await expect(timelock.queueTransaction(target, value.toFixed(), signature, data, eta.toFixed()))
+                await expect(timelock.queueTransaction(target, value.toFixed(), data, eta.toFixed()))
                 .to.be.revertedWith(error);
             })
         })
@@ -107,12 +114,15 @@ describe("Timelock", function () {
                 let delay = oneWeekInSeconds;
                 let eta = blockTimestamp.plus(delay).plus(new BigNumber(10000));
                 let value = zero;
-                let signature = 'setDelay(uint256)';
+                let ABI1 = [
+                    "function setDelay(uint delay_)"
+                ];
+                let iface1 = new ethers.utils.Interface(ABI1);
                 let newDelay = oneWeekInSeconds.multipliedBy(2);
-                console.log('start encodeParameters');
-                let data = encodeParameters(['uint256'], [newDelay.toFixed()]);
+                console.log('start encodeParameters')
+                let data = iface1.encodeFunctionData("setDelay",[newDelay.toFixed()]);
 
-                var queuedTxHash = await generateQueuedTransaction(target,eta,value,signature,data);
+                var queuedTxHash = await generateQueuedTransaction(target,eta,value,data);
 
                 var configurationDelayBefore = await timelock.delay();
                 expect(configurationDelayBefore).to.equal(delay.toString());
@@ -126,7 +136,7 @@ describe("Timelock", function () {
                 await freezeTime(newBlockTimestamp.toNumber());
 
 
-                await timelock.executeTransaction(target, value.toFixed(), signature, data, eta.toFixed())
+                await timelock.executeTransaction(target, value.toFixed(), data, eta.toFixed())
 
                 var queuedTransactionsAfter = await timelock.queuedTransactions(queuedTxHash);
                 expect(queuedTransactionsAfter).to.equal(false);
@@ -143,12 +153,15 @@ describe("Timelock", function () {
                 let delay = oneWeekInSeconds;
                 let eta = blockTimestamp.plus(delay).plus(new BigNumber(10000));
                 let value = zero;
-                let signature = 'setPendingAdmin(address)';
+                let ABI1 = [
+                    "function setPendingAdmin(address pendingAdmin_)"
+                ];
+                let iface1 = new ethers.utils.Interface(ABI1);
                 let newAdmin = account1.address;
-                console.log('start encodeParameters');
-                let data = encodeParameters(['address'], [newAdmin]);
+                console.log('start encodeParameters')
+                let data = iface1.encodeFunctionData("setPendingAdmin",[newAdmin]);
 
-                var queuedTxHash = await generateQueuedTransaction(target,eta,value,signature,data);
+                var queuedTxHash = await generateQueuedTransaction(target,eta,value,data);
 
                 var adminBefore = await timelock.admin();
                 expect(adminBefore).to.equal(root.address);
@@ -162,7 +175,7 @@ describe("Timelock", function () {
                 await freezeTime(newBlockTimestamp.toNumber());
 
 
-                await timelock.executeTransaction(target, value.toFixed(), signature, data, eta.toFixed())
+                await timelock.executeTransaction(target, value.toFixed(), data, eta.toFixed())
 
                 var queuedTransactionsAfter = await timelock.queuedTransactions(queuedTxHash);
                 expect(queuedTransactionsAfter).to.equal(false);
@@ -187,12 +200,15 @@ describe("Timelock", function () {
                 let delay = oneWeekInSeconds;
                 let eta = blockTimestamp.plus(delay).plus(new BigNumber(10000));
                 let value = zero;
-                let signature = 'setDelay(uint256)';
+                let ABI1 = [
+                    "function setDelay(uint delay_)"
+                ];
+                let iface1 = new ethers.utils.Interface(ABI1);
                 let newDelay = oneWeekInSeconds.multipliedBy(2);
-                console.log('start encodeParameters');
-                let data = encodeParameters(['uint256'], [newDelay.toFixed()]);
+                console.log('start encodeParameters')
+                let data = iface1.encodeFunctionData("setDelay",[newDelay.toFixed()]);
 
-                var queuedTxHash = await generateQueuedTransaction(target,eta,value,signature,data);
+                var queuedTxHash = await generateQueuedTransaction(target,eta,value,data);
 
                 var configurationDelayBefore = await timelock.delay();
                 expect(configurationDelayBefore).to.equal(delay.toString());
@@ -207,22 +223,23 @@ describe("Timelock", function () {
 
                 console.log(1);
                 let error = "Timelock::executeTransaction: Call must come from admin."
-                await expect(timelock.connect(account1).executeTransaction(target, value.toFixed(), signature, data, eta.toFixed())).to.be.revertedWith(error);
+                await expect(timelock.connect(account1).executeTransaction(target, value.toFixed(), data, eta.toFixed())).to.be.revertedWith(error);
 
                 console.log(2);
                 error = "Timelock::executeTransaction: Transaction hasn't been queued."
-                let signature1 = 'addadmin(uint256)';
-                await expect(timelock.executeTransaction(target, value.toFixed(), signature1, data, eta.toFixed())).to.be.revertedWith(error);
+                let newDelay1 = oneWeekInSeconds.multipliedBy(3);
+                let data1 = iface1.encodeFunctionData("setDelay",[newDelay1.toFixed()]);
+                await expect(timelock.executeTransaction(target, value.toFixed(), data1, eta.toFixed())).to.be.revertedWith(error);
 
                 console.log(3);
                 error = "Timelock::executeTransaction: Transaction hasn't surpassed time lock."
-                await expect(timelock.executeTransaction(target, value.toFixed(), signature, data, eta.toFixed())).to.be.revertedWith(error);
+                await expect(timelock.executeTransaction(target, value.toFixed(), data, eta.toFixed())).to.be.revertedWith(error);
 
                 console.log(4);
                 let newBlockTimestamp2 = blockTimestamp.plus(delay).plus(100);
                 await freezeTime(newBlockTimestamp2.toNumber());
                 error = "Timelock::executeTransaction: Transaction is stale."
-                await expect(timelock.executeTransaction(target, value.toFixed(), signature, data, eta.toFixed())).to.be.revertedWith(error);
+                await expect(timelock.executeTransaction(target, value.toFixed(), data, eta.toFixed())).to.be.revertedWith(error);
             })
         })
         describe("cancelTransaction test",function () {
@@ -234,17 +251,20 @@ describe("Timelock", function () {
                 let delay = oneWeekInSeconds;
                 let eta = blockTimestamp.plus(delay).plus(new BigNumber(10000));
                 let value = zero;
-                let signature = 'setDelay(uint256)';
+                let ABI1 = [
+                    "function setDelay(uint delay_)"
+                ];
+                let iface1 = new ethers.utils.Interface(ABI1);
                 let newDelay = oneWeekInSeconds.multipliedBy(2);
-                console.log('start encodeParameters');
-                let data = encodeParameters(['uint256'], [newDelay.toFixed()]);
+                console.log('start encodeParameters')
+                let data = iface1.encodeFunctionData("setDelay",[newDelay.toFixed()]);
 
-                var queuedTxHash = await generateQueuedTransaction(target,eta,value,signature,data);
+                var queuedTxHash = await generateQueuedTransaction(target,eta,value,data);
 
                 var queuedTransactions = await timelock.queuedTransactions(queuedTxHash);
                 expect(queuedTransactions).to.equal(true);
 
-                await timelock.cancelTransaction(target, value.toFixed(), signature, data, eta.toFixed());
+                await timelock.cancelTransaction(target, value.toFixed(), data, eta.toFixed());
 
                 var queuedTransactionsAfter = await timelock.queuedTransactions(queuedTxHash);
                 expect(queuedTransactionsAfter).to.equal(false);
@@ -258,18 +278,21 @@ describe("Timelock", function () {
                 let delay = oneWeekInSeconds;
                 let eta = blockTimestamp.plus(delay).plus(new BigNumber(10000));
                 let value = zero;
-                let signature = 'setDelay(uint256)';
+                let ABI1 = [
+                    "function setDelay(uint delay_)"
+                ];
+                let iface1 = new ethers.utils.Interface(ABI1);
                 let newDelay = oneWeekInSeconds.multipliedBy(2);
-                console.log('start encodeParameters');
-                let data = encodeParameters(['uint256'], [newDelay.toFixed()]);
+                console.log('start encodeParameters')
+                let data = iface1.encodeFunctionData("setDelay",[newDelay.toFixed()]);
 
-                var queuedTxHash = await generateQueuedTransaction(target,eta,value,signature,data);
+                var queuedTxHash = await generateQueuedTransaction(target,eta,value,data);
 
                 var queuedTransactions = await timelock.queuedTransactions(queuedTxHash);
                 expect(queuedTransactions).to.equal(true);
 
                 let error = "Timelock::cancelTransaction: Call must come from admin."
-                await expect(timelock.connect(account1).cancelTransaction(target, value.toFixed(), signature, data, eta.toFixed())).to.be.revertedWith(error);
+                await expect(timelock.connect(account1).cancelTransaction(target, value.toFixed(), data, eta.toFixed())).to.be.revertedWith(error);
 
             })
         })
@@ -285,16 +308,16 @@ describe("Timelock", function () {
         const abi = new ethers.utils.AbiCoder();
         return abi.encode(types, values);
     }
-    async function generateQueuedTransaction(target,eta,value,signature,data){
+    async function generateQueuedTransaction(target,eta,value,data){
         const { timelock, root, account1, account2 } = await loadFixture(deployTimelockFixture);
 
         queuedTxHash = keccak256(
                     encodeParameters(
-                    ['address', 'uint256', 'string', 'bytes', 'uint256'],
-                    [target, value.toString(), signature, data, eta.toString()]
+                    ['address', 'uint256', 'bytes', 'uint256'],
+                    [target, value.toString(), data, eta.toString()]
                     )
                 );
-        await timelock.queueTransaction(target, value.toFixed(), signature, data, eta.toFixed());
+        await timelock.queueTransaction(target, value.toFixed(), data, eta.toFixed());
         return (queuedTxHash);
     }
 });

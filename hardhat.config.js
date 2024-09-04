@@ -43,18 +43,8 @@ module.exports = {
     disambiguatePaths: false,
   },
   networks: {
-    hardhat: {
-      allowUnlimitedContractSize: true
-    },
-    // kovan: {
-    //   url: "https://kovan.infura.io/v3/" + API_KEY,
-    //   chainId: 42,
-    //   accounts: [process.env.kovan_key0]
-    // },
-    // goerli: {
-    //   url: "https://goerli.infura.io/v3/" + API_KEY,
-    //   chainId: 5,
-    //   accounts: [process.env.goerli_key0,process.env.goerli_key1,process.env.goerli_key2,process.env.goerli_key3,process.env.goerli_key4,process.env.goerli_key5]
+    // hardhat: {
+    //   allowUnlimitedContractSize: true
     // },
     // bsc_test: {
     //   url: "https://data-seed-prebsc-1-s1.binance.org:8545",
@@ -69,31 +59,51 @@ module.exports = {
     // bsc: {
     //   url: "https://bsc-dataseed2.binance.org",
     //   chainId: 56,
-    //   accounts: [process.env.key0]
+    //   accounts: [process.env.keymain]
     // },
     // ethereum: {
     //   url: "https://mainnet.infura.io/v3/" + API_KEY,
     //   chainId: 1,
-    //   accounts: [process.env.key0]
+    //   accounts: [process.env.keymain]
+    // },
+    // base_sepolia: {
+    //   url: "https://sepolia.base.org",
+    //   chainId: 84532,
+    //   accounts: [process.env.key0,process.env.key1]
+    // }
+    //   base: {
+    //     url: "https://mainnet.base.org",
+    //     chainId: 8453,
+    //     accounts: [process.env.keymain]
     // }
 
   },
   etherscan: {
     apiKey: {
-      // ethereum: process.env.ethsacn_api_key,
-      // bscscan: process.env.bscscan_api_key
-      // sepolia: process.env.ethsacn_api_key
+      // mainnet: process.env.ethscan_api_key,
+      // bsc: process.env.bscscan_api_key
+      // sepolia: process.env.ethsacn_api_key,
+      // base_sepolia:process.env.basescan_api_key,
+      // base:process.env.basescan_api_key
     },
-    // customChains: [
-    //   {
-    //     network: "sepolia",
-    //     chainId: 11155111,
-    //     urls: {
-    //       apiURL: "https://api-sepolia.etherscan.io/api",
-    //       browserURL: "https://sepolia.etherscan.io"
-    //     }
-    //   }
-    // ]
+    customChains: [
+      // {
+      //   network: "base_sepolia",
+      //   chainId: 84532,
+      //   urls: {
+      //     apiURL: "https://api-sepolia.basescan.org/api",
+      //     browserURL: "https://sepolia.basescan.org"
+      //   }
+      // },
+      // {
+      //   network: "base",
+      //   chainId: 8453,
+      //   urls: {
+      //     apiURL: "https://api.basescan.org/api",
+      //     browserURL: "https://basescan.org"
+      //   }
+      // }
+    ]
   }
 };
 

@@ -13,7 +13,6 @@ contract Timelock {
         bytes32 indexed txHash,
         address indexed target,
         uint value,
-        string signature,
         bytes data,
         uint eta
     );
@@ -21,7 +20,6 @@ contract Timelock {
         bytes32 indexed txHash,
         address indexed target,
         uint value,
-        string signature,
         bytes data,
         uint eta
     );
@@ -29,7 +27,6 @@ contract Timelock {
         bytes32 indexed txHash,
         address indexed target,
         uint value,
-        string signature,
         bytes data,
         uint eta
     );
@@ -105,7 +102,6 @@ contract Timelock {
     function queueTransaction(
         address target,
         uint value,
-        string memory signature,
         bytes memory data,
         uint eta
     ) public returns (bytes32) {
@@ -120,18 +116,17 @@ contract Timelock {
         );
 
         bytes32 txHash = keccak256(
-            abi.encode(target, value, signature, data, eta)
+            abi.encode(target, value, data, eta)
         );
         queuedTransactions[txHash] = true;
 
-        emit QueueTransaction(txHash, target, value, signature, data, eta);
+        emit QueueTransaction(txHash, target, value, data, eta);
         return txHash;
     }
 
     function cancelTransaction(
         address target,
         uint value,
-        string memory signature,
         bytes memory data,
         uint eta
     ) public {
@@ -140,19 +135,21 @@ contract Timelock {
             msg.sender == admin,
             "Timelock::cancelTransaction: Call must come from admin."
         );
-
         bytes32 txHash = keccak256(
-            abi.encode(target, value, signature, data, eta)
+            abi.encode(target, value, data, eta)
+        );
+        require(
+            queuedTransactions[txHash],
+            "Timelock::executeTransaction: Transaction hasn't been queued."
         );
         queuedTransactions[txHash] = false;
 
-        emit CancelTransaction(txHash, target, value, signature, data, eta);
+        emit CancelTransaction(txHash, target, value, data, eta);
     }
 
     function executeTransaction(
         address target,
         uint value,
-        string memory signature,
         bytes memory data,
         uint eta
     ) public payable returns (bytes memory) {
@@ -163,7 +160,7 @@ contract Timelock {
         );
 
         bytes32 txHash = keccak256(
-            abi.encode(target, value, signature, data, eta)
+            abi.encode(target, value, data, eta)
         );
         require(
             queuedTransactions[txHash],
@@ -182,14 +179,7 @@ contract Timelock {
 
         bytes memory callData;
 
-        if (bytes(signature).length == 0) {
-            callData = data;
-        } else {
-            callData = abi.encodePacked(
-                bytes4(keccak256(bytes(signature))),
-                data
-            );
-        }
+        callData = data;
 
         // solium-disable-next-line security/no-call-value
         (bool success, bytes memory returnData) = target.call{value: value}(
@@ -200,7 +190,7 @@ contract Timelock {
             "Timelock::executeTransaction: Transaction execution reverted."
         );
 
-        emit ExecuteTransaction(txHash, target, value, signature, data, eta);
+        emit ExecuteTransaction(txHash, target, value, data, eta);
 
         return returnData;
     }

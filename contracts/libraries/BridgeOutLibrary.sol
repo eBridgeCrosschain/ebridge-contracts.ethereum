@@ -22,7 +22,6 @@ library BridgeOutLibrary {
         bytes32[] rs;
         bytes32[] ss;
         bytes32 rawVs;
-        uint256 threshold;
     }
     struct ReceiptInfo {
         string receiptId;
@@ -79,8 +78,10 @@ library BridgeOutLibrary {
             IRegiment(regiment).IsRegimentMembers(regimentId, signers),
             "no permission to sign"
         );  
+        address[] memory memberlist = IRegiment(regiment).GetRegimentMemberList(regimentId);
+        uint256 memberCount = memberlist.length;
         require(
-            signersCount >= report.threshold, "not enough signers"
+            signersCount >= memberCount.mul(2).div(3).add(1), "not enough signers"
         );
         ReceiptInfo memory receiptInfo;
         receiptInfo = decodeReportAndVerifyReceipt(report.report);

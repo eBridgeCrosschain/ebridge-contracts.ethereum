@@ -2,15 +2,27 @@ import "./Proxy.sol";
 
 pragma solidity 0.8.9;
 
-contract MerkleTree is Proxy {
+contract TokenPool is Proxy {
     constructor(
-        address _regimentAddress,
+        address _bridgeIn,
+        address _bridgeOut,
+        address _nativeToken,
+        address _admin,
         address _implementation
     ) Proxy(_implementation) {
-        require(_regimentAddress != address(0), "invalid input");
+        require(
+            _bridgeIn != address(0) && _bridgeOut != address(0),
+            "invalid input"
+        );
         delegateTo(
             _implementation,
-            abi.encodeWithSignature("initialize(address)", _regimentAddress)
+            abi.encodeWithSignature(
+                "initialize(address,address,address,address)",
+                _bridgeIn,
+                _bridgeOut,
+                _admin,
+                _nativeToken
+            )
         );
     }
 
@@ -26,6 +38,8 @@ contract MerkleTree is Proxy {
         }
         return returnData;
     }
+
+    receive() external payable {}
 
     fallback() external payable {
         // delegate all other functions to current implementation

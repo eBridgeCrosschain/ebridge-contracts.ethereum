@@ -435,12 +435,12 @@ describe("Regiment", function () {
                         var isRegimentManager = await regiment.IsRegimentManager(regimentId, owner.address);
                         expect(isRegimentManager).to.equal(true);
 
-                        await regiment.TransferRegimentOwnership(regimentId, otherAccount0.address)
+                        await regiment.TransferRegimentOwnership(regimentId, otherAccount1.address)
 
                         isRegimentManager = await regiment.IsRegimentManager(regimentId, owner.address);
                         expect(isRegimentManager).to.equal(false);
 
-                        isRegimentManager = await regiment.IsRegimentManager(regimentId, otherAccount0.address);
+                        isRegimentManager = await regiment.IsRegimentManager(regimentId, otherAccount1.address);
                         expect(isRegimentManager).to.equal(true);
                     })
                     describe("IsRegimentMembers test", function () {
