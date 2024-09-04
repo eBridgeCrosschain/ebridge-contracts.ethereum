@@ -28,11 +28,11 @@ async function main() {
 
     const nativeTokenAddress = '0x13aEe64E227af004De02BA2d651E4e3670e15A83';
     const usdcAddress = '0xB110e5d737dcfb38CE22E58482F9546D401F0A2D';
-    const mockMultiSigWalletAddress = '0xA2263D5c14F9c711A8b3C4AA2FD522Efdb5d5e44';
+    const mockMultiSigWalletAddress = '';
     const _memberJoinLimit = 10;
     const _regimentLimit = 20;
     const _maximumAdminsCount = 3;
-    const pauseController = "0xA2263D5c14F9c711A8b3C4AA2FD522Efdb5d5e44";
+    const pauseController = "";
 
     // const WETH = await ethers.getContractFactory("WETH9");
     // const weth = await WETH.deploy();

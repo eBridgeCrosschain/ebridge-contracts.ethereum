@@ -12,18 +12,18 @@ async function main() {
     console.log("Sender account balance:", (await sender.getBalance()).toString());
 
     const RegimentAddress = '0xE5673B2541A2D5C9ed3fEA648d88ac05C677f83C';
-    const RegimentImplementationAddress = '0x180A7f033E5dCeFEB85Ed045957FE82a0B97efC0';
+    const RegimentImplementationAddress = '0x0C5ADDA344F68961038739E9B405202dd8F7DEd8';
     
     const MerkleTreeAddress = '0xFdF37003Aa04c5CdE81BdF3BCcFc9Ca37670A212';
     const MerkleTreeImplementationAddress = '0xdCb341739e9F4f46ACFCb31EEf81C8560d1835fB';
     
-    const BridgeInLib = '0x0A058ae0481F1F68605D4c9CCf12a8F7971Fd23f';
+    const BridgeInLib = '0x4A91FE2893c77F7C9a44bbDE1a4d226DDe0612ed';
     const BridgeInAddress = '0x7ffD4a8823626AF7E181dF36AAFF4270Aeb96Ddd';
-    const BridgeInImplementationAddress = '0x64D56a809652d8e862DA58e9D1e7E4867228445b';
+    const BridgeInImplementationAddress = '0x01A2EA8D36283F2dc93F31EB8378c1E737938ef4';
 
-    const BridgeOutLib = '0xE22a5A304aBdFA727f4791D31F335eB936241b58';
+    const BridgeOutLib = '0x15BBf8aBBC1c9cfcAc1498dD4E066f1483bAF185';
     const BridgeOutAddress = '0x648C372668Fb65f46DB478AF0302330d06B16b8B';
-    const BridgeOutImplementationAddress = '0x1266A7389e938C9dcABDad03465380c26249E45a';
+    const BridgeOutImplementationAddress = '0x61e8A390c0bD8a49E2E54568F62169beb2026115';
 
     const LimiterAddress = '0xBDDfac1151A307e1bF7A8cEA4fd7999eF67bdb41';
     const LimiterImplementationAddress = '0x329CD4355c959ad85f1075CD4cF86dc3f8546D7E';
@@ -88,39 +88,58 @@ async function main() {
     let blockTimestamp = await getCurrentTimestampBigInt();
     console.log(blockTimestamp);
 
-    let targetIn = bridgeIn.address;
-    let delayIn = new BigNumber(86400);
-    let etaIn = new BigNumber(blockTimestamp).plus(delayIn);
-    let valueIn = new BigNumber(0);;
-    let signatureIn = 'updateImplementation(address)';
-    console.log("signature bridge in:",signatureIn);
-    let dataIn = encodeParameters(['address'], [BridgeInImplementation]);
-    console.log("data bridge in:",dataIn);
-    console.log("eta bridge in:",etaIn.toString());
-    queuedTxHash = keccak256(
-        encodeParameters(
-        ['address', 'uint256','string', 'bytes', 'uint256'],
-        [targetIn, valueIn.toString(), signatureIn, dataIn, etaIn.toString()]
-        ));
-    console.log(queuedTxHash);
+    // let targetIn = bridgeIn.address;
+    //     console.log("bridge in:",targetIn);
+    // let delayIn = new BigNumber(86400);
+    // let etaIn = new BigNumber(blockTimestamp).plus(delayIn);
+    // let valueIn = new BigNumber(0);;
+    // let signatureIn = 'updateImplementation(address)';
+    // console.log("signature bridge in:",signatureIn);
+    // let dataIn = encodeParameters(['address'], [BridgeInImplementationAddress]);
+    // console.log("data bridge in:",dataIn);
+    // console.log("eta bridge in:",etaIn.toString());
+    // queuedTxHash = keccak256(
+    //     encodeParameters(
+    //     ['address', 'uint256','string', 'bytes', 'uint256'],
+    //     [targetIn, valueIn.toString(), signatureIn, dataIn, etaIn.toString()]
+    //     ));
+    // console.log(queuedTxHash);
 
 
 
-    let target = bridgeOut.address;
-    let delay = new BigNumber(86400);
-    let eta = new BigNumber(blockTimestamp).plus(delay);
-    let value = new BigNumber(0);;
-    let signature = 'updateImplementation(address)';
-    console.log("signature bridge out:",signature);
-    let data = encodeParameters(['address'], [BridgeOutImplementationAddress]);
-    console.log("data bridge out:",data);
-    console.log("eta bridge out:",eta.toString());
-    queuedTxHash = keccak256(
-        encodeParameters(
-        ['address', 'uint256','string', 'bytes', 'uint256'],
-        [target, value.toString(), signature, data, eta.toString()]
-        ));
-    console.log(queuedTxHash);
+    // let target = bridgeOut.address;
+    //     console.log("bridge out:",target);
+    // let delay = new BigNumber(86400);
+    // let eta = new BigNumber(blockTimestamp).plus(delay);
+    // let value = new BigNumber(0);;
+    // let signature = 'updateImplementation(address)';
+    // console.log("signature bridge out:",signature);
+    // let data = encodeParameters(['address'], [BridgeOutImplementationAddress]);
+    // console.log("data bridge out:",data);
+    // console.log("eta bridge out:",eta.toString());
+    // queuedTxHash = keccak256(
+    //     encodeParameters(
+    //     ['address', 'uint256','string', 'bytes', 'uint256'],
+    //     [target, value.toString(), signature, data, eta.toString()]
+    //     ));
+    // console.log(queuedTxHash);
+
+    // let target = regiment.address;
+    // console.log("regiment:",target);
+    // let delay = new BigNumber(86400);
+    // let eta = new BigNumber(blockTimestamp).plus(delay);
+    // let value = new BigNumber(0);;
+    // let signature = 'updateImplementation(address)';
+    // console.log("signature regiment:",signature);
+    // let data = encodeParameters(['address'], [RegimentImplementationAddress]);
+    // console.log("data regiment:",data);
+    // console.log("eta regiment:",eta.toString());
+    // queuedTxHash = keccak256(
+    //     encodeParameters(
+    //     ['address', 'uint256','string', 'bytes', 'uint256'],
+    //     [target, value.toString(), signature, data, eta.toString()]
+    //     ));
+    // console.log(queuedTxHash);
     
 
 }

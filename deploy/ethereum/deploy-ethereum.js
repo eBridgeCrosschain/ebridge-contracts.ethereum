@@ -14,11 +14,11 @@ async function main() {
     const merkleTreeAddress = '';
     const multiSigWalletAddress = '';
     const bridgeInAddress = '0x7ffD4a8823626AF7E181dF36AAFF4270Aeb96Ddd';
-    const bridgeInImplementationAddress = '';
+    const bridgeInImplementationAddress = '0x01A2EA8D36283F2dc93F31EB8378c1E737938ef4';
     const bridgeOutAddress = '0x648C372668Fb65f46DB478AF0302330d06B16b8B';
-    const bridgeOutImplementationAddress = '';
-    const bridgeInLibAddress = '';
-    const bridgeOutLibAddress = '';
+    const bridgeOutImplementationAddress = '0x61e8A390c0bD8a49E2E54568F62169beb2026115';
+    const bridgeInLibAddress = '0x4A91FE2893c77F7C9a44bbDE1a4d226DDe0612ed';
+    const bridgeOutLibAddress = '0x15BBf8aBBC1c9cfcAc1498dD4E066f1483bAF185';
     const LimiterAddress = '';
     const LimiterImplementationAddress = '';
     const tokenPoolImplementationAddress = '0xcBE05A71Fba4cBf7490758305411B6F261722d68';
@@ -83,6 +83,19 @@ async function main() {
     //         contract: "contracts/BridgeOutImplementationV1.sol:BridgeOutImplementationV1"
     //       })
 
+    //     //deploy regiment implementation
+    // console.log("Start to deploy regiment implementation contract.");
+    // const RegimentImplementation = await ethers.getContractFactory("RegimentImplementation");
+    // const regimentImplementation = await RegimentImplementation.deploy();
+    // console.log("Regiment implementation address:", regimentImplementation.address);
+    // regimentImplementationAddress = regimentImplementation.address;
+
+    // await run("verify:verify", {
+    //     address: "0x0C5ADDA344F68961038739E9B405202dd8F7DEd8",
+    //     constructorArguments: [],
+    //     contract: "contracts/RegimentImplementation.sol:RegimentImplementation"
+    //   })
+
     //  // TokenPoolImplementation
     // console.log("start deploy tokenPool implementation.")
     // const TokenPoolImplementation = await ethers.getContractFactory("TokenPoolImplementation");
@@ -94,16 +107,16 @@ async function main() {
     // const TokenPoolProxy = await TokenPool.deploy(bridgeInAddress,bridgeOutAddress,wethAddress,deployer.address,tokenPoolImplementationAddress);
     // console.log("TokenPool address:", TokenPoolProxy.address);
 
-     await run("verify:verify", {
-        address: tokenPoolAddress,
-        constructorArguments: [bridgeInAddress,bridgeOutAddress,wethAddress,deployer.address,tokenPoolImplementationAddress],
-        contract: "contracts/TokenPool.sol:TokenPool"
-     })
-    await run("verify:verify", {
-        address: tokenPoolImplementationAddress,
-        constructorArguments: [],
-        contract: "contracts/TokenPoolImplementation.sol:TokenPoolImplementation"
-    })
+    //  await run("verify:verify", {
+    //     address: tokenPoolAddress,
+    //     constructorArguments: [bridgeInAddress,bridgeOutAddress,wethAddress,deployer.address,tokenPoolImplementationAddress],
+    //     contract: "contracts/TokenPool.sol:TokenPool"
+    //  })
+    // await run("verify:verify", {
+    //     address: tokenPoolImplementationAddress,
+    //     constructorArguments: [],
+    //     contract: "contracts/TokenPoolImplementation.sol:TokenPoolImplementation"
+    // })
 
 }
 

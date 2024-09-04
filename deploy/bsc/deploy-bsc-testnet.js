@@ -164,9 +164,9 @@ async function main() {
     //BridgeIn
     // console.log("Start to deploy BridgeIn contract.");
     // const wethAddress = "0x0CBAb7E71f969Bfb3eF5b13542E9087a73244F02";
-    const pauseController = "0x2E7c4EfdFA6680e34988dcBD70F6a31b4CC28219";
+    const pauseController = "";
     // const BridgeIn = await ethers.getContractFactory("BridgeIn");
-    // const mockMultiSigWalletAddress = '0xA2263D5c14F9c711A8b3C4AA2FD522Efdb5d5e44';
+    // const mockMultiSigWalletAddress = '';
     // const bridgeInProxy = await BridgeIn.deploy(mockMultiSigWalletAddress, wethAddress, pauseController,bridgeInImplementationAddress);
     // console.log("BridgeIn address:", bridgeInProxy.address);
 
@@ -175,8 +175,8 @@ async function main() {
 
     //BridgeOut
     // console.log("Start to deploy BridgeOut contract.");
-    const approveController = "0x2E7c4EfdFA6680e34988dcBD70F6a31b4CC28219";
-    const mockMultiSigWalletAddress = '0xA2263D5c14F9c711A8b3C4AA2FD522Efdb5d5e44';
+    const approveController = "";
+    const mockMultiSigWalletAddress = '';
     // const BridgeOut = await ethers.getContractFactory("BridgeOut");
     // const bridgeOutProxy = await BridgeOut.deploy(merkleTreeAddress, regimentAddress, bridgeInAddress, approveController ,mockMultiSigWalletAddress, wethAddress, bridgeOutImplementationAddress);
     // console.log("BridgeOut address:", bridgeOutProxy.address);

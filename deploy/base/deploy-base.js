@@ -27,11 +27,11 @@ async function main() {
 
     const nativeTokenAddress = '0x4200000000000000000000000000000000000006';
     const usdcAddress = '0x833589fcd6edb6e08f4c7c32d4f71b54bda02913';
-    const mockMultiSigWalletAddress = '0x215056d89D2F494cb8D093Ff10543013486a217F';
+    const mockMultiSigWalletAddress = '';
     const _memberJoinLimit = 10;
     const _regimentLimit = 20;
     const _maximumAdminsCount = 3;
-    const pauseController = "0x215056d89D2F494cb8D093Ff10543013486a217F";
+    const pauseController = "";
 
 
     // //deploy regiment implementation

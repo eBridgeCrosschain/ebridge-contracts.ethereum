@@ -107,7 +107,7 @@ async function main() {
         tokenAddress:wbnbAddress,
         chainId:chainIdSide
     }];
-    var provider="0xA2263D5c14F9c711A8b3C4AA2FD522Efdb5d5e44";
+    var provider="";
     // await bridgeInImplementation.assetsMigrator(tokens,provider);
     let ABI1 = [
         "function assetsMigrator(tuple(address tokenAddress, string chainId)[] tokens,address provider)"

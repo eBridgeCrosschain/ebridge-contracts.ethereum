@@ -148,7 +148,7 @@ async function main() {
     //     tokenAddress:sgrAddress,
     //     chainId:chainIdSide
     // }]
-    // var provider="0xA2263D5c14F9c711A8b3C4AA2FD522Efdb5d5e44";
+    // var provider="";
     // // await bridgeInImplementation.assetsMigrator(tokens,provider);
     // let ABI1 = [
     //     "function assetsMigrator(tuple(address tokenAddress, string chainId)[] tokens,address provider)"
@@ -181,7 +181,7 @@ async function main() {
     // let iface1 = new ethers.utils.Interface(ABI1);
     // console.log(iface1);
 
-    // var provider="0xA2263D5c14F9c711A8b3C4AA2FD522Efdb5d5e44";
+    // var provider="";
     // var data = iface1.encodeFunctionData("changeMultiSignWallet", [provider])
     // console.log(data);
 
