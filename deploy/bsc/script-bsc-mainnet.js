@@ -31,10 +31,14 @@ async function main() {
     const TimelockAddress = '0xBDDfac1151A307e1bF7A8cEA4fd7999eF67bdb41';
     const MultiSigWalletAddress = '0x6f1084A0D432201499C3a9ebFc52999Dd80ec749';
 
+    const tokenPoolImplementationAddress = '0xcBE05A71Fba4cBf7490758305411B6F261722d68';
+    const tokenPoolAddress = '0xce037d7175C530E0c5e0B9473B8318eea111dA7a';
 
-    // elfAddress = "0xbf2179859fc6D5BEE9Bf9158632Dc51678a4100e";
-    // usdtAddress = "0xdAC17F958D2ee523a2206206994597C13D831ec7";
-    // wethAddress = "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2";
+    elfAddress="0xa3f020a5c92e15be13caf0ee5c95cf79585eecc9";
+    usdtAddress="0x55d398326f99059ff775485246999027b3197955";	
+    usdcAddress="0x8ac76a51cc950d9822d68b83fe1ad97b32cd580d";	
+    daiAddress="0x1af3f329e8be154074d8769d1ffa4ee058b1dbc3"	;
+    wbnbAddress="0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c";	
 
     const BridgeInImplementation = await ethers.getContractFactory("BridgeInImplementation",{
         libraries:{
@@ -85,8 +89,15 @@ async function main() {
     });
     const limiterImplementation = await LimiterImplementation.attach(LimiterAddress);
 
-    let blockTimestamp = await getCurrentTimestampBigInt();
-    console.log(blockTimestamp);
+
+    const TokenPoolImplementation = await ethers.getContractFactory("TokenPoolImplementation");
+    const tokenPoolImplementation = await TokenPoolImplementation.attach(tokenPoolAddress);
+
+    const TokenPool = await ethers.getContractFactory("TokenPool");
+    const tokenPool = await TokenPool.attach(tokenPoolAddress);
+
+    // let blockTimestamp = await getCurrentTimestampBigInt();
+    // console.log(blockTimestamp);
 
     // let targetIn = bridgeIn.address;
     // console.log("bridge in:",targetIn);
@@ -141,7 +152,88 @@ async function main() {
     //     [target, value.toString(), signature, data, eta.toString()]
     //     ));
     // console.log(queuedTxHash);
+
+    // let ABI = [
+    //     "function setTokenPool(address _tokenPool)"
+    //     ];
+    // let iface = new ethers.utils.Interface(ABI);
+    // console.log(iface);
+
+    // var data = iface.encodeFunctionData("setTokenPool", [tokenPoolAddress])
+    // console.log(data);
+
+    // var result = await multiSign.submitTransaction(BridgeInAddress, 0, data);
+    // console.log(result)
+
+    // let ABI = [
+    //     "function setTokenPool(address _tokenPool)"
+    //     ];
+    // let iface = new ethers.utils.Interface(ABI);
+    // console.log(iface);
+
+    // var data = iface.encodeFunctionData("setTokenPool", [tokenPoolAddress])
+    // console.log(data);
+
+    // var result = await multiSign.submitTransaction(BridgeOutAddress, 0, data);
+    // console.log(result)
     
+    // var chainIdMain = "MainChain_AELF";
+    // var chainIdSide = "SideChain_tDVV";
+    // var tokens = [{
+    //     tokenAddress:elfAddress,
+    //     chainId:chainIdMain
+    // },{
+    //     tokenAddress:usdtAddress,
+    //     chainId:chainIdMain
+    // },{
+    //     tokenAddress:wbnbAddress,
+    //     chainId:chainIdMain
+    // },{
+    //     tokenAddress:daiAddress,
+    //     chainId:chainIdMain
+    // },{
+    //     tokenAddress:usdcAddress,
+    //     chainId:chainIdMain
+    // },{
+    //     tokenAddress:elfAddress,
+    //     chainId:chainIdSide
+    // },{
+    //     tokenAddress:usdtAddress,
+    //     chainId:chainIdSide
+    // },{
+    //     tokenAddress:wbnbAddress,
+    //     chainId:chainIdSide
+    // },{
+    //     tokenAddress:daiAddress,
+    //     chainId:chainIdSide
+    // },{
+    //     tokenAddress:usdcAddress,
+    //     chainId:chainIdSide
+    // }]
+    // var provider="";
+    // let ABI = [
+    //     "function assetsMigrator(tuple(address tokenAddress, string chainId)[] tokens,address provider)"
+    //     ];
+    // let iface = new ethers.utils.Interface(ABI);
+    // console.log(iface);
+
+    // var data = iface.encodeFunctionData("assetsMigrator", [tokens,provider])
+    // console.log(data);
+
+    // var result = await multiSign.submitTransaction(BridgeInAddress, 0, data);
+    // console.log(result)
+
+    // let ABI = [
+    //     "function restart()"
+    //     ];
+    // let iface = new ethers.utils.Interface(ABI);
+    // console.log(iface);
+
+    // var data = iface.encodeFunctionData("restart")
+    // console.log(data);
+
+    // var result = await multiSign.submitTransaction(BridgeInAddress, 0, data);
+    // console.log(result)
 
 }
 function createMessage(nodeNumber, leafHash) {
