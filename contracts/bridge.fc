@@ -1,0 +1,153 @@
+#include "common/stdlib.fc";
+#include "bridge/storage.fc";
+#include "common/jetton-utils.fc";
+#include "bridge/op.fc";
+#include "common/message.fc";
+#include "bridge/utils.fc";
+#include "common/dic.fc";
+#include "bridge/errors.fc";
+#include "bridge/getter.fc";
+#include "bridge/admin-calls.fc";
+#include "bridge/bridge_receipt_account-utils.fc";
+
+
+() recv_internal(int my_balance, int msg_value, cell in_msg_full, slice in_msg_body) impure {
+    if (in_msg_body.slice_empty?()) { ;; ignore empty messages
+        return ();
+    }
+    var cs = in_msg_cell.begin_parse();
+    var flags = cs~load_uint(4);  ;; int_msg_info$0 ihr_disabled:Bool bounce:Bool bounced:Bool
+
+    slice sender_address = cs~load_msg_addr();
+
+    load_storage();
+
+    if (flags & 1) {
+        on_bounce(sender_address,in_msg_body);
+        return ();
+    }
+    cs~load_msg_addr(); ;; skip dst
+    cs~load_coins(); ;; skip value
+    cs~skip_bits(1); ;; skip extracurrency collection
+    cs~load_coins(); ;; skip ihr_fee
+    int fwd_fee = cs~load_coins();
+
+    force_chain(WORKCHAIN, sender_address, WRONG_WORKCHAIN);
+    (int op, int query_id) = (in_msg_body~load_uint(32), in_msg_body~load_uint(64));
+
+    if (op == transfer_notification) {
+        (int jetton_amount, slice from_sender) = (in_msg_body~load_coins(), in_msg_body~load_msg_addr());
+        cell ref_cs = in_msg_body~load_ref(); 
+        slice ref_ds = ref_cs.begin_parse();
+        
+        throw_unless(INVALID_AMOUNT, jetton_amount > 0);
+        int transfer_op = ref_ds~load_uint(32);
+
+        ;; todo: fee is not enough
+        if (storage::is_paused) {
+            var body = create_simple_transfer_body(query_id, 0, jetton_amount, from_sender);
+            body = body.store_uint(transfer_bounce_paused, 32);
+            send_simple_message(0, sender_address, body.end_cell(), SEND_MODE_CARRY_ALL_REMAINING_MESSAGE_VALUE);
+        } else {
+            if(transfer_op == create_receipt){
+                (int target_chain_id,int target_address,slice jetton_address) = (in_msg_body~load_uint(32),in_msg_body.load_uint(256),in_msg_body~load_msg_addr());
+                var token_whitelist = storage::jetton_whitelist_dic;
+                (int wc, int jetton_address_hash) = parse_std_addr(jetton_address);
+                var key_builder = begin_cell()
+                    .store_uint(wc,8)
+                    .store_uint(target_chain_id,32)
+                    .store_uint(jetton_address_hash,256)
+                    .end_cell();
+                var key_hash = cell_hash(key_builder);
+                (_,int is_support) = idict_get?(token_whitelist, KEY_LENGTH, key_hash);
+                if (is_support) {
+                    ;; transfer to jetton pool
+                    ;; get jetton pool address
+                    (var jetton_pool_address,int found) = dict_get?(storage::bridge_pool_address_dic,KEY_LENGTH,jetton_address);
+                    if (found) {
+                        ;; forward_pay_load: op::lock
+                        var payload = begin_cell()
+                            .store_uint(lock, 32)
+                            .store_uint(target_chain_id, 32)
+                            .store_uint(target_address, 256)
+                            .store_slice(from_sender)
+                            .end_cell();
+                        var body = create_with_payload_transfer_body(query_id,fwd_fee,jetton_amount,my_address(),payload);
+                        send_simple_message(0, jetton_pool_address, body.end_cell(), SEND_MODE_CARRY_ALL_REMAINING_MESSAGE_VALUE);
+                    } else {
+                        var body = create_simple_transfer_body(query_id, 0, jetton_amount, from_sender);
+                        body = body.store_uint(transfer_bounce_token_pool_not_exist, 32);
+                        send_simple_message(0, sender_address, body.end_cell(), SEND_MODE_CARRY_ALL_REMAINING_MESSAGE_VALUE);
+                        return ();
+                    }
+                } else {
+                    var body = create_simple_transfer_body(query_id, 0, jetton_amount, from_sender);
+                    body = body.store_uint(transfer_bounce_token_not_support, 32);
+                    send_simple_message(0, sender_address, body.end_cell(), SEND_MODE_CARRY_ALL_REMAINING_MESSAGE_VALUE);
+                }
+            }
+            if(tarnsfer_op == excess_jetton_to_user){
+                
+            }
+        }
+        return ();
+    }
+    if (op == receipt_ok){
+        slice jetton_address = in_msg_body~load_msg_addr();
+        slice owner_address = in_msg_body~load_msg_addr();
+        int target_chain_id = in_msg_body~laod_uint(32);
+        int targer_address = in_msg_body~laod_uint(256);
+        int jetton_amount = in_msg_body~load_coins();
+        ;;var receipt_id = begin_cell()
+        ;;.store_uint(hash_value, 256) hash_value=>cell_hash(jetton_address,target_chain_id)
+        ;;.store_uint(index, 32)
+        ;;.end_cell();
+        cell receipt_id = in_msg_body~load_ref();
+        (var jetton_pool_address,_) = dict_get?(storage::bridge_pool_address_dic,KEY_LENGTH,jetton_address); 
+        cell acc_state_init = calculate_bridge_receipt_account_state_init(owner_address, jetton_pool_address, jetton_address, storage::bridge_receipt_account_code); 
+        throw_unless(UNAUTHORIZED,equal_slices(sender_address, calculate_bridge_receipt_account_address(acc_state_init)))
+        emit_log_simple(NEW_RECEIPT,
+            begin_cell()
+                .store_slice(from_sender)
+                .store_uint(target_chain_id, 32)
+                .store_uint(target_address, 256)
+                .store_slice(jetton_address)
+                .store_uint(jetton_amount)
+                .store_ref(receipt_id)
+                .end_cell(),
+            1
+        );
+    }
+    if (op == transmit) {
+        ;; Handler oracle call
+    }
+    ;; handle governance message from admin to change pool parameters
+    if (equal_slices(sender_address, storage::admin_address)) {
+        handle_admin_messages(op, query_id, my_balance, msg_value, in_msg_body);
+        return ();
+    }
+
+    ;; make sure that the message has been processed
+    if (handle_getter_messages(op, query_id, sender_address, in_msg_body)) {
+        return (); 
+    }
+
+    throw(WRONG_OP);
+}
+
+() on_bounce(slice sender_address,slice in_msg_body) impure {
+    ;; Handler bounce message
+    slice jetton_address = in_msg_body~load_msg_addr();
+    (var jetton_pool_address,int found_pool) = dict_get?(storage::bridge_pool_address_dic,KEY_LENGTH,jetton_address); 
+    (var jetton_swap_address,int found_swap) = dict_get?(storage::bridge_swap_address_dic,KEY_LENGTH,jetton_address); 
+    ifnot (found_pool & found_swap){
+        throw(UNKOWN_JETTON_POOL_OR_SWAP_OP);
+    } 
+    if (equal_slices(sender_address,jetton_pool_address)){  
+       ;; Handler pool bounced
+    }
+    if (equal_slices(sender_address,jetton_swap_address)){
+        ;; Handler swap bounced
+    }
+}
+

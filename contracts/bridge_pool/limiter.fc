@@ -1,0 +1,3 @@
+() set_daily_limit_config(int target_chain_id,int type,int refresh_time, int daily_limit){
+
+}

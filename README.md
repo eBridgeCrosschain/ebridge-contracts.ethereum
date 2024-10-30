@@ -1,22 +1,26 @@
-# ebridge-contracts.ethereum
+# ebridge-contracts.ton
 
-BRANCH | AZURE PIPELINES                                                                                                                                                                                              | TESTS                                                                                                                                                                            | CODE COVERAGE
--------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|--------------
-MASTER   | [![Build Status](https://dev.azure.com/eBridgeCrosschain/ebridge-contracts.ethereum/_apis/build/status%2FeBridgeCrosschain.ebridge-contracts.ethereum?branchName=master)](https://dev.azure.com/eBridgeCrosschain/ebridge-contracts.ethereum/_build/latest?definitionId=11&branchName=master) | [![Test Status](https://img.shields.io/azure-devops/tests/eBridgeCrosschain/ebridge-contracts.ethereum/11/master)](https://dev.azure.com/eBridgeCrosschain/ebridge-contracts.ethereum/_build/latest?definitionId=11&branchName=master) | [![codecov](https://codecov.io/gh/eBridgeCrosschain/ebridge-contracts.ethereum/branch/master/graph/badge.svg?token=N0ADSUJ1LT)](https://codecov.io/gh/eBridgeCrosschain/ebridge-contracts.ethereum)
-DEV    | [![Build Status](https://dev.azure.com/eBridgeCrosschain/ebridge-contracts.ethereum/_apis/build/status%2FeBridgeCrosschain.ebridge-contracts.ethereum?branchName=dev)](https://dev.azure.com/eBridgeCrosschain/ebridge-contracts.ethereum/_build/latest?definitionId=11&branchName=dev)   | [![Test Status](https://img.shields.io/azure-devops/tests/eBridgeCrosschain/ebridge-contracts.ethereum/11/dev)](https://dev.azure.com/eBridgeCrosschain/ebridge-contracts.ethereum/_build/latest?definitionId=11&branchName=dev)   | [![codecov](https://codecov.io/gh/eBridgeCrosschain/ebridge-contracts.ethereum/branch/dev/graph/badge.svg?token=N0ADSUJ1LT)](https://codecov.io/gh/eBridgeCrosschain/ebridge-contracts.ethereum)
+## Project structure
 
+-   `contracts` - source code of all the smart contracts of the project and their dependencies.
+-   `wrappers` - wrapper classes (implementing `Contract` from ton-core) for the contracts, including any [de]serialization primitives and compilation functions.
+-   `tests` - tests for the contracts.
+-   `scripts` - scripts used by the project, mainly the deployment scripts.
 
-## Unit tests
+## How to use
 
-For running unit tests, refer to the following commands.
+### Build
 
+`npx blueprint build` or `yarn blueprint build`
 
-To run all unit tests
-```
-npx hardhat test
-```
+### Test
 
-To run the specific unit test
-```
-npx hardhat test test/BridgeIn.test.js
-```
+`npx blueprint test` or `yarn blueprint test`
+
+### Deploy or run another script
+
+`npx blueprint run` or `yarn blueprint run`
+
+### Add a new contract
+
+`npx blueprint create ContractName` or `yarn blueprint create ContractName`

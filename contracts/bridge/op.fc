@@ -1,0 +1,34 @@
+const transfer = 0xf8a7ea5;
+const transfer_notification = 0x7362d09c;
+
+const create_receipt = "create_receipt"c;
+const create_native_receipt = "create_native_receipt"c;
+const transmit = "transmit"c;
+const receipt_ok = "receipt_ok"c;
+const add_jetton_whitelist = "add_jetton_whitelist"c;
+const set_bridge_pool = "set_bridge_pool"c;
+const excess_jetton_to_user = "excess_jetton_to_user"c
+
+const lock = "lock"c;
+const on_bounce = "on_bounce"c;
+
+const change_pause_controller = "change_pause_controller"c;
+
+
+const init_code_upgrade = "init_code_upgrade"c;
+const init_admin_upgrade = "init_admin_upgrade"c;
+const cancel_code_upgrade = "cancel_code_upgrade"c;
+const cancel_admin_upgrade = "cancel_admin_upgrade"c;
+const finalize_upgrades = "finalize_upgrades"c;
+
+;; async "get" calls
+const getter_bridge_swap_address = "getter_bridge_swap_address"c;
+const getter_bridge_pool_address = "getter_bridge_pool_address"c;
+const is_jetton_support = "is_jetton_support"c;
+const getter_oracle_address = "getter_oracle_address"c;
+
+
+;; transfer refund statuses
+const transfer_bounce_paused = "transfer_bounce_paused"c;
+const transfer_bounce_token_not_support = "transfer_bounce_token_not_support"c;
+const transfer_bounce_token_pool_not_exist = "transfer_bounce_token_pool_not_exist"c;

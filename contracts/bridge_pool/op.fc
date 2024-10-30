@@ -1,0 +1,20 @@
+const transfer = 0xf8a7ea5;
+const transfer_notification = 0x7362d09c;
+
+const lock = "lock"c;
+const add_liquidity = "add_liquidity"c;
+const release = "release"c;
+const remove_liquidity = "remove_liquidity"c;
+
+const set_daily_limit_config = "set_daily_limit_config"c;
+const set_rate_limit_config = "set_rate_limit_config"c;
+const excess_jetton_to_user = "excess_jetton_to_user"c
+
+
+;; async "get" calls
+const getter_pool_data = "getter_pool_data"c;
+const getter_pool_liquidity_account_address = "getter_pool_liquidity_account_address"c;
+const getter_receipt_daily_limit = "getter_receipt_daily_limit"c;
+const getter_swap_daily_limit = "getter_swap_daily_limit"c;
+const getter_receipt_rate_limit_state = "getter_receipt_rate_limit_state"c;
+const getter_swap_rate_limit_state = "getter_swap_rate_limit_state"c;
