@@ -33,8 +33,13 @@ module.exports = {
       version: "0.8.10",
     },
     {
+      version: "0.8.20",
+    },
+    {
       version: "0.4.18",
-    }
+    },{
+      version: "0.8.0",
+    },
     ]
   },
   contractSizer:{
@@ -43,13 +48,13 @@ module.exports = {
     disambiguatePaths: false,
   },
   networks: {
-    // hardhat: {
-    //   allowUnlimitedContractSize: true
-    // },
+    hardhat: {
+      allowUnlimitedContractSize: true
+    }
     // bsc_test: {
     //   url: "https://data-seed-prebsc-1-s1.binance.org:8545",
     //   chainId: 97,
-    //   accounts: [process.env.key0,process.env.keymanager,process.env.key1,process.env.key2,process.env.key3,process.env.key4,process.env.key5,process.env.key6]
+    //   accounts: [process.env.key0,process.env.key1]
     // },
     // sepolia: {
     //   url: "https://sepolia.infura.io/v3/" + API_KEY,
@@ -82,9 +87,10 @@ module.exports = {
     apiKey: {
       // mainnet: process.env.ethscan_api_key,
       // bsc: process.env.bscscan_api_key
-      // sepolia: process.env.ethsacn_api_key,
+      // sepolia: process.env.ethscan_api_key,
       // base_sepolia:process.env.basescan_api_key,
       // base:process.env.basescan_api_key
+      // bscTestnet :process.env.bscscan_api_key
     },
     customChains: [
       // {
