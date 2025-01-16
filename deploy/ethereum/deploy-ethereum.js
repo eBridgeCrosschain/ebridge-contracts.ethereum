@@ -102,10 +102,10 @@ async function main() {
     // const tokenpoolImplementation = await TokenPoolImplementation.deploy();
     // console.log("tokenpoolImplementation address:", tokenpoolImplementation.address);
 
-    // // TokenPool
-    // const TokenPool = await ethers.getContractFactory("TokenPool");
-    // const TokenPoolProxy = await TokenPool.deploy(bridgeInAddress,bridgeOutAddress,wethAddress,deployer.address,tokenPoolImplementationAddress);
-    // console.log("TokenPool address:", TokenPoolProxy.address);
+    // TokenPool
+    const TokenPool = await ethers.getContractFactory("TokenPool");
+    const TokenPoolProxy = await TokenPool.deploy(bridgeInAddress,bridgeOutAddress,wethAddress,deployer.address,tokenPoolImplementationAddress);
+    console.log("TokenPool address:", TokenPoolProxy.address);
 
     //  await run("verify:verify", {
     //     address: tokenPoolAddress,
