@@ -21,7 +21,7 @@ async function main() {
     const bridgeOutLibAddress = '0xfE50386988d9ad9FAf4f6Cd44D9041FA597fc9bE';
     const LimiterAddress = '';
     const LimiterImplementationAddress = '';
-    const tokenPoolImplementationAddress = '0xC0bC30C164d38AfbafcE58B08620EEaA98919394';
+    const tokenPoolImplementationAddress = '0x82a0951a93f51ce67dE3F45A1381C48050762B8d';
     const tokenPoolAddress = '0x2cE306a9eA9cD479Ceb407c83c40054f4607587F';
 
     const wbnbAddress = "0x0CBAb7E71f969Bfb3eF5b13542E9087a73244F02";
@@ -95,11 +95,11 @@ async function main() {
     // console.log("TokenPool address:", TokenPoolProxy.address);
 
 
-    await run("verify:verify", {
-        address: tokenPoolAddress,
-        constructorArguments: [bridgeInAddress,bridgeOutAddress,wbnbAddress,deployer.address,tokenPoolImplementationAddress],
-        contract: "contracts/TokenPool.sol:TokenPool"
-     })
+    // await run("verify:verify", {
+    //     address: tokenPoolAddress,
+    //     constructorArguments: [bridgeInAddress,bridgeOutAddress,wbnbAddress,deployer.address,tokenPoolImplementationAddress],
+    //     contract: "contracts/TokenPool.sol:TokenPool"
+    //  })
     await run("verify:verify", {
         address: tokenPoolImplementationAddress,
         constructorArguments: [],

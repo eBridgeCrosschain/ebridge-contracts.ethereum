@@ -21,7 +21,7 @@ async function main() {
     const bridgeOutLibAddress = '0x16e4232c5Bc41d91BB45cd739897439c38b10866';
     const LimiterAddress = '';
     const LimiterImplementationAddress = '';
-    const tokenPoolImplementationAddress = '0xE2f11d5983C0cc144260a1666bD157f439335d04';
+    const tokenPoolImplementationAddress = '0xAA914bC3652D51664fE453049dF1DA34f61e7738';
     const tokenPoolAddress = '0xd4aaab5bF10955e98918a00b14e1b4fdd73E97e4';
 
     const wethAddress = "0x035900292c309d8beCBCAFb3227238bec0EBa253";
@@ -61,11 +61,11 @@ async function main() {
     // const bridgeOutImplementation = await BridgeOutImplementation.deploy();
     // console.log("BridgeOutImplementation address:", bridgeOutImplementation.address);
 
-    await run("verify:verify", {
-            address: bridgeInImplementationAddress,
-            constructorArguments: [],
-            contract: "contracts/BridgeInImplementation.sol:BridgeInImplementation"
-          })
+    // await run("verify:verify", {
+    //         address: bridgeInImplementationAddress,
+    //         constructorArguments: [],
+    //         contract: "contracts/BridgeInImplementation.sol:BridgeInImplementation"
+    //       })
 
     // await run("verify:verify", {
     //     address: bridgeOutLibAddress,
@@ -83,7 +83,7 @@ async function main() {
     //         contract: "contracts/BridgeOutImplementationV1.sol:BridgeOutImplementationV1"
     //       })
 
-    //  // TokenPoolImplementation
+     // TokenPoolImplementation
     // console.log("start deploy tokenPool implementation.")
     // const TokenPoolImplementation = await ethers.getContractFactory("TokenPoolImplementation");
     // const tokenpoolImplementation = await TokenPoolImplementation.deploy();
@@ -100,11 +100,11 @@ async function main() {
     //     constructorArguments: [bridgeInAddress,bridgeOutAddress,wethAddress,deployer.address,tokenPoolImplementationAddress],
     //     contract: "contracts/TokenPool.sol:TokenPool"
     //  })
-    // await run("verify:verify", {
-    //     address: tokenPoolImplementationAddress,
-    //     constructorArguments: [],
-    //     contract: "contracts/TokenPoolImplementation.sol:TokenPoolImplementation"
-    // })
+    await run("verify:verify", {
+        address: tokenPoolImplementationAddress,
+        constructorArguments: [],
+        contract: "contracts/TokenPoolImplementation.sol:TokenPoolImplementation"
+    })
 
     
     // //deploy regiment implementation

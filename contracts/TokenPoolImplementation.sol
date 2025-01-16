@@ -101,19 +101,30 @@ contract TokenPoolImplementation is ProxyStorage {
     /// @notice Adds liquidity to the pool. The tokens should be approved first.
     /// @param amount The amount of liquidity to provide.
     function addLiquidity(address token, uint256 amount) external payable {
-        require(amount > 0,'invalid amount');
-        if (token == nativeToken && msg.value == amount) {
-            INativeToken(nativeToken).deposit{value: msg.value}();
-            _addLiquidity(token,msg.value);
-        }else{
-            IERC20(token).safeTransferFrom(msg.sender, address(this), amount);
-            _addLiquidity(token,amount);
-        } 
+        _validateAndHandleLiquidity(token, amount, msg.sender);
     }
 
-    function _addLiquidity(address token, uint256 amount) internal {
-        liquidityProviderBalances[msg.sender][token] = liquidityProviderBalances[msg.sender][token].add(amount);
-        emit LiquidityAdded(msg.sender,token,amount);
+    function addLiquidityFor(address token, uint256 amount,address provider) external payable {
+        _validateAndHandleLiquidity(token, amount, provider);
+    }
+
+    function _validateAndHandleLiquidity(address token, uint256 amount, address provider) internal {
+        if (token == nativeToken) {
+            require(msg.value > 0, "Invalid amount");
+            INativeToken(nativeToken).deposit{value: msg.value}();
+            amount = msg.value;
+        } else {
+            require(amount > 0, "Invalid amount");
+            IERC20(token).safeTransferFrom(msg.sender, address(this), amount);
+        }
+
+        _addLiquidity(token, amount, provider);
+    }
+
+
+    function _addLiquidity(address token, uint256 amount,address provider) internal {
+        liquidityProviderBalances[provider][token] = liquidityProviderBalances[provider][token].add(amount);
+        emit LiquidityAdded(provider,token,amount);
     }
 
     /// @notice Removed liquidity to the pool. The tokens will be sent to msg.sender.
