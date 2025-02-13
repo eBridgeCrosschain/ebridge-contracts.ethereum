@@ -13,26 +13,26 @@ async function main() {
 
     const regimentAddress = '0xd6A2BbDB1d23155A78aeB3dEB8a4df0d96AB007D';
     const regimentImplementationAddress = '0x5561174AC5c20e557372f68913F9548DD523675a';
-    const limiterAddress = '0x8E0cF442690a9395C42623F6503Ab926c739f59E';
-    const limiterImplementationAddress = '0x1Ff0268295652c69Ef00718aEd32d1E0A9c1C775';
-    const tokenPoolAddress = '0x35E875C8790A240bd680DEC8C0fe3ffeb5fC4933';
-    const tokenPoolImplementationAddress = '0x88dC11314e267D14A98A153193270Cd2D31Ff5eD';
-    const bridgeInLibAddress = '0xF2e5C43251157969830C5B14B0ccF026999da96d';
+    const limiterAddress = '0x11a86274622fCE5C9d95e9f9ac9A1ae8b4531cA6';
+    const limiterImplementationAddress = '0xcb41c295021977bcd36759e179222a9d89b001Bf';
+    const tokenPoolAddress = '0x66760B644668d4E7de273bc788F915Efd5536332';
+    const tokenPoolImplementationAddress = '0xa4a4ec2D1CFA960cd9D2DD7a16BA59243Af0a3d9';
+    const bridgeInLibAddress = '0x785fD5EDc07c7be50F93B85f57E3B05dbA221A75';
     const bridgeInImplementationAddress = '0x0A73fB8D7D47160Fa51822b050B8DA683c238Cc9';
-    const bridgeInAddress = '0x35aD61E5Ae01b105aD482D58937a2dCa87A2d832';
-    const bridgeOutLibAddress = '0x9baf9A0d37C4135CB475f8359E263Aa730534d34';
-    const bridgeOutImplementationAddress = '0x4aE5762FA7f0E033107427Ad3e297974870D57d2';
-    const bridgeOutAddress = '0x801790e7318eeE92087dD8DFA091f8FE16d93ba8';
+    const bridgeInAddress = '0x7e308DC172faa2a6560C2cd806e8282C51E5BFA5';
+    const bridgeOutLibAddress = '0x8Ede64d05686b2eC2917d9383BCEAfa32A864bfB';
+    const bridgeOutImplementationAddress = '0xEEED25DE983924CeB6bc155CCAaD673BF6e4519C';
+    const bridgeOutAddress = '0xA251aE4C14C53d980699b14319bf2Ad5A4bC4A14';
     const multiSigWalletAddress = '0xBf58DDeC734402724Af33f5De679B27b4b12a21D';
     const timelockAddress = '0x508eBa75EB1aEB8502ED95029C8e1fAe04215069';
 
     const nativeTokenAddress = '0x13aEe64E227af004De02BA2d651E4e3670e15A83';
     const usdcAddress = '0xB110e5d737dcfb38CE22E58482F9546D401F0A2D';
-    const mockMultiSigWalletAddress = '';
+    const mockMultiSigWalletAddress = '0xA2263D5c14F9c711A8b3C4AA2FD522Efdb5d5e44';
     const _memberJoinLimit = 10;
     const _regimentLimit = 20;
     const _maximumAdminsCount = 3;
-    const pauseController = "";
+    const pauseController = "0xA2263D5c14F9c711A8b3C4AA2FD522Efdb5d5e44";
 
     // const WETH = await ethers.getContractFactory("WETH9");
     // const weth = await WETH.deploy();
@@ -102,7 +102,7 @@ async function main() {
     //     contract: "contracts/LimiterImplementation.sol:LimiterImplementation"
     // })
 
-    // TokenPoolImplementation
+    // // TokenPoolImplementation
     // console.log("start deploy tokenPool implementation.")
     // const TokenPoolImplementation = await ethers.getContractFactory("TokenPoolImplementation");
     // const tokenpoolImplementation = await TokenPoolImplementation.deploy();
