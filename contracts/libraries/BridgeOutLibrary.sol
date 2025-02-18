@@ -3,9 +3,10 @@ pragma solidity 0.8.9;
 import "../interfaces/MerkleTreeInterface.sol";
 import "../interfaces/RegimentInterface.sol";
 import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
-import '@openzeppelin/contracts/utils/math/SafeMath.sol';
-import './StringHex.sol';
+import "@openzeppelin/contracts/utils/math/SafeMath.sol";
+import "./StringHex.sol";
 import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
+import "../interfaces/RampInterface.sol";
 
 /**
  * @dev String operations.
@@ -16,7 +17,16 @@ library BridgeOutLibrary {
     using StringHex for bytes32;
     using Strings for uint256;
     using EnumerableSet for EnumerableSet.Bytes32Set;
+    struct ChainMapping {
+        mapping(string => uint256) stringToIntChainId;
+        mapping(uint256 => string) intToStringChainId;
+    }
 
+    struct CrossChainConfig {
+        address oracleContract;
+        string[] chainNames;
+        uint256[] chainIds;
+    }
     struct Report {
         bytes report;
         bytes32[] rs;
@@ -29,6 +39,12 @@ library BridgeOutLibrary {
         uint256 amount;
         address receiveAddress;
         bytes32 receiptIdToken;
+    }
+
+    struct SwapCalculationParams {
+        uint256 amount;
+        uint256 targetShare;
+        uint256 originShare;
     }
 
     function verifyMerkleTree(
@@ -56,7 +72,11 @@ library BridgeOutLibrary {
         );
     }
 
-    function verifySignatureAndDecodeReport (Report memory report,bytes32 regimentId,address regiment) external view returns (ReceiptInfo memory){
+    function verifySignatureAndDecodeReport(
+        Report memory report,
+        bytes32 regimentId,
+        address regiment
+    ) external view returns (ReceiptInfo memory) {
         require(
             IRegiment(regiment).IsRegimentMember(regimentId, msg.sender),
             "no permission to transmit"
@@ -70,18 +90,21 @@ library BridgeOutLibrary {
                 report.rs[i],
                 report.ss[i]
             );
-            require(!_contains(signers,signer), "non-unique signature");
+            require(!_contains(signers, signer), "non-unique signature");
             signers[i] = signer;
             signersCount = uint8(uint256(signersCount).add(1));
         }
         require(
             IRegiment(regiment).IsRegimentMembers(regimentId, signers),
             "no permission to sign"
-        );  
-        address[] memory memberlist = IRegiment(regiment).GetRegimentMemberList(regimentId);
+        );
+        address[] memory memberlist = IRegiment(regiment).GetRegimentMemberList(
+            regimentId
+        );
         uint256 memberCount = memberlist.length;
         require(
-            signersCount >= memberCount.mul(2).div(3).add(1), "not enough signers"
+            signersCount >= memberCount.mul(2).div(3).add(1),
+            "not enough signers"
         );
         ReceiptInfo memory receiptInfo;
         receiptInfo = decodeReportAndVerifyReceipt(report.report);
@@ -95,17 +118,41 @@ library BridgeOutLibrary {
         bytes32 targetAddress;
         ReceiptInfo memory receiptInfo;
         if (_report.length > 128) {
-            (, , receiptIndex, receiptInfo.receiptHash,receiptInfo.amount,targetAddress,receiptInfo.receiptIdToken) = abi.decode(
-                _report,(uint256, uint256, uint256, bytes32,uint256,bytes32,bytes32));
-            receiptInfo.receiveAddress = address(uint160(uint256(targetAddress)));
-            receiptInfo.receiptId = string(abi.encodePacked(receiptInfo.receiptIdToken.toHexWithoutPrefixes(), '.', receiptIndex.toString()));
+            (
+                ,
+                ,
+                receiptIndex,
+                receiptInfo.receiptHash,
+                receiptInfo.amount,
+                targetAddress,
+                receiptInfo.receiptIdToken
+            ) = abi.decode(
+                _report,
+                (uint256, uint256, uint256, bytes32, uint256, bytes32, bytes32)
+            );
+            receiptInfo.receiveAddress = address(
+                uint160(uint256(targetAddress))
+            );
+            receiptInfo.receiptId = string(
+                abi.encodePacked(
+                    receiptInfo.receiptIdToken.toHexWithoutPrefixes(),
+                    ".",
+                    receiptIndex.toString()
+                )
+            );
 
-            bytes32 leafHash = computeLeafHash(receiptInfo.receiptId,receiptInfo.amount,receiptInfo.receiveAddress);
-            require (leafHash == receiptInfo.receiptHash,"verification failed");
-        }else{
+            bytes32 leafHash = computeLeafHash(
+                receiptInfo.receiptId,
+                receiptInfo.amount,
+                receiptInfo.receiveAddress
+            );
+            require(leafHash == receiptInfo.receiptHash, "verification failed");
+        } else {
             (, , receiptIndex, receiptInfo.receiptHash) = abi.decode(
-                _report, (uint256, uint256, uint256, bytes32));
-        }   
+                _report,
+                (uint256, uint256, uint256, bytes32)
+            );
+        }
         return receiptInfo;
     }
 
@@ -129,7 +176,10 @@ library BridgeOutLibrary {
         );
     }
 
-    function _contains(address[] memory array, address target) internal pure returns(bool) {
+    function _contains(
+        address[] memory array,
+        address target
+    ) internal pure returns (bool) {
         for (uint i = 0; i < array.length; i++) {
             if (target == array[i]) {
                 return true;
@@ -138,13 +188,33 @@ library BridgeOutLibrary {
         return false;
     }
 
-    function validateToken(EnumerableSet.Bytes32Set storage tokenList,address token,bytes32 tokenKey,address targetToken) external view {
+    function validateToken(
+        EnumerableSet.Bytes32Set storage tokenList,
+        address token,
+        bytes32 tokenKey,
+        address targetToken
+    ) external view {
         require(tokenList.contains(tokenKey), "target token not exist");
         require(targetToken == token, "invalid token");
     }
 
-    function checkTokenNotExist(EnumerableSet.Bytes32Set storage tokenList,bytes32 tokenKey) public view {
+    function checkTokenNotExist(
+        EnumerableSet.Bytes32Set storage tokenList,
+        bytes32 tokenKey
+    ) public view {
         require(!tokenList.contains(tokenKey), "target token already exist");
     }
 
+    function calculateTargetTokenAmount(
+        SwapCalculationParams memory params
+    ) internal pure returns (uint256) {
+        return params.amount.mul(params.targetShare).div(params.originShare);
+    }
+
+    function validateReceiver(
+        address receiver,
+        address existingReceiver
+    ) internal pure {
+        require(existingReceiver == address(0), "already claimed");
+    }
 }

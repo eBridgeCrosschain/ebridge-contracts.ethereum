@@ -10,8 +10,10 @@ import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import "./Proxy.sol";
 import "./interfaces/LimiterInterface.sol";
-import {BridgeOutLibrary} from './libraries/BridgeOutLibrary.sol';
+import {BridgeOutLibrary} from "./libraries/BridgeOutLibrary.sol";
+import {StringHex} from "./libraries/StringHex.sol";
 import "./interfaces/TokenPoolInterface.sol";
+import "./interfaces/RampInterface.sol";
 
 pragma solidity 0.8.9;
 
@@ -21,6 +23,8 @@ contract BridgeOutImplementationV1 is ProxyStorage {
     using EnumerableSet for EnumerableSet.Bytes32Set;
     using EnumerableSet for EnumerableSet.AddressSet;
     using BridgeOutLibrary for BridgeOutLibrary.Report;
+    using BridgeOutLibrary for BridgeOutLibrary.ChainMapping;
+    using StringHex for bytes32;
 
     address private merkleTree;
     address public regiment;
@@ -46,6 +50,8 @@ contract BridgeOutImplementationV1 is ProxyStorage {
     address public limiter;
     uint8 public signatureThreshold;
     address public tokenPool;
+
+    address public oracleContract;
 
     struct ReceivedReceipt {
         address asset; // ERC20 Token Address
@@ -82,7 +88,6 @@ contract BridgeOutImplementationV1 is ProxyStorage {
         string receiptId,
         bytes32 receiptHash
     );
-
 
     modifier onlyBridgeInContract() {
         require(msg.sender == bridgeIn, "no permission");
@@ -171,7 +176,7 @@ contract BridgeOutImplementationV1 is ProxyStorage {
             targetToken.token,
             targetToken.fromChainId
         );
-        BridgeOutLibrary.checkTokenNotExist(targetTokenList,tokenKey);
+        BridgeOutLibrary.checkTokenNotExist(targetTokenList, tokenKey);
         require(
             targetToken.originShare > 0 && targetToken.targetShare > 0,
             "invalid swap ratio"
@@ -190,89 +195,137 @@ contract BridgeOutImplementationV1 is ProxyStorage {
 
     function deposit(bytes32 tokenKey, address token, uint256 amount) external {
         bytes32 swapId = tokenKeyToSwapIdMap[tokenKey];
-        BridgeOutLibrary.validateToken(targetTokenList,token,tokenKey,swapInfos[swapId].targetToken.token);
+        BridgeOutLibrary.validateToken(
+            targetTokenList,
+            token,
+            tokenKey,
+            swapInfos[swapId].targetToken.token
+        );
         IERC20(token).safeTransferFrom(
             address(msg.sender),
             address(this),
             amount
         );
-        tokenDepositAmount[swapId] = tokenDepositAmount[swapId].add(amount);
+        tokenDepositAmount[swapId] += amount;
     }
 
-    function transmit(
-        bytes32 swapHashId,
-        bytes calldata _report,
-        bytes32[] calldata _rs, // observer signatures->r
-        bytes32[] calldata _ss, //observer signatures->s
-        bytes32 _rawVs // signatures->v (Each 1 byte is combined into a 32-byte binder, which means that the maximum number of observer signatures is 32.)
+    function setCrossChainConfig(
+        BridgeOutLibrary.CrossChainConfig calldata config
+    ) external {
+        oracleContract = config.oracleContract;
+        // chainMapping.updateConfig(config);
+    }
+
+    function forwardMessage(
+        uint256 sourceChainId,
+        uint256 targetChainId,
+        string calldata sender,
+        string calldata receiver,
+        bytes calldata message,
+        IRamp.TokenAmount calldata tokenAmount
     ) external whenNotPaused {
-        SwapInfo storage swapInfo = swapInfos[swapHashId];
-        BridgeOutLibrary.ReceiptInfo memory receiptInfo = BridgeOutLibrary.Report(
-            _report,
-            _rs,
-            _ss,
-            _rawVs
-        ).verifySignatureAndDecodeReport(swapInfo.regimentId,regiment);
-        require(ledger[receiptInfo.receiptHash].leafNodeIndex == 0, "already recorded");
-        require(receiptInfo.amount > 0, "invalid amount");
+        // require(tokenAmount.amount > 0, "Invalid amount");
+
+        BridgeOutLibrary.ReceiptInfo memory receiptInfo = BridgeOutLibrary
+            .decodeReportAndVerifyReceipt(message);
+        require(
+            ledger[receiptInfo.receiptHash].leafNodeIndex == 0,
+            "Already recorded"
+        );
         ledger[receiptInfo.receiptHash].leafNodeIndex = 1;
-        _completeReceipt(receiptInfo,swapInfo);
-        emit NewTransmission(swapHashId, msg.sender, receiptInfo.receiptId, receiptInfo.receiptHash);
+        SwapInfo storage swapInfo = swapInfos[tokenAmount.swapId];
+        _completeReceipt(receiptInfo, swapInfo);
+
+        emit NewTransmission(
+            tokenAmount.swapId,
+            msg.sender,
+            receiptInfo.receiptId,
+            receiptInfo.receiptHash
+        );
     }
 
-    function _checkParams(bytes32 swapId) private view returns(SwapInfo storage){
+    function _checkParams(
+        bytes32 swapId
+    ) internal view returns (SwapInfo storage) {
         require(!isPaused, "BridgeOut:paused");
         SwapInfo storage swapInfo = swapInfos[swapId];
         require(swapInfo.regimentId != bytes32(0), "swap pair not found");
         return swapInfo;
     }
 
-    function _completeReceipt(BridgeOutLibrary.ReceiptInfo memory receiptInfo,SwapInfo memory swapInfo) private {
-        uint256 targetTokenAmount = receiptInfo.amount
-            .mul(swapInfo.targetToken.targetShare)
-            .div(swapInfo.targetToken.originShare);
-        bytes32 swapId = swapInfo.swapId;
-        address receiverAddress = receiptInfo.receiveAddress;
-        SwapAmounts storage swapAmouts = ledger[receiptInfo.receiptHash];
-        require(swapAmouts.receiver == address(0), "already claimed");
-        swapAmouts.receiver = receiverAddress;
+    function _completeReceipt(
+        BridgeOutLibrary.ReceiptInfo memory receiptInfo,
+        SwapInfo memory swapInfo
+    ) internal {
+        uint256 targetTokenAmount = BridgeOutLibrary.calculateTargetTokenAmount(
+            BridgeOutLibrary.SwapCalculationParams(
+                receiptInfo.amount,
+                swapInfo.targetToken.targetShare,
+                swapInfo.targetToken.originShare
+            )
+        );
+        bytes32 receiptHash = receiptInfo.receiptHash;
+        SwapAmounts storage swapAmounts = ledger[receiptHash];
+        BridgeOutLibrary.validateReceiver(
+            receiptInfo.receiveAddress,
+            swapAmounts.receiver
+        );
+        swapAmounts.receiver = receiptInfo.receiveAddress;
         address token = swapInfo.targetToken.token;
-        ILimiter(limiter).consumeDailyLimit(swapId, token, targetTokenAmount);
-        ILimiter(limiter).consumeTokenBucket(swapId, token, targetTokenAmount);
-        if (tokenPool == address(0)) {
-            require(
-                targetTokenAmount <= tokenDepositAmount[swapId],
-                "deposit not enough"
-            );
-            tokenDepositAmount[swapId] = tokenDepositAmount[swapId].sub(
-                targetTokenAmount
-            );
-            if (token == tokenAddress) {
-                INativeToken(tokenAddress).withdraw(targetTokenAmount);
-                (bool success, ) = payable(receiverAddress).call{
-                    value: targetTokenAmount
-                }("");
-                require(success, "swap failed");
-            } else {
-                IERC20(token).safeTransfer(
-                    receiverAddress,
-                    targetTokenAmount
-                );
-            }
-        }else{
-            ITokenPool(tokenPool).release(token,targetTokenAmount,swapInfo.targetToken.fromChainId,receiverAddress);
-        }
-        emit TokenSwapEvent(
-            receiverAddress,
+        ILimiter(limiter).consumeDailyLimit(
+            swapInfo.swapId,
             token,
             targetTokenAmount
         );
-        swapAmouts.receivedAmounts[token] = targetTokenAmount;
-        bytes32 tokenKey = _getTokenKey(token,swapInfo.targetToken.fromChainId);
-        receivedReceiptIndex[tokenKey] = receivedReceiptIndex[tokenKey].add(1);
-        receivedReceiptsMap[tokenKey][receivedReceiptIndex[tokenKey]] = ReceivedReceipt(
+        ILimiter(limiter).consumeTokenBucket(
+            swapInfo.swapId,
             token,
-            receiverAddress,
+            targetTokenAmount
+        );
+        if (tokenPool == address(0)) {
+            require(
+                targetTokenAmount <= tokenDepositAmount[swapInfo.swapId],
+                "deposit not enough"
+            );
+            tokenDepositAmount[swapInfo.swapId] =
+                tokenDepositAmount[swapInfo.swapId] -
+                targetTokenAmount;
+            if (token == tokenAddress) {
+                INativeToken(tokenAddress).withdraw(targetTokenAmount);
+                (bool success, ) = payable(receiptInfo.receiveAddress).call{
+                    value: targetTokenAmount
+                }("");
+                require(success, "transfer failed");
+            } else {
+                IERC20(token).safeTransfer(
+                    receiptInfo.receiveAddress,
+                    targetTokenAmount
+                );
+            }
+        } else {
+            ITokenPool(tokenPool).release(
+                token,
+                targetTokenAmount,
+                swapInfo.targetToken.fromChainId,
+                receiptInfo.receiveAddress
+            );
+        }
+        emit TokenSwapEvent(
+            receiptInfo.receiveAddress,
+            token,
+            targetTokenAmount
+        );
+        swapAmounts.receivedAmounts[token] = targetTokenAmount;
+        bytes32 tokenKey = _getTokenKey(
+            token,
+            swapInfo.targetToken.fromChainId
+        );
+        receivedReceiptIndex[tokenKey] = receivedReceiptIndex[tokenKey] + 1;
+        receivedReceiptsMap[tokenKey][
+            receivedReceiptIndex[tokenKey]
+        ] = ReceivedReceipt(
+            token,
+            receiptInfo.receiveAddress,
             receiptInfo.amount,
             block.number,
             block.timestamp,
@@ -281,11 +334,11 @@ contract BridgeOutImplementationV1 is ProxyStorage {
         );
     }
 
-    function _getTokenKey(address token,string memory chainId) private pure returns (bytes32){
-        return BridgeOutLibrary.generateTokenKey(
-            token,
-            chainId
-        );
+    function _getTokenKey(
+        address token,
+        string memory fromChainId
+    ) internal pure returns (bytes32) {
+        return sha256(abi.encodePacked(token, fromChainId));
     }
 
     function isReceiptRecorded(bytes32 receiptHash) public view returns (bool) {
@@ -297,25 +350,24 @@ contract BridgeOutImplementationV1 is ProxyStorage {
         string[] calldata fromChainIds
     ) external view returns (uint256[] memory) {
         require(tokens.length == fromChainIds.length, "invalid input");
-        uint256[] memory indexs = new uint256[](tokens.length);
-        for (uint256 i = 0; i < tokens.length; i++) {
-            bytes32 tokenKey = _getTokenKey(
-                tokens[i],
-                fromChainIds[i]
-            );
-            indexs[i] = receivedReceiptIndex[tokenKey];
+
+        uint256 length = tokens.length;
+        uint256[] memory indexes = new uint256[](length);
+
+        for (uint256 i = 0; i < length; i++) {
+            indexes[i] = receivedReceiptIndex[
+                _getTokenKey(tokens[i], fromChainIds[i])
+            ];
         }
-        return indexs;
+
+        return indexes;
     }
 
     function getSwapId(
         address token,
         string calldata fromChainId
     ) public view returns (bytes32) {
-        bytes32 tokenKey = _getTokenKey(
-            token,
-            fromChainId
-        );
+        bytes32 tokenKey = _getTokenKey(token, fromChainId);
         return tokenKeyToSwapIdMap[tokenKey];
     }
 
@@ -325,26 +377,20 @@ contract BridgeOutImplementationV1 is ProxyStorage {
         uint256 fromIndex,
         uint256 endIndex
     ) public view returns (ReceivedReceipt[] memory _receipts) {
-        bytes32 tokenKey = _getTokenKey(
-            token,
-            fromChainId
-        );
+        bytes32 tokenKey = _getTokenKey(token, fromChainId);
         require(
             endIndex <= receivedReceiptIndex[tokenKey] && fromIndex > 0,
             "Invalid input"
         );
-        uint256 length = endIndex.sub(fromIndex).add(1);
+
+        uint256 length = endIndex - fromIndex + 1;
         require(length <= MaxQueryRange, "Query range is exceeded");
         _receipts = new ReceivedReceipt[](length);
         for (uint256 i = 0; i < length; i++) {
-            _receipts[i] = receivedReceiptsMap[tokenKey][i.add(fromIndex)];
+            _receipts[i] = receivedReceiptsMap[tokenKey][fromIndex + i];
         }
 
         return _receipts;
-    }
-
-    function getDepositAmount(bytes32 swapId) public view returns (uint256) {
-        return tokenDepositAmount[swapId];
     }
 
     function getSwapInfo(
@@ -359,23 +405,32 @@ contract BridgeOutImplementationV1 is ProxyStorage {
             address token
         )
     {
-        fromChainId = swapInfos[swapId].targetToken.fromChainId;
-        regimentId = swapInfos[swapId].regimentId;
-        spaceId = swapInfos[swapId].spaceId;
-        token = swapInfos[swapId].targetToken.token;
+        SwapInfo storage info = swapInfos[swapId];
+        return (
+            info.targetToken.fromChainId,
+            info.regimentId,
+            info.spaceId,
+            info.targetToken.token
+        );
     }
 
-    function assetsMigrator(
-        bytes32 tokenKey,
-        address token
-    ) external onlyBridgeInContract {
-        bytes32 swapId = tokenKeyToSwapIdMap[tokenKey];
-        BridgeOutLibrary.validateToken(targetTokenList,token,tokenKey,swapInfos[swapId].targetToken.token);
-        uint256 balance = IERC20(token).balanceOf(address(this));
-        if (balance > 0) {            
-            IERC20(token).safeTransfer(address(tokenPool), balance);
-        }
-        tokenDepositAmount[swapId] = 0;
-    }
+    // function assetsMigrator(
+    //     bytes32 tokenKey,
+    //     address token
+    // ) external onlyBridgeInContract {
+    //     bytes32 swapId = tokenKeyToSwapIdMap[tokenKey];
+    //     BridgeOutLibrary.validateToken(
+    //         targetTokenList,
+    //         token,
+    //         tokenKey,
+    //         swapInfos[swapId].targetToken.token
+    //     );
 
+    //     uint256 balance = IERC20(token).balanceOf(address(this));
+    //     if (balance > 0) {
+    //         IERC20(token).safeTransfer(address(tokenPool), balance);
+    //     }
+
+    //     delete tokenDepositAmount[swapId];
+    // }
 }

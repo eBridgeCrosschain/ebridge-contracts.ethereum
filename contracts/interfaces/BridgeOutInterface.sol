@@ -1,5 +1,7 @@
 pragma solidity >=0.5.0;
 
+import "./RampInterface.sol";
+
 interface IBridgeOut {
     function deposit(
         bytes32 swapHashId,
@@ -13,10 +15,7 @@ interface IBridgeOut {
         uint256 amount
     ) external;
 
-    function assetsMigrator(
-        bytes32 swapHashId,
-        address token
-    ) external;
+    function assetsMigrator(bytes32 swapHashId, address token) external;
 
     function restart() external;
 
@@ -25,11 +24,20 @@ interface IBridgeOut {
     function getSwapId(
         address token,
         string calldata fromChainId
-    ) external view returns(bytes32);
+    ) external view returns (bytes32);
 
     function assetsMigratorTest(
         bytes32 swapHashId,
         address token,
         address tokenpool
+    ) external;
+
+    function forwardMessage(
+        uint256 sourceChainId,
+        uint256 targetChainId,
+        string calldata sender,
+        string calldata receiver,
+        bytes calldata message,
+        IRamp.TokenAmount calldata tokenAmount
     ) external;
 }

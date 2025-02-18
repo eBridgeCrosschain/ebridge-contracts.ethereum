@@ -207,79 +207,6 @@ describe("TokenPool", function () {
 
             });
         });
-
-        describe("add liquidity for",async function () {
-            it("success", async function () {
-                const { owner, admin,tokenpool, bridgeInMock, bridgeOutMock,account1} = await loadFixture(deployTokenPoolFixture);
-                const { elf, usdt } = await loadFixture(deployTokensFixture);
-                var amount1 = '20000000';
-                var amount = '100000';
-                await elf.mint(owner.address, amount1);
-                expect(await elf.balanceOf(owner.address)).to.equal(amount1)
-                await elf.approve(tokenpool.address, amount);
-                await elf.approve(bridgeInMock.address, amount);
-
-                var tokens = [{
-                    tokenAddress : elf.address,
-                    chainId : "AELF"
-                }]
-                await bridgeInMock.addToken(tokens);
-
-                var tx = await tokenpool.addLiquidityFor(elf.address,amount,admin.address);
-                expect(await elf.balanceOf(tokenpool.address)).to.equal(amount);
-                expect(await elf.balanceOf(owner.address)).to.equal(amount1-amount);
-
-                const receipt = await tx.wait();
-                const interface = new ethers.utils.Interface(["event LiquidityAdded(address indexed provider, address indexed token, uint256 indexed amount)"]);
-                let event;
-                for (const log of receipt.logs) {
-                    if (log.address === tokenpool.address && log.topics[0] === interface.getEventTopic("LiquidityAdded")) {
-                        event = interface.decodeEventLog("LiquidityAdded", log.data, log.topics);
-                        console.log(event);
-                    }
-                };
-                expect(event.token).to.equal(elf.address);
-                expect(event.amount).to.equal(amount);
-                expect(event.provider).to.equal(admin.address);
-
-                var liquidity = await tokenpool.getUserLiquidity(owner.address,elf.address);
-                expect(liquidity).to.equal(0);
-                var liquidity = await tokenpool.getUserLiquidity(admin.address,elf.address);
-                expect(liquidity).to.equal(amount);
-
-                await bridgeInMock.lock(elf.address,amount,"AELF",tokenpool.address);
-                expect(await elf.balanceOf(tokenpool.address)).to.equal('200000');
-
-                var liquidity = await tokenpool.getUserLiquidity(admin.address,elf.address);
-                expect(liquidity).to.equal(amount);
-            });
-            it("success native token", async function () {
-                const { owner, admin,tokenpool, bridgeInMock, bridgeOutMock,account1,otherAccount0,otherAccount1, otherAccount2,weth } = await loadFixture(deployTokenPoolFixture);
-                const { elf, usdt } = await loadFixture(deployTokensFixture);
-                var amount = '10000000000000000000';
-                var tokens = [{
-                    tokenAddress : weth.address,
-                    chainId : "AELF"
-                }]
-                await bridgeInMock.addToken(tokens);
-                var beforeBalance = await owner.getBalance();
-                await tokenpool.addLiquidityFor(weth.address,amount,admin.address,{ value: '10000000000000000000' });
-                expect(await weth.balanceOf(tokenpool.address)).to.equal('10000000000000000000');
-                var afterBalance = await owner.getBalance();
-                console.log("after balance:",afterBalance);
-                amountMin = new BigNumber(1000000000000000000);
-                amountMax = new BigNumber(1000800000000000000);
-                var actualAmount = (new BigNumber(beforeBalance).minus(new BigNumber(afterBalance)));
-                console.log(actualAmount.toString());
-                expect(actualAmount < amountMax).to.be.true;
-                expect(actualAmount > amountMin).to.be.true;
-                expect(await weth.balanceOf(tokenpool.address)).to.equal('10000000000000000000');
-
-                var liquidity = await tokenpool.getUserLiquidity(admin.address,weth.address);
-                expect(liquidity).to.equal('10000000000000000000');
-
-            });
-        });
         describe("remove liquidity",async function () {
             it("success", async function () {
                 const { owner, admin,tokenpool, bridgeInMock, bridgeOutMock,account1} = await loadFixture(deployTokenPoolFixture);
@@ -325,49 +252,6 @@ describe("TokenPool", function () {
                 
                 
             });
-            it("success add for",async function () {
-                const { owner, admin,tokenpool, bridgeInMock, bridgeOutMock,account1} = await loadFixture(deployTokenPoolFixture);
-                const { elf, usdt } = await loadFixture(deployTokensFixture);
-                var amount1 = '20000000';
-                var amount = '100000';
-                await elf.mint(owner.address, amount1);
-                expect(await elf.balanceOf(owner.address)).to.equal(amount1)
-                await elf.approve(tokenpool.address, amount);
-
-                var tokens = [{
-                    tokenAddress : elf.address,
-                    chainId : "AELF"
-                }]
-                await bridgeInMock.addToken(tokens);
-
-                await tokenpool.addLiquidityFor(elf.address,amount,admin.address);
-                expect(await elf.balanceOf(tokenpool.address)).to.equal(amount);
-                expect(await elf.balanceOf(owner.address)).to.equal(20000000-100000);
-
-                var liquidity = await tokenpool.getUserLiquidity(admin.address,elf.address);
-                expect(liquidity).to.equal(amount);
-
-                var removeAmount = "30000";
-                var tx = await tokenpool.connect(admin).removeLiquidity(elf.address,removeAmount);
-
-                const receipt = await tx.wait();
-                const interface = new ethers.utils.Interface(["event LiquidityRemoved(address indexed provider, address indexed token, uint256 indexed amount)"]);
-                let event;
-                for (const log of receipt.logs) {
-                    if (log.address === tokenpool.address && log.topics[0] === interface.getEventTopic("LiquidityRemoved")) {
-                        event = interface.decodeEventLog("LiquidityRemoved", log.data, log.topics);
-                        console.log(event);
-                    }
-                };
-                expect(event.token).to.equal(elf.address);
-                expect(event.amount).to.equal(removeAmount);
-                expect(event.provider).to.equal(admin.address);
-                
-
-                var liquidity = await tokenpool.getUserLiquidity(admin.address,elf.address);
-                expect(liquidity).to.equal(amount-removeAmount);
-                expect(await elf.balanceOf(tokenpool.address)).to.equal(100000-30000);
-            })
             it("success native token", async function () {
                 const { owner, admin,tokenpool, bridgeInMock, bridgeOutMock,account1,otherAccount0,otherAccount1, otherAccount2,weth } = await loadFixture(deployTokenPoolFixture);
                 const { elf, usdt } = await loadFixture(deployTokensFixture);

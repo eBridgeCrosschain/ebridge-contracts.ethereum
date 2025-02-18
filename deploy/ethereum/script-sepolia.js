@@ -40,8 +40,6 @@ async function main() {
     wethAddress = "0x035900292c309d8beCBCAFb3227238bec0EBa253";
     wusdAddress = "0x50A9FC9f46401f2e0AF52835aCD50238431C8ebc";
     sgrAddress = "0x310e7bD119253b9F9F3AC0cD191A1b8b5b1b3b84";
-    addAddress = "0x4f36F2beb2A104bb7f9BdA1fB16ef219E577066C";
-    
 
 
     const BridgeInImplementation = await ethers.getContractFactory("BridgeInImplementation",{
@@ -99,114 +97,7 @@ async function main() {
     const TokenPool = await ethers.getContractFactory("TokenPool");
     const tokenPool = await TokenPool.attach(tokenPoolAddress);
 
-    var chainIdMain = "MainChain_AELF";
-    var chainIdSide = "SideChain_tDVW";
-    var regimentId = '0xf7296bf942ea75763b3ffffd0133a94558c87477c0a7e595bf9543cd7540602f';
 
-    // // step 1: add token
-    // var tokens = [{
-    //     tokenAddress : addAddress,
-    //     chainId : chainIdMain
-    // },
-    // {
-    //     tokenAddress : addAddress,
-    //     chainId : chainIdSide
-    // }]
-    // await bridgeInImplementation.addToken(tokens);
-    // // step 2: create swap
-    // var targetTokenusdtauMain = {
-    //     token: addAddress,
-    //     fromChainId: chainIdMain,
-    //     originShare: 1,
-    //     targetShare: 10000000000
-    // }
-    // var targetTokenusdtauSide = {
-    //     token: addAddress,
-    //     fromChainId: chainIdSide,
-    //     originShare: 1,
-    //     targetShare: 10000000000
-    // }
-    // console.log("Start to create main swap.");
-    // await bridgeOutImplementation.connect(managerAddress).createSwap(targetTokenusdtauMain,regimentId);
-    // console.log("Start to create side swap.");
-    // await bridgeOutImplementation.connect(managerAddress).createSwap(targetTokenusdtauSide,regimentId);
-
-    // // get swap info
-    // var swapIdMain = await bridgeOutImplementation.getSwapId(addAddress, chainIdMain);
-    // console.log("main swap id:",swapIdMain);
-    // var info = await bridgeOutImplementation.getSwapInfo(swapIdMain);
-    // console.log("from chain id:",info.fromChainId);
-    // console.log("regiment id:",info.regimentId);
-    // console.log("token:",info.token);
-    // var tokenKeyMain = _generateTokenKey(addAddress,chainIdMain);
-    // console.log("token key:",tokenKeyMain);
-
-    // var swapIdSide = await bridgeOutImplementation.getSwapId(addAddress, chainIdSide);
-    // console.log("side swap id:",swapIdSide);
-    // var infoSide = await bridgeOutImplementation.getSwapInfo(swapIdSide);
-    // console.log("from chain id:",infoSide.fromChainId);
-    // console.log("regiment id:",infoSide.regimentId);
-    // console.log("token:",infoSide.token);
-    // var tokenKeySide = _generateTokenKey(addAddress,chainIdSide);
-    // console.log("token key:",tokenKeySide);
-
-    // // step 3: set daily limit
-    // console.log("Start to set daily limit.")
-    // const date = new Date();
-    // const timestamp = Date.UTC(date.getFullYear(), date.getMonth(), date.getUTCDate(), 0, 0, 0, 0);
-    // var refreshTime = timestamp  / 1000;
-    // console.log(refreshTime);
-    // var config = [
-    //     {
-    //        "dailyLimitId": "0xe5b30d58c8734dbffc6a7f38a7287e26a100d85f52a00ad4da2778799ceda3bc",
-    //        "refreshTime": refreshTime,
-    //        "defaultTokenAmount": "100000000000000000000000"
-    //     },
-    //     {
-    //         "dailyLimitId": "0x18524025053fea3bc15323165056c34cfe8ade923353c7c167e302f9f832e48b",
-    //         "refreshTime": refreshTime,
-    //         "defaultTokenAmount": "100000000000000000000000"
-    //     },
-    //     {
-    //        "dailyLimitId": "0x6b16c1b5498e42032008d3c1db1852c02da818ca675f15c98fbbae0e63a9bc35",
-    //        "refreshTime": refreshTime,
-    //        "defaultTokenAmount": "100000000000000000000000"
-    //     },
-    //     {
-    //         "dailyLimitId": "0xb73990965f7b5c0436e93ccc39ce535dd2e701e8bd5ae02f2d8a5bf3c0234d8e",
-    //         "refreshTime": refreshTime,
-    //         "defaultTokenAmount": "100000000000000000000000"
-    //     }
-    // ];
-    // await limiterImplementation.setDailyLimit(config);
-    // // step 4: set rate limit
-    // console.log("Start to set rate limit.")
-    // var configs = [{
-    //     "bucketId": "0xe5b30d58c8734dbffc6a7f38a7287e26a100d85f52a00ad4da2778799ceda3bc",
-    //     "isEnabled": true,
-    //     "tokenCapacity": "10000000000000000000000",
-    //     "rate": "10000000000000000000000"
-    //   },
-    //   {
-    //     "bucketId": "0x18524025053fea3bc15323165056c34cfe8ade923353c7c167e302f9f832e48b",
-    //     "isEnabled": true,
-    //     "tokenCapacity": "10000000000000000000000",
-    //     "rate": "10000000000000000000000"
-    //   },
-    //   {
-    //     "bucketId": "0x6b16c1b5498e42032008d3c1db1852c02da818ca675f15c98fbbae0e63a9bc35",
-    //     "isEnabled": true,
-    //     "tokenCapacity": "10000000000000000000000",
-    //     "rate": "10000000000000000000000"
-    //   },
-    //   {
-    //     "bucketId": "0xb73990965f7b5c0436e93ccc39ce535dd2e701e8bd5ae02f2d8a5bf3c0234d8e",
-    //     "isEnabled": true,
-    //     "tokenCapacity": "10000000000000000000000",
-    //     "rate": "10000000000000000000000"
-    //   }
-    // ];
-    // await limiterImplementation.setTokenBucketConfig(configs);
 
     // let ABI1 = [
     //     "function setTokenPool(address _tokenPool)"
@@ -272,17 +163,17 @@ async function main() {
     // console.log(result)
 
 
-    // let ABI1 = [
-    //     "function restart()"
-    //     ];
-    // let iface1 = new ethers.utils.Interface(ABI1);
-    // console.log(iface1);
+    let ABI1 = [
+        "function restart()"
+        ];
+    let iface1 = new ethers.utils.Interface(ABI1);
+    console.log(iface1);
 
-    // var data = iface1.encodeFunctionData("restart")
-    // console.log(data);
+    var data = iface1.encodeFunctionData("restart")
+    console.log(data);
 
-    // var result = await multiSign.submitTransaction(BridgeInAddress, 0, data);
-    // console.log(result)
+    var result = await multiSign.submitTransaction(BridgeInAddress, 0, data);
+    console.log(result)
 
     // let ABI1 = [
     //     "function changeMultiSignWallet(address _wallet)"

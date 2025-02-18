@@ -67,4 +67,14 @@ library StringHex {
                 )
             );
     }
+
+    function stringToBytes32(string memory source) public pure returns (bytes32 result) {
+        require(bytes(source).length == 66, "Invalid length"); // "0x" + 64 hex chars = 66 chars
+        bytes memory temp = bytes(source);
+        require(temp[0] == '0' && temp[1] == 'x', "Invalid prefix");
+
+        assembly {
+            result := mload(add(temp, 32))
+        }
+    }
 }

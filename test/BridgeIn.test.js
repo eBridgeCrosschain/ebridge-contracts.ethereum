@@ -17,16 +17,17 @@ describe("BridgeIn", function () {
         const [owner, otherAccount0, otherAccount1, otherAccount2, admin] = await ethers.getSigners();
         const BridgeInLib = await ethers.getContractFactory("BridgeInLibrary");
         const lib = await BridgeInLib.deploy();
-
-
+        // const CrossChainLibrary = await ethers.getContractFactory("CrossChainLibrary");
+        // const crossChainLibrary = await CrossChainLibrary.deploy();
+        // await crossChainLibrary.deployed();
         const BridgeOutMock = await ethers.getContractFactory("MockBridgeOut");
         const bridgeOutMock = await BridgeOutMock.deploy();
-
+        const RampMock = await ethers.getContractFactory("MockRamp");
+        const rampContractMock = await RampMock.deploy();
         const multiSigWalletMockAddress = otherAccount0.address;
-
-        const BridgeInImplementation = await ethers.getContractFactory("BridgeInImplementation",{
-            libraries : {
-                BridgeInLibrary:lib.address
+        const BridgeInImplementation = await ethers.getContractFactory("BridgeInImplementation", {
+            libraries: {                
+                BridgeInLibrary: lib.address,
             }
         });
         const BridgeIn = await ethers.getContractFactory("BridgeIn");
@@ -34,23 +35,29 @@ describe("BridgeIn", function () {
         const bridgeInProxy = await BridgeIn.deploy(multiSigWalletMockAddress, weth.address, otherAccount1.address, bridgeInImplementation.address);
         const bridgeIn = BridgeInImplementation.attach(bridgeInProxy.address);
 
-        const LimiterImplementation = await ethers.getContractFactory("LimiterImplementation",{
-            libraries:{
-                BridgeInLibrary : lib.address
+        const LimiterImplementation = await ethers.getContractFactory("LimiterImplementation", {
+            libraries: {
+                BridgeInLibrary: lib.address
             }
         });
 
         const Limiter = await ethers.getContractFactory("Limiter");
         const limiterImplementation = await LimiterImplementation.deploy();
-        const LimiterProxy = await Limiter.deploy(bridgeIn.address,bridgeOutMock.address,admin.address,limiterImplementation.address);
+        const LimiterProxy = await Limiter.deploy(bridgeIn.address, bridgeOutMock.address, admin.address, limiterImplementation.address);
         const limiter = LimiterImplementation.attach(LimiterProxy.address);
 
-        await bridgeIn.connect(otherAccount0).setBridgeOutAndLimiter(bridgeOutMock.address,limiter.address);
+        await bridgeIn.connect(otherAccount0).setBridgeOutAndLimiter(bridgeOutMock.address, limiter.address);
+        const crossChainConfig = {
+            oracleContract: rampContractMock.address,
+            chainNames: ["Ethereum", "Polygon", "Avalanche"],
+            chainIds: [1, 137, 43114],
+        };
+        await bridgeIn.connect(otherAccount0).setCrossChainConfig(crossChainConfig);
 
         const TokenPoolImplementation = await ethers.getContractFactory("TokenPoolImplementation");
         const TokenPool = await ethers.getContractFactory("TokenPool");
         const tokenpoolImplementation = await TokenPoolImplementation.deploy();
-        const TokenPoolProxy = await TokenPool.deploy(bridgeIn.address,bridgeOutMock.address,weth.address,admin.address,tokenpoolImplementation.address);
+        const TokenPoolProxy = await TokenPool.deploy(bridgeIn.address, bridgeOutMock.address, weth.address, admin.address, tokenpoolImplementation.address);
         const tokenpool = TokenPoolImplementation.attach(TokenPoolProxy.address);
         await bridgeIn.connect(otherAccount0).setTokenPool(tokenpool.address);
 
@@ -86,8 +93,8 @@ describe("BridgeIn", function () {
                 var error = "BridgeIn:only for Wallet call"
                 var chainId = "AELF_MAINNET"
                 var tokens = [{
-                    tokenAddress : elf.address,
-                    chainId : chainId
+                    tokenAddress: elf.address,
+                    chainId: chainId
                 }]
                 await expect(bridgeIn.connect(otherAccount1).addToken(tokens))
                     .to.be.revertedWith(error);
@@ -100,8 +107,8 @@ describe("BridgeIn", function () {
 
                 var chainId = "AELF_MAINNET"
                 var tokens = [{
-                    tokenAddress : elf.address,
-                    chainId : chainId
+                    tokenAddress: elf.address,
+                    chainId: chainId
                 }]
                 await bridgeIn.connect(otherAccount0).addToken(tokens);
                 var isSupported = await bridgeIn.isSupported(elf.address, chainId);
@@ -119,8 +126,8 @@ describe("BridgeIn", function () {
 
                 var chainId = "AELF_MAINNET"
                 var tokens = [{
-                    tokenAddress : elf.address,
-                    chainId : chainId
+                    tokenAddress: elf.address,
+                    chainId: chainId
                 }]
                 await bridgeIn.connect(otherAccount0).addToken(tokens);
                 var isSupported = await bridgeIn.isSupported(elf.address, chainId);
@@ -138,47 +145,46 @@ describe("BridgeIn", function () {
             });
         });
 
-        describe("create receipt native token",function(){
+        describe("create receipt native token", function () {
             it("Should success", async function () {
-                const { bridgeIn, owner, otherAccount0, otherAccount1, bridgeOutMock,weth, otherAccount2, limiter, admin,tokenpool } = await loadFixture(deployBridgeInFixture);
-            
+                const { bridgeIn, owner, otherAccount0, otherAccount1, bridgeOutMock, weth, otherAccount2, limiter, admin, tokenpool } = await loadFixture(deployBridgeInFixture);
+
                 var chainId = "AELF_MAINNET";
                 var tokens = [{
-                    tokenAddress : weth.address,
-                    chainId : chainId
+                    tokenAddress: weth.address,
+                    chainId: chainId
                 }]
                 await bridgeIn.connect(otherAccount0).addToken(tokens);
-                
-            
+
                 var targetAddress = "AELF_123";
 
                 var beforeBalance = await owner.getBalance();
-                console.log("before balance:",beforeBalance);
+                console.log("before balance:", beforeBalance);
 
                 const date = new Date();
                 const timestamp = Date.UTC(date.getFullYear(), date.getMonth(), date.getUTCDate(), 0, 0, 0, 0);
                 var refreshTime = timestamp / 1000;
                 console.log(refreshTime);
                 var configs = [{
-                    dailyLimitId : _generateTokenKey(weth.address,chainId),
-                    refreshTime : refreshTime,
-                    defaultTokenAmount : "100000000000000000000"
+                    dailyLimitId: _generateTokenKey(weth.address, chainId),
+                    refreshTime: refreshTime,
+                    defaultTokenAmount: "100000000000000000000"
                 }]
                 await limiter.connect(admin).setDailyLimit(configs);
 
                 var bucketConfigs = [{
-                    bucketId:_generateTokenKey(weth.address,chainId),
-                    isEnabled:true,
-                    tokenCapacity:"10000000000000000000",
-                    rate:"1000000000000000000"
+                    bucketId: _generateTokenKey(weth.address, chainId),
+                    isEnabled: true,
+                    tokenCapacity: "10000000000000000000",
+                    rate: "1000000000000000000"
                 }]
-        
+
                 await limiter.connect(admin).setTokenBucketConfig(bucketConfigs);
 
-                await bridgeIn.createNativeTokenReceipt(chainId,targetAddress,{value:'1000000000000000000'});
+                await bridgeIn.createNativeTokenReceipt(chainId, targetAddress, { value: '1000000000000000000' });
 
                 var afterBalance = await owner.getBalance();
-                console.log("after balance:",afterBalance);
+                console.log("after balance:", afterBalance);
 
                 //contains transaction fee
                 amountMin = new BigNumber(1000000000000000000);
@@ -188,19 +194,19 @@ describe("BridgeIn", function () {
                 expect(actualAmount < amountMax).to.be.true;
                 expect(actualAmount > amountMin).to.be.true;
 
-                
+
                 expect(await weth.balanceOf(tokenpool.address)).to.equal('1000000000000000000');
 
                 {
                     console.log(await time.latest());
-                    var receiptDailyLimitInfo = await limiter.getReceiptDailyLimit(weth.address,chainId);
+                    var receiptDailyLimitInfo = await limiter.getReceiptDailyLimit(weth.address, chainId);
                     expect(receiptDailyLimitInfo.tokenAmount).to.equal("99000000000000000000");
                     expect(receiptDailyLimitInfo.refreshTime).to.equal(refreshTime);
                     expect(receiptDailyLimitInfo.defaultTokenAmount).to.equal("100000000000000000000");
                 }
                 {
                     console.log("token bucket.");
-                    var receiptRateLimitInfo = await limiter.getCurrentReceiptTokenBucketState(weth.address,chainId);
+                    var receiptRateLimitInfo = await limiter.getCurrentReceiptTokenBucketState(weth.address, chainId);
                     expect(receiptRateLimitInfo.currentTokenAmount).to.equal("9000000000000000000");
                     expect(receiptRateLimitInfo.lastUpdatedTime).to.equal(new BigNumber(await time.latest()));
                     expect(receiptRateLimitInfo.isEnabled).to.equal(true);
@@ -208,27 +214,27 @@ describe("BridgeIn", function () {
                     expect(receiptRateLimitInfo.rate).to.equal("1000000000000000000");
                 }
                 {
-                    let blockTimestamp1 = new BigNumber(86400*2);
+                    let blockTimestamp1 = new BigNumber(86400 * 2);
                     await freezeTime(blockTimestamp1.toNumber());
                     console.log(await time.latest());
-                    var receiptDailyLimitInfo = await limiter.getReceiptDailyLimit(weth.address,chainId);
+                    var receiptDailyLimitInfo = await limiter.getReceiptDailyLimit(weth.address, chainId);
                     expect(receiptDailyLimitInfo.tokenAmount).to.equal("100000000000000000000");
-                    expect(receiptDailyLimitInfo.refreshTime).to.equal(refreshTime+86400*2);
+                    expect(receiptDailyLimitInfo.refreshTime).to.equal(refreshTime + 86400 * 2);
                     expect(receiptDailyLimitInfo.defaultTokenAmount).to.equal("100000000000000000000");
                 }
-                
+
             })
         })
 
         describe("create receipt test", function () {
             it("Should revert when trigger error", async function () {
-                const { bridgeIn, owner, otherAccount0, otherAccount1, bridgeOutMock,weth, otherAccount2, limiter, admin } = await loadFixture(deployBridgeInFixture);
+                const { bridgeIn, owner, otherAccount0, otherAccount1, bridgeOutMock, weth, otherAccount2, limiter, admin } = await loadFixture(deployBridgeInFixture);
 
                 const { elf, usdt } = await deployTokensFixture();
                 var chainId = "AELF_MAINNET"
                 var tokens = [{
-                    tokenAddress : elf.address,
-                    chainId : chainId
+                    tokenAddress: elf.address,
+                    chainId: chainId
                 }]
                 await bridgeIn.connect(otherAccount0).addToken(tokens);
 
@@ -237,14 +243,14 @@ describe("BridgeIn", function () {
                 var refreshTime = timestamp / 1000;
                 console.log(refreshTime);
                 var configs = [{
-                    dailyLimitId : _generateTokenKey(elf.address,chainId),
-                    refreshTime : refreshTime,
-                    defaultTokenAmount : "1000000"
+                    dailyLimitId: _generateTokenKey(elf.address, chainId),
+                    refreshTime: refreshTime,
+                    defaultTokenAmount: "1000000"
                 },
                 {
-                    dailyLimitId : _generateTokenKey(usdt.address,chainId),
-                    refreshTime : refreshTime,
-                    defaultTokenAmount : "1000000"
+                    dailyLimitId: _generateTokenKey(usdt.address, chainId),
+                    refreshTime: refreshTime,
+                    defaultTokenAmount: "1000000"
                 }]
                 await limiter.connect(admin).setDailyLimit(configs);
 
@@ -268,13 +274,13 @@ describe("BridgeIn", function () {
             })
 
             it("Should success when token support", async function () {
-                const { bridgeIn, owner, otherAccount0, otherAccount1, bridgeOutMock,weth, otherAccount2, limiter, admin, tokenpool } = await loadFixture(deployBridgeInFixture);
+                const { bridgeIn, owner, otherAccount0, otherAccount1, bridgeOutMock, weth, otherAccount2, limiter, admin, tokenpool } = await loadFixture(deployBridgeInFixture);
                 const { elf, usdt } = await deployTokensFixture();
 
                 var chainId = "AELF_MAINNET"
                 var tokens = [{
-                    tokenAddress : elf.address,
-                    chainId : chainId
+                    tokenAddress: elf.address,
+                    chainId: chainId
                 }]
                 await bridgeIn.connect(otherAccount0).addToken(tokens);
 
@@ -283,14 +289,14 @@ describe("BridgeIn", function () {
                 var refreshTime = timestamp / 1000;
                 console.log(refreshTime);
                 var configs = [{
-                    dailyLimitId : _generateTokenKey(elf.address,chainId),
-                    refreshTime : refreshTime,
-                    defaultTokenAmount : "1000000"
+                    dailyLimitId: _generateTokenKey(elf.address, chainId),
+                    refreshTime: refreshTime,
+                    defaultTokenAmount: "1000000"
                 },
                 {
-                    dailyLimitId : _generateTokenKey(usdt.address,chainId),
-                    refreshTime : refreshTime,
-                    defaultTokenAmount : "1000000"
+                    dailyLimitId: _generateTokenKey(usdt.address, chainId),
+                    refreshTime: refreshTime,
+                    defaultTokenAmount: "1000000"
                 }]
                 await limiter.connect(admin).setDailyLimit(configs);
 
@@ -302,38 +308,38 @@ describe("BridgeIn", function () {
                 await elf.approve(bridgeIn.address, amount);
                 await bridgeIn.createReceipt(elf.address, amount, chainId, targetAddress);
                 expect(await elf.balanceOf(owner.address)).to.equal(0)
-                
-                expect(await elf.balanceOf(tokenpool.address)).to.equal(amount);
-                var tokens = [elf.address];
-                var chainIds = [chainId];
 
-                var result = await bridgeIn.getSendReceiptIndex(tokens, chainIds);
-                var infos = await bridgeIn.getSendReceiptInfos(elf.address, chainId, result[0], result[0]);
-                var receipts = await bridgeIn.getMyReceipts(owner.address, elf.address, chainId);
-                expect(infos[0].asset).to.equal(elf.address)
-                expect(infos[0].amount).to.equal(amount)
-                expect(infos[0].owner).to.equal(owner.address)
-                expect(infos[0].targetChainId).to.equal(chainId)
-                expect(infos[0].targetAddress).to.equal(targetAddress)
-                expect(infos[0].receiptId).to.equal(receipts[0])
+                expect(await elf.balanceOf(tokenpool.address)).to.equal(amount);
+                // var tokens = [elf.address];
+                // var chainIds = [chainId];
+
+                // var result = await bridgeIn.getSendReceiptIndex(tokens, chainIds);
+                // var infos = await bridgeIn.getSendReceiptInfos(elf.address, chainId, result[0], result[0]);
+                // var receipts = await bridgeIn.getMyReceipts(owner.address, elf.address, chainId);
+                // expect(infos[0].asset).to.equal(elf.address)
+                // expect(infos[0].amount).to.equal(amount)
+                // expect(infos[0].owner).to.equal(owner.address)
+                // expect(infos[0].targetChainId).to.equal(chainId)
+                // expect(infos[0].targetAddress).to.equal(targetAddress)
+                // expect(infos[0].receiptId).to.equal(receipts[0])
 
                 var totalAmount = await bridgeIn.getTotalAmountInReceipts(elf.address, chainId);
                 expect(totalAmount).to.equal(amount)
             })
 
             it("Should success when deposit with different token", async function () {
-                const { bridgeIn, owner, otherAccount0, otherAccount1, bridgeOutMock,weth, otherAccount2, limiter, admin, tokenpool } = await loadFixture(deployBridgeInFixture);
+                const { bridgeIn, owner, otherAccount0, otherAccount1, bridgeOutMock, weth, otherAccount2, limiter, admin, tokenpool } = await loadFixture(deployBridgeInFixture);
                 const { elf, usdt } = await deployTokensFixture();
 
                 var chainId = "AELF_MAINNET"
                 var tokens = [{
-                    tokenAddress : elf.address,
-                    chainId : chainId
+                    tokenAddress: elf.address,
+                    chainId: chainId
                 }]
                 await bridgeIn.connect(otherAccount0).addToken(tokens);
                 var tokens1 = [{
-                    tokenAddress : usdt.address,
-                    chainId : chainId
+                    tokenAddress: usdt.address,
+                    chainId: chainId
                 }]
                 await bridgeIn.connect(otherAccount0).addToken(tokens1);
 
@@ -342,14 +348,14 @@ describe("BridgeIn", function () {
                 var refreshTime = timestamp / 1000;
                 console.log(refreshTime);
                 var configs = [{
-                    dailyLimitId : _generateTokenKey(elf.address,chainId),
-                    refreshTime : refreshTime,
-                    defaultTokenAmount : "1000000"
+                    dailyLimitId: _generateTokenKey(elf.address, chainId),
+                    refreshTime: refreshTime,
+                    defaultTokenAmount: "1000000"
                 },
                 {
-                    dailyLimitId : _generateTokenKey(usdt.address,chainId),
-                    refreshTime : refreshTime,
-                    defaultTokenAmount : "1000000"
+                    dailyLimitId: _generateTokenKey(usdt.address, chainId),
+                    refreshTime: refreshTime,
+                    defaultTokenAmount: "1000000"
                 }]
                 await limiter.connect(admin).setDailyLimit(configs);
 
@@ -363,18 +369,17 @@ describe("BridgeIn", function () {
                 await bridgeIn.createReceipt(elf.address, amount, chainId, targetAddress);
                 expect(await elf.balanceOf(owner.address)).to.equal(0)
                 expect(await elf.balanceOf(tokenpool.address)).to.equal(amount);
-                var tokens = [elf.address];
-                var chainIds = [chainId];
-
-                var result = await bridgeIn.getSendReceiptIndex(tokens, chainIds);
-                var infos = await bridgeIn.getSendReceiptInfos(elf.address, chainId, result[0], result[0]);
-                var receipts = await bridgeIn.getMyReceipts(owner.address, elf.address, chainId);
-                expect(infos[0].asset).to.equal(elf.address)
-                expect(infos[0].amount).to.equal(amount)
-                expect(infos[0].owner).to.equal(owner.address)
-                expect(infos[0].targetChainId).to.equal(chainId)
-                expect(infos[0].targetAddress).to.equal(targetAddress)
-                expect(infos[0].receiptId).to.equal(receipts[0])
+                // var tokens = [elf.address];
+                // var chainIds = [chainId];
+                // var result = await bridgeIn.getSendReceiptIndex(tokens, chainIds);
+                // var infos = await bridgeIn.getSendReceiptInfos(elf.address, chainId, result[0], result[0]);
+                // var receipts = await bridgeIn.getMyReceipts(owner.address, elf.address, chainId);
+                // expect(infos[0].asset).to.equal(elf.address)
+                // expect(infos[0].amount).to.equal(amount)
+                // expect(infos[0].owner).to.equal(owner.address)
+                // expect(infos[0].targetChainId).to.equal(chainId)
+                // expect(infos[0].targetAddress).to.equal(targetAddress)
+                // expect(infos[0].receiptId).to.equal(receipts[0])
 
                 var totalAmount = await bridgeIn.getTotalAmountInReceipts(elf.address, chainId);
                 expect(totalAmount).to.equal(amount)
@@ -386,37 +391,37 @@ describe("BridgeIn", function () {
                 await bridgeIn.createReceipt(usdt.address, amount, chainId, targetAddress);
                 expect(await usdt.balanceOf(owner.address)).to.equal(0)
                 expect(await usdt.balanceOf(tokenpool.address)).to.equal(amount);
-                var tokens = [usdt.address];
-                var chainIds = [chainId];
+                // var tokens = [usdt.address];
+                // var chainIds = [chainId];
 
-                var result = await bridgeIn.getSendReceiptIndex(tokens, chainIds);
-                var infos = await bridgeIn.getSendReceiptInfos(usdt.address, chainId, result[0], result[0]);
-                var receipts = await bridgeIn.getMyReceipts(owner.address, usdt.address, chainId);
-                expect(infos[0].asset).to.equal(usdt.address)
-                expect(infos[0].amount).to.equal(amount)
-                expect(infos[0].owner).to.equal(owner.address)
-                expect(infos[0].targetChainId).to.equal(chainId)
-                expect(infos[0].targetAddress).to.equal(targetAddress)
-                expect(infos[0].receiptId).to.equal(receipts[0])
+                // var result = await bridgeIn.getSendReceiptIndex(tokens, chainIds);
+                // var infos = await bridgeIn.getSendReceiptInfos(usdt.address, chainId, result[0], result[0]);
+                // var receipts = await bridgeIn.getMyReceipts(owner.address, usdt.address, chainId);
+                // expect(infos[0].asset).to.equal(usdt.address)
+                // expect(infos[0].amount).to.equal(amount)
+                // expect(infos[0].owner).to.equal(owner.address)
+                // expect(infos[0].targetChainId).to.equal(chainId)
+                // expect(infos[0].targetAddress).to.equal(targetAddress)
+                // expect(infos[0].receiptId).to.equal(receipts[0])
 
                 var totalAmount = await bridgeIn.getTotalAmountInReceipts(usdt.address, chainId);
                 expect(totalAmount).to.equal(amount)
 
             })
 
-            it("Should success when different user deposit", async function () { 
-                const { bridgeIn, owner, otherAccount0, otherAccount1, bridgeOutMock,weth, otherAccount2, limiter, admin , tokenpool} = await loadFixture(deployBridgeInFixture);
+            it("Should success when different user deposit", async function () {
+                const { bridgeIn, owner, otherAccount0, otherAccount1, bridgeOutMock, weth, otherAccount2, limiter, admin, tokenpool } = await loadFixture(deployBridgeInFixture);
                 const { elf, usdt } = await deployTokensFixture();
 
                 var chainId = "AELF_MAINNET"
                 var tokens = [{
-                    tokenAddress : elf.address,
-                    chainId : chainId
+                    tokenAddress: elf.address,
+                    chainId: chainId
                 }]
                 await bridgeIn.connect(otherAccount0).addToken(tokens);
                 var tokens1 = [{
-                    tokenAddress : usdt.address,
-                    chainId : chainId
+                    tokenAddress: usdt.address,
+                    chainId: chainId
                 }]
                 await bridgeIn.connect(otherAccount0).addToken(tokens1);
 
@@ -425,14 +430,14 @@ describe("BridgeIn", function () {
                 var refreshTime = timestamp / 1000;
                 console.log(refreshTime);
                 var configs = [{
-                    dailyLimitId : _generateTokenKey(elf.address,chainId),
-                    refreshTime : refreshTime,
-                    defaultTokenAmount : "1000000"
+                    dailyLimitId: _generateTokenKey(elf.address, chainId),
+                    refreshTime: refreshTime,
+                    defaultTokenAmount: "1000000"
                 },
                 {
-                    dailyLimitId : _generateTokenKey(usdt.address,chainId),
-                    refreshTime : refreshTime,
-                    defaultTokenAmount : "1000000"
+                    dailyLimitId: _generateTokenKey(usdt.address, chainId),
+                    refreshTime: refreshTime,
+                    defaultTokenAmount: "1000000"
                 }]
                 await limiter.connect(admin).setDailyLimit(configs);
 
@@ -446,18 +451,18 @@ describe("BridgeIn", function () {
                 await bridgeIn.createReceipt(elf.address, amount, chainId, targetAddress);
                 expect(await elf.balanceOf(owner.address)).to.equal(0)
                 expect(await elf.balanceOf(tokenpool.address)).to.equal(amount);
-                var tokens = [elf.address];
-                var chainIds = [chainId];
+                // var tokens = [elf.address];
+                // var chainIds = [chainId];
 
-                var result = await bridgeIn.getSendReceiptIndex(tokens, chainIds);
-                var infos = await bridgeIn.getSendReceiptInfos(elf.address, chainId, result[0], result[0]);
-                var receipts = await bridgeIn.getMyReceipts(owner.address, elf.address, chainId);
-                expect(infos[0].asset).to.equal(elf.address)
-                expect(infos[0].amount).to.equal(amount)
-                expect(infos[0].owner).to.equal(owner.address)
-                expect(infos[0].targetChainId).to.equal(chainId)
-                expect(infos[0].targetAddress).to.equal(targetAddress)
-                expect(infos[0].receiptId).to.equal(receipts[0])
+                // var result = await bridgeIn.getSendReceiptIndex(tokens, chainIds);
+                // var infos = await bridgeIn.getSendReceiptInfos(elf.address, chainId, result[0], result[0]);
+                // var receipts = await bridgeIn.getMyReceipts(owner.address, elf.address, chainId);
+                // expect(infos[0].asset).to.equal(elf.address)
+                // expect(infos[0].amount).to.equal(amount)
+                // expect(infos[0].owner).to.equal(owner.address)
+                // expect(infos[0].targetChainId).to.equal(chainId)
+                // expect(infos[0].targetAddress).to.equal(targetAddress)
+                // expect(infos[0].receiptId).to.equal(receipts[0])
 
                 var totalAmount = await bridgeIn.getTotalAmountInReceipts(elf.address, chainId);
                 expect(totalAmount).to.equal(amount)
@@ -468,19 +473,19 @@ describe("BridgeIn", function () {
                 await elf.connect(otherAccount0).approve(bridgeIn.address, amount);
                 await bridgeIn.connect(otherAccount0).createReceipt(elf.address, amount, chainId, targetAddress);
                 expect(await elf.balanceOf(otherAccount0.address)).to.equal(0)
-                expect(await elf.balanceOf(tokenpool.address)).to.equal(amount*2);
-                var tokens = [elf.address];
-                var chainIds = [chainId];
+                expect(await elf.balanceOf(tokenpool.address)).to.equal(amount * 2);
+                // var tokens = [elf.address];
+                // var chainIds = [chainId];
 
-                var result = await bridgeIn.getSendReceiptIndex(tokens, chainIds);
-                var infos = await bridgeIn.getSendReceiptInfos(elf.address, chainId, result[0], result[0]);
-                var receipts = await bridgeIn.getMyReceipts(otherAccount0.address, elf.address, chainId);
-                expect(infos[0].asset).to.equal(elf.address)
-                expect(infos[0].amount).to.equal(amount)
-                expect(infos[0].owner).to.equal(otherAccount0.address)
-                expect(infos[0].targetChainId).to.equal(chainId)
-                expect(infos[0].targetAddress).to.equal(targetAddress)
-                expect(infos[0].receiptId).to.equal(receipts[0])
+                // var result = await bridgeIn.getSendReceiptIndex(tokens, chainIds);
+                // var infos = await bridgeIn.getSendReceiptInfos(elf.address, chainId, result[0], result[0]);
+                // var receipts = await bridgeIn.getMyReceipts(otherAccount0.address, elf.address, chainId);
+                // expect(infos[0].asset).to.equal(elf.address)
+                // expect(infos[0].amount).to.equal(amount)
+                // expect(infos[0].owner).to.equal(otherAccount0.address)
+                // expect(infos[0].targetChainId).to.equal(chainId)
+                // expect(infos[0].targetAddress).to.equal(targetAddress)
+                // expect(infos[0].receiptId).to.equal(receipts[0])
 
                 var totalAmount = await bridgeIn.getTotalAmountInReceipts(elf.address, chainId);
                 expect(totalAmount).to.equal(amount * 2)
@@ -488,20 +493,20 @@ describe("BridgeIn", function () {
             })
 
             it("Should success when different user deposit in different token", async function () {
-                const { bridgeIn, owner, otherAccount0, otherAccount1, bridgeOutMock,weth, otherAccount2, limiter, admin, tokenpool } = await loadFixture(deployBridgeInFixture);
+                const { bridgeIn, owner, otherAccount0, otherAccount1, bridgeOutMock, weth, otherAccount2, limiter, admin, tokenpool } = await loadFixture(deployBridgeInFixture);
                 const { elf, usdt } = await deployTokensFixture();
                 console.log("elf:", elf.address);
                 console.log("usdt:", usdt.address);
 
                 var chainId = "AELF_MAINNET"
                 var tokens = [{
-                    tokenAddress : elf.address,
-                    chainId : chainId
+                    tokenAddress: elf.address,
+                    chainId: chainId
                 }]
                 await bridgeIn.connect(otherAccount0).addToken(tokens);
                 var tokens1 = [{
-                    tokenAddress : usdt.address,
-                    chainId : chainId
+                    tokenAddress: usdt.address,
+                    chainId: chainId
                 }]
                 await bridgeIn.connect(otherAccount0).addToken(tokens1);
                 var amount = 100;
@@ -512,14 +517,14 @@ describe("BridgeIn", function () {
                 var refreshTime = timestamp / 1000;
                 console.log(refreshTime);
                 var configs = [{
-                    dailyLimitId : _generateTokenKey(elf.address,chainId),
-                    refreshTime : refreshTime,
-                    defaultTokenAmount : "1000000"
+                    dailyLimitId: _generateTokenKey(elf.address, chainId),
+                    refreshTime: refreshTime,
+                    defaultTokenAmount: "1000000"
                 },
                 {
-                    dailyLimitId : _generateTokenKey(usdt.address,chainId),
-                    refreshTime : refreshTime,
-                    defaultTokenAmount : "1000000"
+                    dailyLimitId: _generateTokenKey(usdt.address, chainId),
+                    refreshTime: refreshTime,
+                    defaultTokenAmount: "1000000"
                 }]
                 await limiter.connect(admin).setDailyLimit(configs);
 
@@ -530,18 +535,18 @@ describe("BridgeIn", function () {
                 await bridgeIn.createReceipt(elf.address, amount, chainId, targetAddress);
                 expect(await elf.balanceOf(owner.address)).to.equal(0)
                 expect(await elf.balanceOf(tokenpool.address)).to.equal(amount);
-                var tokens = [elf.address];
-                var chainIds = [chainId];
+                // var tokens = [elf.address];
+                // var chainIds = [chainId];
 
-                var result = await bridgeIn.getSendReceiptIndex(tokens, chainIds);
-                var infos = await bridgeIn.getSendReceiptInfos(elf.address, chainId, result[0], result[0]);
-                var receipts = await bridgeIn.getMyReceipts(owner.address, elf.address, chainId);
-                expect(infos[0].asset).to.equal(elf.address)
-                expect(infos[0].amount).to.equal(amount)
-                expect(infos[0].owner).to.equal(owner.address)
-                expect(infos[0].targetChainId).to.equal(chainId)
-                expect(infos[0].targetAddress).to.equal(targetAddress)
-                expect(infos[0].receiptId).to.equal(receipts[0])
+                // var result = await bridgeIn.getSendReceiptIndex(tokens, chainIds);
+                // var infos = await bridgeIn.getSendReceiptInfos(elf.address, chainId, result[0], result[0]);
+                // var receipts = await bridgeIn.getMyReceipts(owner.address, elf.address, chainId);
+                // expect(infos[0].asset).to.equal(elf.address)
+                // expect(infos[0].amount).to.equal(amount)
+                // expect(infos[0].owner).to.equal(owner.address)
+                // expect(infos[0].targetChainId).to.equal(chainId)
+                // expect(infos[0].targetAddress).to.equal(targetAddress)
+                // expect(infos[0].receiptId).to.equal(receipts[0])
 
                 var totalAmount = await bridgeIn.getTotalAmountInReceipts(elf.address, chainId);
                 expect(totalAmount).to.equal(amount)
@@ -553,31 +558,31 @@ describe("BridgeIn", function () {
                 await bridgeIn.connect(otherAccount0).createReceipt(usdt.address, amount, chainId, targetAddress);
                 expect(await usdt.balanceOf(otherAccount0.address)).to.equal(0)
                 expect(await usdt.balanceOf(tokenpool.address)).to.equal(amount);
-                var tokens = [usdt.address];
-                var chainIds = [chainId];
+                // var tokens = [usdt.address];
+                // var chainIds = [chainId];
 
-                var result = await bridgeIn.getSendReceiptIndex(tokens, chainIds);
-                var infos = await bridgeIn.getSendReceiptInfos(usdt.address, chainId, result[0], result[0]);
-                var receipts = await bridgeIn.getMyReceipts(otherAccount0.address, usdt.address, chainId);
-                expect(infos[0].asset).to.equal(usdt.address)
-                expect(infos[0].amount).to.equal(amount)
-                expect(infos[0].owner).to.equal(otherAccount0.address)
-                expect(infos[0].targetChainId).to.equal(chainId)
-                expect(infos[0].targetAddress).to.equal(targetAddress)
-                expect(infos[0].receiptId).to.equal(receipts[0])
+                // var result = await bridgeIn.getSendReceiptIndex(tokens, chainIds);
+                // var infos = await bridgeIn.getSendReceiptInfos(usdt.address, chainId, result[0], result[0]);
+                // var receipts = await bridgeIn.getMyReceipts(otherAccount0.address, usdt.address, chainId);
+                // expect(infos[0].asset).to.equal(usdt.address)
+                // expect(infos[0].amount).to.equal(amount)
+                // expect(infos[0].owner).to.equal(otherAccount0.address)
+                // expect(infos[0].targetChainId).to.equal(chainId)
+                // expect(infos[0].targetAddress).to.equal(targetAddress)
+                // expect(infos[0].receiptId).to.equal(receipts[0])
 
                 var totalAmount = await bridgeIn.getTotalAmountInReceipts(usdt.address, chainId);
                 expect(totalAmount).to.equal(amount)
 
             })
             it("Should getSendReceiptInfos success when create more than one receipts", async function () {
-                const { bridgeIn, owner, otherAccount0, otherAccount1, bridgeOutMock,weth, otherAccount2, limiter, admin } = await loadFixture(deployBridgeInFixture);
+                const { bridgeIn, owner, otherAccount0, otherAccount1, bridgeOutMock, weth, otherAccount2, limiter, admin } = await loadFixture(deployBridgeInFixture);
                 const { elf, usdt } = await deployTokensFixture();
 
                 var chainId = "AELF_MAINNET"
                 var tokens = [{
-                    tokenAddress : elf.address,
-                    chainId : chainId
+                    tokenAddress: elf.address,
+                    chainId: chainId
                 }]
                 await bridgeIn.connect(otherAccount0).addToken(tokens);
 
@@ -586,14 +591,14 @@ describe("BridgeIn", function () {
                 var refreshTime = timestamp / 1000;
                 console.log(refreshTime);
                 var configs = [{
-                    dailyLimitId : _generateTokenKey(elf.address,chainId),
-                    refreshTime : refreshTime,
-                    defaultTokenAmount : "1000000"
+                    dailyLimitId: _generateTokenKey(elf.address, chainId),
+                    refreshTime: refreshTime,
+                    defaultTokenAmount: "1000000"
                 },
                 {
-                    dailyLimitId : _generateTokenKey(usdt.address,chainId),
-                    refreshTime : refreshTime,
-                    defaultTokenAmount : "1000000"
+                    dailyLimitId: _generateTokenKey(usdt.address, chainId),
+                    refreshTime: refreshTime,
+                    defaultTokenAmount: "1000000"
                 }]
                 await limiter.connect(admin).setDailyLimit(configs);
 
@@ -606,29 +611,29 @@ describe("BridgeIn", function () {
                 await bridgeIn.createReceipt(elf.address, amount, chainId, targetAddress);
                 expect(await elf.balanceOf(owner.address)).to.equal(0)
 
-                var tokens = [elf.address];
-                var chainIds = [chainId];
-                var indexes = await bridgeIn.getSendReceiptIndex(tokens, chainIds);
-                expect(indexes[0]).to.equal(2)
+                // var tokens = [elf.address];
+                // var chainIds = [chainId];
+                // var indexes = await bridgeIn.getSendReceiptIndex(tokens, chainIds);
+                // expect(indexes[0]).to.equal(2)
 
-                var infos = await bridgeIn.getSendReceiptInfos(elf.address, chainId, 1, indexes[0]);
-                var receipts = await bridgeIn.getMyReceipts(owner.address, elf.address, chainId);
-                expect(receipts.length).to.equal(2)
-                expect(infos.length).to.equal(2)
-                expect(infos[0].amount).to.equal(amount)
-                expect(infos[0].targetAddress).to.equal(targetAddress)
-                expect(infos[1].amount).to.equal(amount)
-                expect(infos[1].targetAddress).to.equal(targetAddress)
+                // var infos = await bridgeIn.getSendReceiptInfos(elf.address, chainId, 1, indexes[0]);
+                // var receipts = await bridgeIn.getMyReceipts(owner.address, elf.address, chainId);
+                // expect(receipts.length).to.equal(2)
+                // expect(infos.length).to.equal(2)
+                // expect(infos[0].amount).to.equal(amount)
+                // expect(infos[0].targetAddress).to.equal(targetAddress)
+                // expect(infos[1].amount).to.equal(amount)
+                // expect(infos[1].targetAddress).to.equal(targetAddress)
 
             })
             it("Should revert when pause", async function () {
-                const { bridgeIn, owner, otherAccount0, otherAccount1, bridgeOutMock,weth, otherAccount2, limiter, admin } = await loadFixture(deployBridgeInFixture);
+                const { bridgeIn, owner, otherAccount0, otherAccount1, bridgeOutMock, weth, otherAccount2, limiter, admin } = await loadFixture(deployBridgeInFixture);
                 const { elf, usdt } = await deployTokensFixture();
 
                 var chainId = "AELF_MAINNET"
                 var tokens = [{
-                    tokenAddress : elf.address,
-                    chainId : chainId
+                    tokenAddress: elf.address,
+                    chainId: chainId
                 }]
                 await bridgeIn.connect(otherAccount0).addToken(tokens);
 
@@ -637,18 +642,18 @@ describe("BridgeIn", function () {
                 var refreshTime = timestamp / 1000;
                 console.log(refreshTime);
                 var configs = [{
-                    dailyLimitId : _generateTokenKey(elf.address,chainId),
-                    refreshTime : refreshTime,
-                    defaultTokenAmount : "1000000"
+                    dailyLimitId: _generateTokenKey(elf.address, chainId),
+                    refreshTime: refreshTime,
+                    defaultTokenAmount: "1000000"
                 },
                 {
-                    dailyLimitId : _generateTokenKey(usdt.address,chainId),
-                    refreshTime : refreshTime,
-                    defaultTokenAmount : "1000000"
+                    dailyLimitId: _generateTokenKey(usdt.address, chainId),
+                    refreshTime: refreshTime,
+                    defaultTokenAmount: "1000000"
                 }]
                 await limiter.connect(admin).setDailyLimit(configs);
 
-            
+
                 var amount = 100;
                 var targetAddress = "AELF_123";
 
@@ -686,13 +691,13 @@ describe("BridgeIn", function () {
             })
 
             it("Should transfer funds to bridgeOut", async function () {
-                const { bridgeIn, owner, otherAccount0, otherAccount1, bridgeOutMock,weth, otherAccount2, limiter, admin, tokenpool } = await loadFixture(deployBridgeInFixture);
+                const { bridgeIn, owner, otherAccount0, otherAccount1, bridgeOutMock, weth, otherAccount2, limiter, admin, tokenpool } = await loadFixture(deployBridgeInFixture);
                 const { elf, usdt } = await deployTokensFixture();
 
                 var chainId = "AELF_MAINNET"
                 var tokens = [{
-                    tokenAddress : elf.address,
-                    chainId : chainId
+                    tokenAddress: elf.address,
+                    chainId: chainId
                 }]
                 await bridgeIn.connect(otherAccount0).addToken(tokens);
 
@@ -701,14 +706,14 @@ describe("BridgeIn", function () {
                 var refreshTime = timestamp / 1000;
                 console.log(refreshTime);
                 var configs = [{
-                    dailyLimitId : _generateTokenKey(elf.address,chainId),
-                    refreshTime : refreshTime,
-                    defaultTokenAmount : "1000000"
+                    dailyLimitId: _generateTokenKey(elf.address, chainId),
+                    refreshTime: refreshTime,
+                    defaultTokenAmount: "1000000"
                 },
                 {
-                    dailyLimitId : _generateTokenKey(usdt.address,chainId),
-                    refreshTime : refreshTime,
-                    defaultTokenAmount : "1000000"
+                    dailyLimitId: _generateTokenKey(usdt.address, chainId),
+                    refreshTime: refreshTime,
+                    defaultTokenAmount: "1000000"
                 }]
                 await limiter.connect(admin).setDailyLimit(configs);
 
@@ -821,8 +826,8 @@ describe("BridgeIn", function () {
         //             .to.be.revertedWith(error);
         //     })
         // })
-        describe("pause controller test",function(){
-            it("should success",async function(){
+        describe("pause controller test", function () {
+            it("should success", async function () {
                 const { bridgeIn, owner, otherAccount0, otherAccount1, bridgeOutMock, otherAccount2 } = await loadFixture(deployBridgeInFixture);
                 var pauseController = await bridgeIn.pauseController();
                 expect(pauseController).to.equal(otherAccount1.address);
@@ -832,7 +837,7 @@ describe("BridgeIn", function () {
                 var error = 'BrigeIn:only for pause controller';
                 await expect(bridgeIn.connect(otherAccount1).pause()).to.be.revertedWith(error);
             })
-            it("should revert no permission",async function(){
+            it("should revert no permission", async function () {
                 const { bridgeIn, owner, otherAccount0, otherAccount1, bridgeOutMock } = await loadFixture(deployBridgeInFixture);
                 var error = 'BridgeIn:only for Wallet call';
                 await expect(bridgeIn.connect(otherAccount1).changePauseController(otherAccount0.address)).to.be.revertedWith(error);

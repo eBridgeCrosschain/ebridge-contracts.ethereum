@@ -36,7 +36,6 @@ async function main() {
     elfAddress = "0xd1CD51a8d28ab58464839ba840E16950A6a635ad";
     usdtAddress = "0x3F280eE5876CE8B15081947E0f189E336bb740A5";
     wbnbAddress = "0x0CBAb7E71f969Bfb3eF5b13542E9087a73244F02";
-    addAddress = "0xE24b9e88597D2d2f86a71193808ABD5cB0298520";
 
     const BridgeInImplementation = await ethers.getContractFactory("BridgeInImplementation",{
         libraries:{
@@ -95,155 +94,32 @@ async function main() {
 
     var chainIdMain = "MainChain_AELF";
     var chainIdSide = "SideChain_tDVW";
-    var regimentId = '0xf7296bf942ea75763b3ffffd0133a94558c87477c0a7e595bf9543cd7540602f';
+    var tokens = [{
+        tokenAddress:elfAddress,
+        chainId:chainIdMain
+    },{
+        tokenAddress:wbnbAddress,
+        chainId:chainIdMain
+    },{
+        tokenAddress:elfAddress,
+        chainId:chainIdSide
+    },{
+        tokenAddress:wbnbAddress,
+        chainId:chainIdSide
+    }];
+    var provider="";
+    // await bridgeInImplementation.assetsMigrator(tokens,provider);
+    let ABI1 = [
+        "function assetsMigrator(tuple(address tokenAddress, string chainId)[] tokens,address provider)"
+        ];
+    let iface1 = new ethers.utils.Interface(ABI1);
+    console.log(iface1);
 
-    // let ABI1 = [
-    //     "function TransferRegimentOwnership(bytes32 regimentId,address newManagerAddress)"
-    //     ];
-    // let iface1 = new ethers.utils.Interface(ABI1);
-    // console.log(iface1);
+    var data = iface1.encodeFunctionData("assetsMigrator", [tokens,provider])
+    console.log(data);
 
-    // var newManagerAddress="0x1Aa5C9C754BA10a20418f04d218Db59AA7ce74c4";
-    // var data = iface1.encodeFunctionData("TransferRegimentOwnership", [regimentId,newManagerAddress])
-    // console.log(data);
-
-    // var result = await multiSign.submitTransaction(RegimentAddress, 0, data);
-    // console.log(result)
-
-
-    // // step 1: add token
-    // var tokens = [{
-    //     tokenAddress : addAddress,
-    //     chainId : chainIdMain
-    // },
-    // {
-    //     tokenAddress : addAddress,
-    //     chainId : chainIdSide
-    // }]
-    // await bridgeInImplementation.addToken(tokens);
-    // // step 2: create swap
-    // var targetTokenusdtauMain = {
-    //     token: addAddress,
-    //     fromChainId: chainIdMain,
-    //     originShare: 1,
-    //     targetShare: 10000000000
-    // }
-    // var targetTokenusdtauSide = {
-    //     token: addAddress,
-    //     fromChainId: chainIdSide,
-    //     originShare: 1,
-    //     targetShare: 10000000000
-    // }
-    // console.log("Start to create main swap.");
-    // await bridgeOutImplementation.connect(managerAddress).createSwap(targetTokenusdtauMain,regimentId);
-    // console.log("Start to create side swap.");
-    // await bridgeOutImplementation.connect(managerAddress).createSwap(targetTokenusdtauSide,regimentId);
-
-    // // get swap info
-    // var swapIdMain = await bridgeOutImplementation.getSwapId(addAddress, chainIdMain);
-    // console.log("main swap id:",swapIdMain);
-    // var info = await bridgeOutImplementation.getSwapInfo(swapIdMain);
-    // console.log("from chain id:",info.fromChainId);
-    // console.log("regiment id:",info.regimentId);
-    // console.log("token:",info.token);
-    // var tokenKeyMain = _generateTokenKey(addAddress,chainIdMain);
-    // console.log("token key:",tokenKeyMain);
-
-    // var swapIdSide = await bridgeOutImplementation.getSwapId(addAddress, chainIdSide);
-    // console.log("side swap id:",swapIdSide);
-    // var infoSide = await bridgeOutImplementation.getSwapInfo(swapIdSide);
-    // console.log("from chain id:",infoSide.fromChainId);
-    // console.log("regiment id:",infoSide.regimentId);
-    // console.log("token:",infoSide.token);
-    // var tokenKeySide = _generateTokenKey(addAddress,chainIdSide);
-    // console.log("token key:",tokenKeySide);
-
-    // step 3: set daily limit
-    console.log("Start to set daily limit.")
-    const date = new Date();
-    const timestamp = Date.UTC(date.getFullYear(), date.getMonth(), date.getUTCDate(), 0, 0, 0, 0);
-    var refreshTime = timestamp  / 1000;
-    console.log(refreshTime);
-    var config = [
-        {
-           "dailyLimitId": "0x84e2d7a1b46b78b674e9c8bc819ef44376010d356db81f755ce4e56569cc28dd",
-           "refreshTime": refreshTime,
-           "defaultTokenAmount": "100000000000000000000000"
-        },
-        {
-            "dailyLimitId": "0x09fab89c0f8c9da14b697737de77d3abb4356c3deb6da1d6f049f620390bbed0",
-            "refreshTime": refreshTime,
-            "defaultTokenAmount": "100000000000000000000000"
-        },
-        {
-           "dailyLimitId": "0x854518791703abea8507f0004e9b1a8331bd5616a3cb8d7e0e5933ff581f8ffc",
-           "refreshTime": refreshTime,
-           "defaultTokenAmount": "100000000000000000000000"
-        },
-        {
-            "dailyLimitId": "0xef9639bf4102e36447cf5f1f4d67739032890f04849b64714a90e4a55dbfe689",
-            "refreshTime": refreshTime,
-            "defaultTokenAmount": "100000000000000000000000"
-        }
-    ];
-    await limiterImplementation.setDailyLimit(config);
-    // step 4: set rate limit
-    console.log("Start to set rate limit.")
-    var configs = [{
-        "bucketId": "0x84e2d7a1b46b78b674e9c8bc819ef44376010d356db81f755ce4e56569cc28dd",
-        "isEnabled": true,
-        "tokenCapacity": "10000000000000000000000",
-        "rate": "10000000000000000000000"
-      },
-      {
-        "bucketId": "0x09fab89c0f8c9da14b697737de77d3abb4356c3deb6da1d6f049f620390bbed0",
-        "isEnabled": true,
-        "tokenCapacity": "10000000000000000000000",
-        "rate": "10000000000000000000000"
-      },
-      {
-        "bucketId": "0x854518791703abea8507f0004e9b1a8331bd5616a3cb8d7e0e5933ff581f8ffc",
-        "isEnabled": true,
-        "tokenCapacity": "10000000000000000000000",
-        "rate": "10000000000000000000000"
-      },
-      {
-        "bucketId": "0xef9639bf4102e36447cf5f1f4d67739032890f04849b64714a90e4a55dbfe689",
-        "isEnabled": true,
-        "tokenCapacity": "10000000000000000000000",
-        "rate": "10000000000000000000000"
-      }
-    ];
-    await limiterImplementation.setTokenBucketConfig(configs);
-
-    // var chainIdMain = "MainChain_AELF";
-    // var chainIdSide = "SideChain_tDVW";
-    // var tokens = [{
-    //     tokenAddress:elfAddress,
-    //     chainId:chainIdMain
-    // },{
-    //     tokenAddress:wbnbAddress,
-    //     chainId:chainIdMain
-    // },{
-    //     tokenAddress:elfAddress,
-    //     chainId:chainIdSide
-    // },{
-    //     tokenAddress:wbnbAddress,
-    //     chainId:chainIdSide
-    // }];
-    // var provider="";
-    // // await bridgeInImplementation.assetsMigrator(tokens,provider);
-    // let ABI1 = [
-    //     "function assetsMigrator(tuple(address tokenAddress, string chainId)[] tokens,address provider)"
-    //     ];
-    // let iface1 = new ethers.utils.Interface(ABI1);
-    // console.log(iface1);
-
-    // var data = iface1.encodeFunctionData("assetsMigrator", [tokens,provider])
-    // console.log(data);
-
-    // var result = await multiSign.connect(managerAddress).submitTransaction(BridgeInAddress, 0, data);
-    // console.log(result)
+    var result = await multiSign.connect(managerAddress).submitTransaction(BridgeInAddress, 0, data);
+    console.log(result)
 
     // let ABI1 = [
     //     "function changeMultiSignWallet(address _wallet)"

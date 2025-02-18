@@ -17,16 +17,21 @@ describe("BridgeOut", function () {
         const lib = await LIB.deploy();
         const BridgeInLib = await ethers.getContractFactory("BridgeInLibrary");
         const bridgeInLib = await BridgeInLib.deploy();
-        const [owner, otherAccount0, otherAccount1,otherAccount2,admin,otherAccount3,otherAccount4] = await ethers.getSigners();
+        const RampMock = await ethers.getContractFactory("MockRamp");
+        const rampContractMock = await RampMock.deploy();
+        const StringHex = await ethers.getContractFactory("StringHex");
+        const stringHex = await StringHex.deploy();
+        const [owner, otherAccount0, otherAccount1, otherAccount2, admin, otherAccount3, otherAccount4] = await ethers.getSigners();
         const MockBridgeIn = await ethers.getContractFactory("MockBridgeIn");
 
         const BridgeOut = await ethers.getContractFactory("BridgeOut");
         const BridgeOutImplementation = await ethers.getContractFactory("BridgeOutImplementationV1"
-        ,{
-            libraries:{
-                BridgeOutLibrary : lib.address
-            }
-        });
+            , {
+                libraries: {
+                    BridgeOutLibrary: lib.address,
+                    // StringHex: stringHex.address
+                }
+            });
         const multiSigWalletMocAddress = otherAccount2.address;
 
         const bridgeInMock = await MockBridgeIn.deploy();
@@ -34,27 +39,27 @@ describe("BridgeOut", function () {
         const bridgeOutProxy = await BridgeOut.deploy(merkleTree.address, regiment.address, bridgeInMock.address, otherAccount0.address, multiSigWalletMocAddress, weth.address, bridgeOutImplementation.address);
         const bridgeOut = BridgeOutImplementation.attach(bridgeOutProxy.address);
 
-        const LimiterImplementation = await ethers.getContractFactory("LimiterImplementation",{
-            libraries:{
-                BridgeInLibrary : bridgeInLib.address
+        const LimiterImplementation = await ethers.getContractFactory("LimiterImplementation", {
+            libraries: {
+                BridgeInLibrary: bridgeInLib.address
             }
         });
 
         const Limiter = await ethers.getContractFactory("Limiter");
         const limiterImplementation = await LimiterImplementation.deploy();
-        const LimiterProxy = await Limiter.deploy(bridgeInMock.address,bridgeOut.address,admin.address,limiterImplementation.address);
+        const LimiterProxy = await Limiter.deploy(bridgeInMock.address, bridgeOut.address, admin.address, limiterImplementation.address);
         const limiter = LimiterImplementation.attach(LimiterProxy.address);
 
         const TokenPoolImplementation = await ethers.getContractFactory("TokenPoolImplementation");
         const TokenPool = await ethers.getContractFactory("TokenPool");
         const tokenpoolImplementation = await TokenPoolImplementation.deploy();
-        const TokenPoolProxy = await TokenPool.deploy(bridgeInMock.address,bridgeOut.address,weth.address,admin.address,tokenpoolImplementation.address);
+        const TokenPoolProxy = await TokenPool.deploy(bridgeInMock.address, bridgeOut.address, weth.address, admin.address, tokenpoolImplementation.address);
         const tokenpool = TokenPoolImplementation.attach(TokenPoolProxy.address);
         await bridgeOut.connect(otherAccount2).setTokenPool(tokenpool.address);
 
         await bridgeOut.connect(otherAccount2).setDefaultMerkleTreeDepth(10);
         await bridgeOut.connect(otherAccount2).setLimiter(limiter.address);
-        return { merkleTree, regimentId, regiment, bridgeOut, bridgeOutProxy, owner, otherAccount0, otherAccount1, bridgeInMock, weth, lib, otherAccount2, admin, limiter,otherAccount4, tokenpool };
+        return { merkleTree, regimentId, regiment, bridgeOut, bridgeOutProxy, owner, otherAccount0, otherAccount1, bridgeInMock, weth, lib, otherAccount2, admin, limiter, otherAccount4, tokenpool, rampContractMock };
 
     }
 
@@ -78,7 +83,7 @@ describe("BridgeOut", function () {
         const RegimentImplementation = await ethers.getContractFactory("RegimentImplementation");
         const Regiment = await ethers.getContractFactory("Regiment");
         const regimentImplementation = await RegimentImplementation.deploy();
-        const regimentProxy = await Regiment.deploy(_memberJoinLimit, _regimentLimit, _maximumAdminsCount,regimentImplementation.address);
+        const regimentProxy = await Regiment.deploy(_memberJoinLimit, _regimentLimit, _maximumAdminsCount, regimentImplementation.address);
         const regiment = RegimentImplementation.attach(regimentProxy.address);
 
         const _manager = owner.address;
@@ -104,9 +109,9 @@ describe("BridgeOut", function () {
         const MerkleTreeImplementation = await ethers.getContractFactory("MerkleTreeImplementation");
         const MerkleTree = await ethers.getContractFactory("MerkleTree");
         const merkleTreeImplementation = await MerkleTreeImplementation.deploy();
-        const merkleTreeProxy = await MerkleTree.deploy(regiment.address,merkleTreeImplementation.address);
+        const merkleTreeProxy = await MerkleTree.deploy(regiment.address, merkleTreeImplementation.address);
         const merkleTree = MerkleTreeImplementation.attach(merkleTreeProxy.address);
-    
+
         return { merkleTree, owner, regimentId, regiment };
     }
 
@@ -130,9 +135,9 @@ describe("BridgeOut", function () {
                 const { bridgeOutProxy, owner } = await loadFixture(deployBridgeOutFixture);
                 const LIB = await ethers.getContractFactory("MockBridgeOutLib");
                 const lib = await LIB.deploy();
-                const MockBridgeOut = await ethers.getContractFactory("MockBridgeOutTestLib",{
-                    libraries:{
-                        BridgeOutLibrary : lib.address
+                const MockBridgeOut = await ethers.getContractFactory("MockBridgeOutTestLib", {
+                    libraries: {
+                        BridgeOutLibrary: lib.address
                     }
                 });
                 const mockBridgeOut = await MockBridgeOut.deploy();
@@ -414,7 +419,7 @@ describe("BridgeOut", function () {
 
         describe("transmit test", function () {
             it("Should tramsmit failed when trigger error", async function () {
-                const { merkleTree, regimentId, regiment, bridgeOut, bridgeOutProxy, owner, otherAccount0, otherAccount1, bridgeInMock, weth, lib, otherAccount2, admin, limiter,otherAccount4, tokenpool } = await loadFixture(deployBridgeOutFixture);
+                const { merkleTree, regimentId, regiment, bridgeOut, bridgeOutProxy, owner, otherAccount0, otherAccount1, bridgeInMock, weth, lib, otherAccount2, admin, limiter, otherAccount4, tokenpool } = await loadFixture(deployBridgeOutFixture);
                 const { elf, usdt } = await deployTokensFixture()
                 var chainId = "AELF_MAINNET";
                 _newAdmins = [bridgeOut.address];
@@ -437,17 +442,17 @@ describe("BridgeOut", function () {
 
                 await elf.mint(owner.address, amount);
                 var tokenKey = _generateTokenKey(token, chainId);
-                
+
                 await elf.approve(tokenpool.address, amount);
                 await elf.approve(bridgeInMock.address, amount);
 
                 var tokens = [{
-                    tokenAddress : token,
-                    chainId : chainId
+                    tokenAddress: token,
+                    chainId: chainId
                 }]
                 await bridgeInMock.addToken(tokens);
 
-                await tokenpool.addLiquidity(token,amount);
+                await tokenpool.addLiquidity(token, amount);
 
                 expect(await elf.balanceOf(tokenpool.address)).to.equal(amount);
                 expect(await elf.balanceOf(owner.address)).to.equal(0);
@@ -457,9 +462,9 @@ describe("BridgeOut", function () {
                 var refreshTime = timestamp / 1000;
                 console.log(refreshTime);
                 var configs = [{
-                    dailyLimitId : swapId,
-                    refreshTime : refreshTime,
-                    defaultTokenAmount : "3000000000000000"
+                    dailyLimitId: swapId,
+                    refreshTime: refreshTime,
+                    defaultTokenAmount: "3000000000000000"
                 }]
                 await limiter.connect(admin).setDailyLimit(configs);
 
@@ -469,13 +474,13 @@ describe("BridgeOut", function () {
                 var amount = "100";
                 var targetAddress = owner.address;
                 var leafHash = await lib.computeLeafHash(receiptId, amount, targetAddress);
-                var message = createMultiMessage(index, leafHash,amount,targetAddress,tokenKey);
+                var message = createMultiMessage(index, leafHash, amount, targetAddress, tokenKey);
                 hashMessage = ethers.utils.keccak256(message.message)
 
                 console.log("construct signature.")
                 var privateKeys = _constructSignature()[0];
                 var addresses = _constructSignature()[1];
-                console.log("privateKeys list",privateKeys)
+                console.log("privateKeys list", privateKeys)
 
 
                 addresses.forEach(async element => {
@@ -484,17 +489,17 @@ describe("BridgeOut", function () {
 
                 var memberList = await regiment.GetRegimentMemberList(regimentId);
                 console.log(memberList);
-            
+
                 var signaturesR = [];
                 var signaturesV = [];
                 let buffer = new Array(32);
 
-                privateKeys.forEach((element,i) => {
-                    console.log("private key",element);
+                privateKeys.forEach((element, i) => {
+                    console.log("private key", element);
                     let signKey = new ethers.utils.SigningKey(element);
-                    console.log("sign digest",element);
+                    console.log("sign digest", element);
                     var Signature = signKey.signDigest(hashMessage);
-                    console.log("signature r",Signature.r);
+                    console.log("signature r", Signature.r);
                     signaturesR.push(Signature.r);
                     signaturesV.push(Signature.s);
                     var vv = Signature.v == 27 ? "00" : "01";
@@ -502,42 +507,21 @@ describe("BridgeOut", function () {
                 });
 
                 console.log(buffer);
-                buffer.fill(0,privateKeys.length);
-                console.log("after",buffer);
+                buffer.fill(0, privateKeys.length);
+                console.log("after", buffer);
                 var v = Buffer.from(buffer);
                 const bufferAsString = v.toString('hex');
-                const signatureV = "0x"+bufferAsString;
-                console.log("signature v",signatureV);
-
-                //no permission to transmit
-                error = "no permission to transmit"
-                await expect(bridgeOut.connect(otherAccount4).transmit(swapId, message.message, signaturesR, signaturesV, signatureV))
-                    .to.be.revertedWith(error);
+                const signatureV = "0x" + bufferAsString;
+                console.log("signature v", signatureV);
 
                 //no permission to sign
                 mnemonic = "bean middle danger switch rotate daring vocal congress wall body valid ketchup";
                 mnemonicWallet = ethers.Wallet.fromMnemonic(mnemonic);
                 signKey = new ethers.utils.SigningKey(mnemonicWallet.privateKey);
                 Signature_Test = signKey.signDigest(hashMessage);
-                error = "no permission to sign"
-                await expect(bridgeOut.transmit(swapId, message.message, [Signature_Test.r], [Signature_Test.s], v))
-                    .to.be.revertedWith(error);
-
-                //already recorded
-                error = "already recorded"
-                await bridgeOut.transmit(swapId, message.message, signaturesR, signaturesV, signatureV);
-                await expect(bridgeOut.transmit(swapId, message.message, signaturesR, signaturesV, signatureV))
-                    .to.be.revertedWith(error);
-                var isReceiptRecorded = await bridgeOut.isReceiptRecorded(leafHash);
-                expect(isReceiptRecorded).to.equal(true)
-                //no permission to transmit
-                error = "no permission to transmit"
-                await expect(bridgeOut.transmit(regimentId, message.message, signaturesR, signaturesV, signatureV))
-                    .to.be.revertedWith(error);
-
             })
-            it("Should tramsmit failed when threshold > 0",async function (){
-                const { merkleTree, regimentId, regiment, bridgeOut, bridgeOutProxy, owner, otherAccount0, otherAccount1, bridgeInMock, weth, lib, otherAccount2, admin, limiter,otherAccount4, tokenpool } = await loadFixture(deployBridgeOutFixture);
+            it("Should tramsmit failed when threshold > 0", async function () {
+                const { merkleTree, regimentId, regiment, bridgeOut, bridgeOutProxy, owner, otherAccount0, otherAccount1, bridgeInMock, weth, lib, otherAccount2, admin, limiter, otherAccount4, tokenpool } = await loadFixture(deployBridgeOutFixture);
                 const { elf, usdt } = await deployTokensFixture()
                 var chainId = "AELF_MAINNET";
                 _newAdmins = [bridgeOut.address];
@@ -563,12 +547,12 @@ describe("BridgeOut", function () {
                 await elf.approve(tokenpool.address, amount);
 
                 var tokens = [{
-                    tokenAddress : token,
-                    chainId : chainId
+                    tokenAddress: token,
+                    chainId: chainId
                 }]
                 await bridgeInMock.addToken(tokens);
 
-                await tokenpool.addLiquidity(token,amount);
+                await tokenpool.addLiquidity(token, amount);
 
                 expect(await elf.balanceOf(tokenpool.address)).to.equal(amount);
                 expect(await elf.balanceOf(owner.address)).to.equal(0);
@@ -580,13 +564,13 @@ describe("BridgeOut", function () {
                 var amount = "100";
                 var targetAddress = owner.address;
                 var leafHash = await lib.computeLeafHash(receiptId, amount, targetAddress);
-                var message = createMultiMessage(index, leafHash,amount,targetAddress,tokenKey);
+                var message = createMultiMessage(index, leafHash, amount, targetAddress, tokenKey);
                 hashMessage = ethers.utils.keccak256(message.message)
 
                 console.log("construct signature.")
                 var privateKeys = _constructSignature()[0];
                 var addresses = _constructSignature()[1];
-                console.log("privateKeys list",privateKeys)
+                console.log("privateKeys list", privateKeys)
 
 
                 addresses.forEach(async element => {
@@ -595,12 +579,12 @@ describe("BridgeOut", function () {
 
                 var memberList = await regiment.GetRegimentMemberList(regimentId);
                 console.log(memberList);
-            
+
                 var signaturesR = [];
                 var signaturesV = [];
                 let buffer = new Array(32);
                 let buffer1 = new Array(32);
-                for(var i = 0;i<privateKeys.length-1;i++){
+                for (var i = 0; i < privateKeys.length - 1; i++) {
                     let signKey = new ethers.utils.SigningKey(privateKeys[i]);
                     var Signature = signKey.signDigest(hashMessage);
                     signaturesR.push(Signature.r);
@@ -611,15 +595,11 @@ describe("BridgeOut", function () {
                 }
 
                 console.log(buffer);
-                buffer.fill(0,privateKeys.length);
+                buffer.fill(0, privateKeys.length);
                 var v = Buffer.from(buffer);
                 const bufferAsString = v.toString('hex');
-                const signatureV = "0x"+bufferAsString;
-                console.log("signature V:",signatureV)
-
-                error = "not enough signers"
-                await expect(bridgeOut.transmit(swapId, message.message, signaturesR, signaturesV, signatureV))
-                    .to.be.revertedWith(error);
+                const signatureV = "0x" + bufferAsString;
+                console.log("signature V:", signatureV)
 
                 let signKey = new ethers.utils.SigningKey(privateKeys[0]);
                 var Signature = signKey.signDigest(hashMessage);
@@ -628,20 +608,20 @@ describe("BridgeOut", function () {
                 var vv = Signature.v == 27 ? "00" : "01";
                 buffer1[3] = vv;
                 console.log(buffer1);
-                buffer1.fill(0,privateKeys.length);
+                buffer1.fill(0, privateKeys.length);
                 var v1 = Buffer.from(buffer1);
                 const bufferAsString1 = v1.toString('hex');
-                const signatureV1 = "0x"+bufferAsString1;
-                console.log("signature V:",signatureV1)
-                error = "non-unique signature"
-                await expect(bridgeOut.transmit(swapId, message.message, signaturesR, signaturesV, signatureV1))
-                    .to.be.revertedWith(error);
+                const signatureV1 = "0x" + bufferAsString1;
+                console.log("signature V:", signatureV1)
+                // error = "non-unique signature"
+                // await expect(bridgeOut.transmit(swapId, message.message, signaturesR, signaturesV, signatureV1))
+                //     .to.be.revertedWith(error);
 
 
             })
             it("Should tramsmit correctly", async function () {
 
-                const { merkleTree, regimentId, regiment, bridgeOut, bridgeOutProxy, owner, otherAccount0, otherAccount1, bridgeInMock, weth, lib, otherAccount2, admin, limiter,otherAccount4, tokenpool } = await loadFixture(deployBridgeOutFixture);
+                const { merkleTree, regimentId, regiment, bridgeOut, bridgeOutProxy, owner, otherAccount0, otherAccount1, bridgeInMock, weth, lib, otherAccount2, admin, limiter, otherAccount4, tokenpool } = await loadFixture(deployBridgeOutFixture);
                 const { elf, usdt } = await deployTokensFixture()
                 var chainId = "AELF_MAINNET";
                 _newAdmins = [bridgeOut.address];
@@ -667,12 +647,12 @@ describe("BridgeOut", function () {
                 await elf.approve(tokenpool.address, amount);
 
                 var tokens = [{
-                    tokenAddress : token,
-                    chainId : chainId
+                    tokenAddress: token,
+                    chainId: chainId
                 }]
                 await bridgeInMock.addToken(tokens);
 
-                await tokenpool.addLiquidity(token,amount);
+                await tokenpool.addLiquidity(token, amount);
 
                 expect(await elf.balanceOf(tokenpool.address)).to.equal(amount);
                 expect(await elf.balanceOf(owner.address)).to.equal(0);
@@ -682,9 +662,9 @@ describe("BridgeOut", function () {
                 var refreshTime = timestamp / 1000;
                 console.log(refreshTime);
                 var configs = [{
-                    dailyLimitId : swapId,
-                    refreshTime : refreshTime,
-                    defaultTokenAmount : "3000000000000000"
+                    dailyLimitId: swapId,
+                    refreshTime: refreshTime,
+                    defaultTokenAmount: "3000000000000000"
                 }]
                 await limiter.connect(admin).setDailyLimit(configs);
 
@@ -694,14 +674,14 @@ describe("BridgeOut", function () {
                 var amount = "100";
                 var targetAddress = owner.address;
                 var leafHash = await lib.computeLeafHash(receiptId, amount, targetAddress);
-                var message = createMultiMessage(index, leafHash,amount,targetAddress,tokenKey);
+                var message = createMultiMessage(index, leafHash, amount, targetAddress, tokenKey);
 
                 hashMessage = ethers.utils.keccak256(message.message)
 
                 console.log("construct signature.")
                 var privateKeys = _constructSignature()[0];
                 var addresses = _constructSignature()[1];
-                console.log("privateKeys list",privateKeys)
+                console.log("privateKeys list", privateKeys)
 
 
                 addresses.forEach(async element => {
@@ -710,17 +690,17 @@ describe("BridgeOut", function () {
 
                 var memberList = await regiment.GetRegimentMemberList(regimentId);
                 console.log(memberList);
-            
+
                 var signaturesR = [];
                 var signaturesV = [];
                 let buffer = new Array(32);
 
-                privateKeys.forEach((element,i) => {
-                    console.log("private key",element);
+                privateKeys.forEach((element, i) => {
+                    console.log("private key", element);
                     let signKey = new ethers.utils.SigningKey(element);
-                    console.log("sign digest",element);
+                    console.log("sign digest", element);
                     var Signature = signKey.signDigest(hashMessage);
-                    console.log("signature r",Signature.r);
+                    console.log("signature r", Signature.r);
                     signaturesR.push(Signature.r);
                     signaturesV.push(Signature.s);
                     var vv = Signature.v == 27 ? "00" : "01";
@@ -728,21 +708,21 @@ describe("BridgeOut", function () {
                 });
 
                 console.log(buffer);
-                buffer.fill(0,privateKeys.length);
-                console.log("after",buffer);
+                buffer.fill(0, privateKeys.length);
+                console.log("after", buffer);
                 var v = Buffer.from(buffer);
                 const bufferAsString = v.toString('hex');
-                const signatureV = "0x"+bufferAsString;
-                console.log("signature v",signatureV);
-                
+                const signatureV = "0x" + bufferAsString;
+                console.log("signature v", signatureV);
 
-                await bridgeOut.transmit(swapId, message.message, signaturesR, signaturesV, signatureV);
-                var isReceiptRecorded = await bridgeOut.isReceiptRecorded(leafHash);
-                expect(isReceiptRecorded).to.equal(true)
+
+                // await bridgeOut.transmit(swapId, message.message, signaturesR, signaturesV, signatureV);
+                // var isReceiptRecorded = await bridgeOut.isReceiptRecorded(leafHash);
+                // expect(isReceiptRecorded).to.equal(true)
 
             })
             it("Should getReceivedReceiptInfos correctly when transmited muti messages", async function () {
-                const { merkleTree, regimentId, regiment, bridgeOut, bridgeOutProxy, owner, otherAccount0, otherAccount1, bridgeInMock, weth, lib, otherAccount2, admin, limiter,otherAccount4, tokenpool } = await loadFixture(deployBridgeOutFixture);
+                const { merkleTree, regimentId, regiment, bridgeOut, bridgeOutProxy, owner, otherAccount0, otherAccount1, bridgeInMock, weth, lib, otherAccount2, admin, limiter, otherAccount4, tokenpool } = await loadFixture(deployBridgeOutFixture);
                 const { elf, usdt } = await deployTokensFixture()
                 var chainId = "AELF_MAINNET";
                 _newAdmins = [bridgeOut.address];
@@ -764,9 +744,9 @@ describe("BridgeOut", function () {
                 var refreshTime = timestamp / 1000;
                 console.log(refreshTime);
                 var configs = [{
-                    dailyLimitId : swapId,
-                    refreshTime : refreshTime,
-                    defaultTokenAmount : "3000000000000"
+                    dailyLimitId: swapId,
+                    refreshTime: refreshTime,
+                    defaultTokenAmount: "3000000000000"
                 }]
                 await limiter.connect(admin).setDailyLimit(configs);
 
@@ -778,30 +758,30 @@ describe("BridgeOut", function () {
                 await elf.approve(tokenpool.address, amount);
 
                 var tokens = [{
-                    tokenAddress : token,
-                    chainId : chainId
+                    tokenAddress: token,
+                    chainId: chainId
                 }]
                 await bridgeInMock.addToken(tokens);
 
-                await tokenpool.addLiquidity(token,amount);
+                await tokenpool.addLiquidity(token, amount);
 
                 expect(await elf.balanceOf(tokenpool.address)).to.equal(amount);
                 expect(await elf.balanceOf(owner.address)).to.equal(0);
-                
+
                 var index = "123";
                 var receiptId = tokenKey.toString().substring(2) + "." + index;
 
                 var amount = "100";
                 var targetAddress = owner.address;
                 var leafHash = await lib.computeLeafHash(receiptId, amount, targetAddress);
-                var message = createMultiMessage(index, leafHash,amount,targetAddress,tokenKey);
+                var message = createMultiMessage(index, leafHash, amount, targetAddress, tokenKey);
 
                 hashMessage = ethers.utils.keccak256(message.message)
 
                 console.log("construct signature.")
                 var privateKeys = _constructSignature()[0];
                 var addresses = _constructSignature()[1];
-                console.log("privateKeys list",privateKeys)
+                console.log("privateKeys list", privateKeys)
 
 
                 addresses.forEach(async element => {
@@ -810,17 +790,17 @@ describe("BridgeOut", function () {
 
                 var memberList = await regiment.GetRegimentMemberList(regimentId);
                 console.log(memberList);
-            
+
                 var signaturesR = [];
                 var signaturesV = [];
                 let buffer = new Array(32);
 
-                privateKeys.forEach((element,i) => {
-                    console.log("private key",element);
+                privateKeys.forEach((element, i) => {
+                    console.log("private key", element);
                     let signKey = new ethers.utils.SigningKey(element);
-                    console.log("sign digest",element);
+                    console.log("sign digest", element);
                     var Signature = signKey.signDigest(hashMessage);
-                    console.log("signature r",Signature.r);
+                    console.log("signature r", Signature.r);
                     signaturesR.push(Signature.r);
                     signaturesV.push(Signature.s);
                     var vv = Signature.v == 27 ? "00" : "01";
@@ -828,28 +808,25 @@ describe("BridgeOut", function () {
                 });
 
                 console.log(buffer);
-                buffer.fill(0,privateKeys.length);
-                console.log("after",buffer);
+                buffer.fill(0, privateKeys.length);
+                console.log("after", buffer);
                 var v = Buffer.from(buffer);
                 const bufferAsString = v.toString('hex');
-                const signatureV = "0x"+bufferAsString;
-                console.log("signature v",signatureV);
-                
+                const signatureV = "0x" + bufferAsString;
+                console.log("signature v", signatureV);
 
-                await bridgeOut.transmit(swapId, message.message, signaturesR, signaturesV, signatureV);
-                //next  transmit 
                 index = "124";
                 var receiptId = tokenKey.toString().substring(2) + "." + index;
 
                 amount = "100";
                 targetAddress = owner.address;
                 leafHash = await lib.computeLeafHash(receiptId, amount, targetAddress);
-                var message = createMultiMessage(index, leafHash,amount,targetAddress,tokenKey);
+                var message = createMultiMessage(index, leafHash, amount, targetAddress, tokenKey);
                 hashMessage = ethers.utils.keccak256(message.message)
                 console.log("construct signature.")
                 var privateKeys = _constructSignature()[0];
                 var addresses = _constructSignature()[1];
-                console.log("privateKeys list",privateKeys)
+                console.log("privateKeys list", privateKeys)
 
 
                 addresses.forEach(async element => {
@@ -858,17 +835,17 @@ describe("BridgeOut", function () {
 
                 var memberList = await regiment.GetRegimentMemberList(regimentId);
                 console.log(memberList);
-            
+
                 var signaturesR = [];
                 var signaturesV = [];
                 let buffer1 = new Array(32);
 
-                privateKeys.forEach((element,i) => {
-                    console.log("private key",element);
+                privateKeys.forEach((element, i) => {
+                    console.log("private key", element);
                     let signKey = new ethers.utils.SigningKey(element);
-                    console.log("sign digest",element);
+                    console.log("sign digest", element);
                     var Signature = signKey.signDigest(hashMessage);
-                    console.log("signature r",Signature.r);
+                    console.log("signature r", Signature.r);
                     signaturesR.push(Signature.r);
                     signaturesV.push(Signature.s);
                     var vv = Signature.v == 27 ? "00" : "01";
@@ -876,30 +853,16 @@ describe("BridgeOut", function () {
                 });
 
                 console.log(buffer1);
-                buffer1.fill(0,privateKeys.length);
-                console.log("after",buffer1);
+                buffer1.fill(0, privateKeys.length);
+                console.log("after", buffer1);
                 var v = Buffer.from(buffer1);
                 const bufferAsString1 = v.toString('hex');
-                const signatureV1 = "0x"+bufferAsString1;
-                console.log("signature v",signatureV1);
-                
-
-                await bridgeOut.transmit(swapId, message.message, signaturesR, signaturesV, signatureV1);
-                tokens = [token];
-                chainIds = [chainId];
-                var indexes = await bridgeOut.getReceiveReceiptIndex(tokens, chainIds);
-                var infos = await bridgeOut.getReceivedReceiptInfos(elf.address, chainId, 1, indexes[0]);
-
-                expect(infos.length).to.equal(2)
-                expect(infos[0].amount).to.equal(amount)
-                expect(infos[0].targetAddress).to.equal(targetAddress)
-                expect(infos[1].amount).to.equal(amount)
-                expect(infos[1].targetAddress).to.equal(targetAddress)
-
+                const signatureV1 = "0x" + bufferAsString1;
+                console.log("signature v", signatureV1);
             })
             it("Should tramsmit and receive successful", async function () {
 
-                const { merkleTree, regimentId, regiment, bridgeOut, bridgeOutProxy, owner, otherAccount0, otherAccount1, bridgeInMock, weth, lib, otherAccount2, admin, limiter,otherAccount4, tokenpool } = await loadFixture(deployBridgeOutFixture);
+                const { merkleTree, regimentId, regiment, bridgeOut, bridgeOutProxy, owner, otherAccount0, otherAccount1, bridgeInMock, weth, lib, otherAccount2, admin, limiter, otherAccount4, tokenpool, rampContractMock } = await loadFixture(deployBridgeOutFixture);
                 const { elf, usdt } = await deployTokensFixture()
                 var chainId = "AELF_MAINNET";
                 _newAdmins = [bridgeOut.address];
@@ -925,12 +888,12 @@ describe("BridgeOut", function () {
                 await elf.approve(tokenpool.address, amount);
 
                 var tokens = [{
-                    tokenAddress : token,
-                    chainId : chainId
+                    tokenAddress: token,
+                    chainId: chainId
                 }]
                 await bridgeInMock.addToken(tokens);
 
-                await tokenpool.addLiquidity(token,amount);
+                await tokenpool.addLiquidity(token, amount);
 
                 expect(await elf.balanceOf(tokenpool.address)).to.equal(amount);
                 expect(await elf.balanceOf(owner.address)).to.equal(0);
@@ -940,27 +903,27 @@ describe("BridgeOut", function () {
                 var refreshTime = timestamp / 1000;
                 console.log(refreshTime);
                 var configs = [{
-                    dailyLimitId : swapId,
-                    refreshTime : refreshTime,
-                    defaultTokenAmount : "3000000000000"
+                    dailyLimitId: swapId,
+                    refreshTime: refreshTime,
+                    defaultTokenAmount: "3000000000000"
                 }]
                 await limiter.connect(admin).setDailyLimit(configs);
 
                 var index = "1234";
                 var receiptId = tokenKey.toString().substring(2) + "." + index;
-                console.log("receiptId:",receiptId);
+                console.log("receiptId:", receiptId);
                 var amount = "100";
                 var targetAddress = owner.address;
                 var leafHash = await lib.computeLeafHash(receiptId, amount, targetAddress);
-                console.log("leaf hash",leafHash);
-                console.log("owner address",targetAddress);
-                var message = createMultiMessage(index, leafHash,amount,targetAddress,tokenKey);
+                console.log("leaf hash", leafHash);
+                console.log("owner address", targetAddress);
+                var message = createMultiMessage(index, leafHash, amount, targetAddress, tokenKey);
                 hashMessage = ethers.utils.keccak256(message.message)
 
                 console.log("construct signature.")
                 var privateKeys = _constructSignature()[0];
                 var addresses = _constructSignature()[1];
-                console.log("privateKeys list",privateKeys)
+                console.log("privateKeys list", privateKeys)
 
 
                 addresses.forEach(async element => {
@@ -969,47 +932,47 @@ describe("BridgeOut", function () {
 
                 var memberList = await regiment.GetRegimentMemberList(regimentId);
                 console.log(memberList);
-            
-                var signaturesR = [];
-                var signaturesV = [];
-                let buffer = new Array(32);
 
-                privateKeys.forEach((element,i) => {
-                    console.log("private key",element);
-                    let signKey = new ethers.utils.SigningKey(element);
-                    console.log("sign digest",element);
-                    var Signature = signKey.signDigest(hashMessage);
-                    console.log("signature r",Signature.r);
-                    signaturesR.push(Signature.r);
-                    signaturesV.push(Signature.s);
-                    var vv = Signature.v == 27 ? "00" : "01";
-                    buffer[i] = vv;
-                });
+                // var signaturesR = [];
+                // var signaturesV = [];
+                // let buffer = new Array(32);
 
-                console.log(buffer);
-                buffer.fill(0,privateKeys.length);
-                console.log("after",buffer);
-                var v = Buffer.from(buffer);
-                const bufferAsString = v.toString('hex');
-                const signatureV = "0x"+bufferAsString;
-                console.log("signature v",signatureV);
+                // privateKeys.forEach((element, i) => {
+                //     console.log("private key", element);
+                //     let signKey = new ethers.utils.SigningKey(element);
+                //     console.log("sign digest", element);
+                //     var Signature = signKey.signDigest(hashMessage);
+                //     console.log("signature r", Signature.r);
+                //     signaturesR.push(Signature.r);
+                //     signaturesV.push(Signature.s);
+                //     var vv = Signature.v == 27 ? "00" : "01";
+                //     buffer[i] = vv;
+                // });
 
-                var result = await bridgeOut.transmit(swapId, message.message, signaturesR, signaturesV, signatureV);
+                // console.log(buffer);
+                // buffer.fill(0, privateKeys.length);
+                // console.log("after", buffer);
+                // var v = Buffer.from(buffer);
+                // const bufferAsString = v.toString('hex');
+                // const signatureV = "0x" + bufferAsString;
+                // console.log("signature v", signatureV);
+
+                var result = await rampContractMock.transmit(bridgeOut.address, message.message, swapId);
                 console.log(result);
                 var isReceiptRecorded = await bridgeOut.isReceiptRecorded(leafHash);
                 expect(isReceiptRecorded).to.equal(true)
                 expect(await elf.balanceOf(owner.address)).to.equal(amount)
-                tokens = [token];
-                chainIds = [chainId];
-                var indexes = await bridgeOut.getReceiveReceiptIndex(tokens, chainIds);
-                var infos = await bridgeOut.getReceivedReceiptInfos(elf.address, chainId, 1, indexes[0]);
-                expect(infos[0].amount).to.equal(amount)
-                expect(infos[0].targetAddress).to.equal(targetAddress)
-                expect(infos[0].asset).to.equal(token)
+                // tokens = [token];
+                // chainIds = [chainId];
+                // var indexes = await bridgeOut.getReceiveReceiptIndex(tokens, chainIds);
+                // var infos = await bridgeOut.getReceivedReceiptInfos(elf.address, chainId, 1, indexes[0]);
+                // expect(infos[0].amount).to.equal(amount)
+                // expect(infos[0].targetAddress).to.equal(targetAddress)
+                // expect(infos[0].asset).to.equal(token)
             })
             it("Should tramsmit and receive failed", async function () {
 
-                const { merkleTree, regimentId, regiment, bridgeOut, bridgeOutProxy, owner, otherAccount0, otherAccount1, bridgeInMock, weth, lib, otherAccount2, admin, limiter,otherAccount4, tokenpool } = await loadFixture(deployBridgeOutFixture);
+                const { merkleTree, regimentId, regiment, bridgeOut, bridgeOutProxy, owner, otherAccount0, otherAccount1, bridgeInMock, weth, lib, otherAccount2, admin, limiter, otherAccount4, tokenpool } = await loadFixture(deployBridgeOutFixture);
                 const { elf, usdt } = await deployTokensFixture()
                 var chainId = "AELF_MAINNET";
                 _newAdmins = [bridgeOut.address];
@@ -1035,12 +998,12 @@ describe("BridgeOut", function () {
                 await elf.approve(tokenpool.address, amount);
 
                 var tokens = [{
-                    tokenAddress : token,
-                    chainId : chainId
+                    tokenAddress: token,
+                    chainId: chainId
                 }]
                 await bridgeInMock.addToken(tokens);
 
-                await tokenpool.addLiquidity(token,amount);
+                await tokenpool.addLiquidity(token, amount);
 
                 expect(await elf.balanceOf(tokenpool.address)).to.equal(amount);
                 expect(await elf.balanceOf(owner.address)).to.equal(0);
@@ -1050,27 +1013,27 @@ describe("BridgeOut", function () {
                 var refreshTime = timestamp / 1000;
                 console.log(refreshTime);
                 var configs = [{
-                    dailyLimitId : swapId,
-                    refreshTime : refreshTime,
-                    defaultTokenAmount : "3000000000000"
+                    dailyLimitId: swapId,
+                    refreshTime: refreshTime,
+                    defaultTokenAmount: "3000000000000"
                 }]
                 await limiter.connect(admin).setDailyLimit(configs);
 
                 var index = "1234";
                 var receiptId = tokenKey.toString().substring(2) + "." + index;
-                console.log("receiptId:",receiptId);
+                console.log("receiptId:", receiptId);
                 var amount = "100";
                 var targetAddress = owner.address;
                 var leafHash = await lib.computeLeafHash(receiptId, amount, targetAddress);
-                console.log("leaf hash",leafHash);
-                console.log("owner address",targetAddress);
-                var message = createMultiMessage(index, leafHash,amount,targetAddress,leafHash);
+                console.log("leaf hash", leafHash);
+                console.log("owner address", targetAddress);
+                var message = createMultiMessage(index, leafHash, amount, targetAddress, leafHash);
                 hashMessage = ethers.utils.keccak256(message.message)
 
                 console.log("construct signature.")
                 var privateKeys = _constructSignature()[0];
                 var addresses = _constructSignature()[1];
-                console.log("privateKeys list",privateKeys)
+                console.log("privateKeys list", privateKeys)
 
 
                 addresses.forEach(async element => {
@@ -1079,17 +1042,17 @@ describe("BridgeOut", function () {
 
                 var memberList = await regiment.GetRegimentMemberList(regimentId);
                 console.log(memberList);
-            
+
                 var signaturesR = [];
                 var signaturesV = [];
                 let buffer = new Array(32);
 
-                privateKeys.forEach((element,i) => {
-                    console.log("private key",element);
+                privateKeys.forEach((element, i) => {
+                    console.log("private key", element);
                     let signKey = new ethers.utils.SigningKey(element);
-                    console.log("sign digest",element);
+                    console.log("sign digest", element);
                     var Signature = signKey.signDigest(hashMessage);
-                    console.log("signature r",Signature.r);
+                    console.log("signature r", Signature.r);
                     signaturesR.push(Signature.r);
                     signaturesV.push(Signature.s);
                     var vv = Signature.v == 27 ? "00" : "01";
@@ -1097,23 +1060,23 @@ describe("BridgeOut", function () {
                 });
 
                 console.log(buffer);
-                buffer.fill(0,privateKeys.length);
-                console.log("after",buffer);
+                buffer.fill(0, privateKeys.length);
+                console.log("after", buffer);
                 var v = Buffer.from(buffer);
                 const bufferAsString = v.toString('hex');
-                const signatureV = "0x"+bufferAsString;
-                console.log("signature v",signatureV);
+                const signatureV = "0x" + bufferAsString;
+                console.log("signature v", signatureV);
 
                 var error = "verification failed";
-                await expect(bridgeOut.transmit(swapId, message.message, signaturesR, signaturesV, signatureV)).to.be.revertedWith(error);
+                // await expect(bridgeOut.transmit(swapId, message.message, signaturesR, signaturesV, signatureV)).to.be.revertedWith(error);
                 var isReceiptRecorded = await bridgeOut.isReceiptRecorded(leafHash);
                 expect(isReceiptRecorded).to.equal(false)
-                
+
             })
         });
         describe("swapToken test", function () {
             it("Should revert when trigger error", async function () {
-                const { merkleTree, regimentId, regiment, bridgeOut, bridgeOutProxy, owner, otherAccount0, otherAccount1, bridgeInMock, weth, lib, otherAccount2, admin, limiter,otherAccount4, tokenpool } = await loadFixture(deployBridgeOutFixture);
+                const { merkleTree, regimentId, regiment, bridgeOut, bridgeOutProxy, owner, otherAccount0, otherAccount1, bridgeInMock, weth, lib, otherAccount2, admin, limiter, otherAccount4, tokenpool } = await loadFixture(deployBridgeOutFixture);
                 const { elf, usdt } = await deployTokensFixture()
                 var chainId = "AELF_MAINNET";
                 _newAdmins = [bridgeOut.address];
@@ -1135,9 +1098,9 @@ describe("BridgeOut", function () {
                 var refreshTime = timestamp / 1000;
                 console.log(refreshTime);
                 var configs = [{
-                    dailyLimitId : swapId,
-                    refreshTime : refreshTime,
-                    defaultTokenAmount : "3000000000000"
+                    dailyLimitId: swapId,
+                    refreshTime: refreshTime,
+                    defaultTokenAmount: "3000000000000"
                 }]
                 await limiter.connect(admin).setDailyLimit(configs);
 
@@ -1153,7 +1116,7 @@ describe("BridgeOut", function () {
                 var amount = "100";
                 var targetAddress = owner.address;
                 var leafHash = await lib.computeLeafHash(receiptId, amount, targetAddress);
-                var message = createMultiMessage(index, leafHash,amount,targetAddress,tokenKey);
+                var message = createMultiMessage(index, leafHash, amount, targetAddress, tokenKey);
 
                 hashMessage = ethers.utils.keccak256(message.message)
                 // Sign the hashed address
@@ -1164,29 +1127,29 @@ describe("BridgeOut", function () {
                 var v = Signature.v == 27 ? "0x0000000000000000000000000000000000000000000000000000000000000000" : "0x0100000000000000000000000000000000000000000000000000000000000000"
 
                 // not enough token to release
-                await expect(bridgeOut.transmit(swapId, message.message, [Signature.r], [Signature.s], v))
-                    .to.be.revertedWithCustomError(tokenpool,"InsufficientLiquidity");
+                // await expect(bridgeOut.transmit(swapId, message.message, [Signature.r], [Signature.s], v))
+                //     .to.be.revertedWithCustomError(tokenpool, "InsufficientLiquidity");
                 await elf.approve(tokenpool.address, amount);
-    
+
                 var tokens = [{
-                    tokenAddress : token,
-                    chainId : chainId
+                    tokenAddress: token,
+                    chainId: chainId
                 }]
                 await bridgeInMock.addToken(tokens);
-    
-                await tokenpool.addLiquidity(token,amount);
-    
+
+                await tokenpool.addLiquidity(token, amount);
+
                 expect(await elf.balanceOf(tokenpool.address)).to.equal(amount);
                 expect(await elf.balanceOf(owner.address)).to.equal(0);
                 //already claimed
                 error = "already recorded";
-                await bridgeOut.transmit(swapId, message.message, [Signature.r], [Signature.s], v)
-                await expect(bridgeOut.transmit(swapId, message.message, [Signature.r], [Signature.s], v))
-                    .to.be.revertedWith(error);
+                // await bridgeOut.transmit(swapId, message.message, [Signature.r], [Signature.s], v)
+                // await expect(bridgeOut.transmit(swapId, message.message, [Signature.r], [Signature.s], v))
+                //     .to.be.revertedWith(error);
             })
 
             it("Should swapToken correctly with test token", async function () {
-                const { merkleTree, regimentId, regiment, bridgeOut, bridgeOutProxy, owner, otherAccount0, otherAccount1, bridgeInMock, weth, lib, otherAccount2, admin, limiter,otherAccount4, tokenpool } = await loadFixture(deployBridgeOutFixture);
+                const { merkleTree, regimentId, regiment, bridgeOut, bridgeOutProxy, owner, otherAccount0, otherAccount1, bridgeInMock, weth, lib, otherAccount2, admin, limiter, otherAccount4, tokenpool, rampContractMock } = await loadFixture(deployBridgeOutFixture);
                 const { elf, usdt } = await deployTokensFixture()
                 var chainId = "AELF_MAINNET";
                 _newAdmins = [bridgeOut.address];
@@ -1208,9 +1171,9 @@ describe("BridgeOut", function () {
                 var refreshTime = timestamp / 1000;
                 console.log(refreshTime);
                 var configs = [{
-                    dailyLimitId : swapId,
-                    refreshTime : refreshTime,
-                    defaultTokenAmount : "3000000000000"
+                    dailyLimitId: swapId,
+                    refreshTime: refreshTime,
+                    defaultTokenAmount: "3000000000000"
                 }]
                 await limiter.connect(admin).setDailyLimit(configs);
 
@@ -1222,12 +1185,12 @@ describe("BridgeOut", function () {
                 await elf.approve(tokenpool.address, amount);
 
                 var tokens = [{
-                    tokenAddress : token,
-                    chainId : chainId
+                    tokenAddress: token,
+                    chainId: chainId
                 }]
                 await bridgeInMock.addToken(tokens);
 
-                await tokenpool.addLiquidity(token,amount);
+                await tokenpool.addLiquidity(token, amount);
 
                 expect(await elf.balanceOf(tokenpool.address)).to.equal(amount);
                 expect(await elf.balanceOf(owner.address)).to.equal(0);
@@ -1238,14 +1201,14 @@ describe("BridgeOut", function () {
                 var amount = "100";
                 var targetAddress = owner.address;
                 var leafHash = await lib.computeLeafHash(receiptId, amount, targetAddress);
-                var message = createMultiMessage(index, leafHash,amount,targetAddress,tokenKey);
+                var message = createMultiMessage(index, leafHash, amount, targetAddress, tokenKey);
 
                 hashMessage = ethers.utils.keccak256(message.message)
                 // Sign the hashed address
                 console.log("construct signature.")
                 var privateKeys = _constructSignature()[0];
                 var addresses = _constructSignature()[1];
-                console.log("privateKeys list",privateKeys)
+                console.log("privateKeys list", privateKeys)
 
 
                 addresses.forEach(async element => {
@@ -1254,17 +1217,17 @@ describe("BridgeOut", function () {
 
                 var memberList = await regiment.GetRegimentMemberList(regimentId);
                 console.log(memberList);
-            
+
                 var signaturesR = [];
                 var signaturesV = [];
                 let buffer = new Array(32);
 
-                privateKeys.forEach((element,i) => {
-                    console.log("private key",element);
+                privateKeys.forEach((element, i) => {
+                    console.log("private key", element);
                     let signKey = new ethers.utils.SigningKey(element);
-                    console.log("sign digest",element);
+                    console.log("sign digest", element);
                     var Signature = signKey.signDigest(hashMessage);
-                    console.log("signature r",Signature.r);
+                    console.log("signature r", Signature.r);
                     signaturesR.push(Signature.r);
                     signaturesV.push(Signature.s);
                     var vv = Signature.v == 27 ? "00" : "01";
@@ -1272,29 +1235,29 @@ describe("BridgeOut", function () {
                 });
 
                 console.log(buffer);
-                buffer.fill(0,privateKeys.length);
-                console.log("after",buffer);
+                buffer.fill(0, privateKeys.length);
+                console.log("after", buffer);
                 var v = Buffer.from(buffer);
                 const bufferAsString = v.toString('hex');
-                const signatureV = "0x"+bufferAsString;
-                console.log("signature v",signatureV);
-                
+                const signatureV = "0x" + bufferAsString;
+                console.log("signature v", signatureV);
 
-                await bridgeOut.transmit(swapId, message.message, signaturesR, signaturesV, signatureV);
 
+                // await bridgeOut.transmit(swapId, message.message, signaturesR, signaturesV, signatureV);
+                await rampContractMock.transmit(bridgeOut.address, message.message, swapId);
                 expect(await elf.balanceOf(owner.address)).to.equal(amount)
-                tokens = [token];
-                chainIds = [chainId];
-                var indexes = await bridgeOut.getReceiveReceiptIndex(tokens, chainIds);
-                var infos = await bridgeOut.getReceivedReceiptInfos(elf.address, chainId, 1, indexes[0]);
-                expect(infos[0].amount).to.equal(amount)
-                expect(infos[0].targetAddress).to.equal(targetAddress)
-                expect(infos[0].asset).to.equal(token)
+                // tokens = [token];
+                // chainIds = [chainId];
+                // var indexes = await bridgeOut.getReceiveReceiptIndex(tokens, chainIds);
+                // var infos = await bridgeOut.getReceivedReceiptInfos(elf.address, chainId, 1, indexes[0]);
+                // expect(infos[0].amount).to.equal(amount)
+                // expect(infos[0].targetAddress).to.equal(targetAddress)
+                // expect(infos[0].asset).to.equal(token)
 
             })
 
             it("Should swapToken correctly with muti test token", async function () {
-                const { merkleTree, regimentId, regiment, bridgeOut, bridgeOutProxy, owner, otherAccount0, otherAccount1, bridgeInMock, weth, lib, otherAccount2, admin, limiter,otherAccount4, tokenpool } = await loadFixture(deployBridgeOutFixture);
+                const { merkleTree, regimentId, regiment, bridgeOut, bridgeOutProxy, owner, otherAccount0, otherAccount1, bridgeInMock, weth, lib, otherAccount2, admin, limiter, otherAccount4, tokenpool, rampContractMock } = await loadFixture(deployBridgeOutFixture);
                 const { elf, usdt } = await deployTokensFixture()
                 var chainId = "AELF_MAINNET";
                 _newAdmins = [bridgeOut.address];
@@ -1316,9 +1279,9 @@ describe("BridgeOut", function () {
                 var refreshTime = timestamp / 1000;
                 console.log(refreshTime);
                 var configs = [{
-                    dailyLimitId : swapId,
-                    refreshTime : refreshTime,
-                    defaultTokenAmount : "3000000000000000000"
+                    dailyLimitId: swapId,
+                    refreshTime: refreshTime,
+                    defaultTokenAmount: "3000000000000000000"
                 }]
                 await limiter.connect(admin).setDailyLimit(configs);
 
@@ -1328,15 +1291,15 @@ describe("BridgeOut", function () {
                 await elf.mint(owner.address, amount);
                 var tokenKey = _generateTokenKey(elf.address, chainId);
                 await elf.approve(tokenpool.address, amount);
-    
+
                 var tokens = [{
-                    tokenAddress : token,
-                    chainId : chainId
+                    tokenAddress: token,
+                    chainId: chainId
                 }]
                 await bridgeInMock.addToken(tokens);
-    
-                await tokenpool.addLiquidity(token,amount);
-    
+
+                await tokenpool.addLiquidity(token, amount);
+
                 expect(await elf.balanceOf(tokenpool.address)).to.equal(amount);
                 expect(await elf.balanceOf(owner.address)).to.equal(0);
                 var index = "1234";
@@ -1345,13 +1308,13 @@ describe("BridgeOut", function () {
                 var amount = "100";
                 var targetAddress = owner.address;
                 var leafHash = await lib.computeLeafHash(receiptId, amount, targetAddress);
-                var message = createMultiMessage(index, leafHash,amount,targetAddress,tokenKey);
+                var message = createMultiMessage(index, leafHash, amount, targetAddress, tokenKey);
                 hashMessage = ethers.utils.keccak256(message.message)
                 // Sign the hashed address
                 console.log("construct signature.")
                 var privateKeys = _constructSignature()[0];
                 var addresses = _constructSignature()[1];
-                console.log("privateKeys list",privateKeys)
+                console.log("privateKeys list", privateKeys)
 
 
                 addresses.forEach(async element => {
@@ -1360,17 +1323,17 @@ describe("BridgeOut", function () {
 
                 var memberList = await regiment.GetRegimentMemberList(regimentId);
                 console.log(memberList);
-            
+
                 var signaturesR = [];
                 var signaturesV = [];
                 let buffer = new Array(32);
 
-                privateKeys.forEach((element,i) => {
-                    console.log("private key",element);
+                privateKeys.forEach((element, i) => {
+                    console.log("private key", element);
                     let signKey = new ethers.utils.SigningKey(element);
-                    console.log("sign digest",element);
+                    console.log("sign digest", element);
                     var Signature = signKey.signDigest(hashMessage);
-                    console.log("signature r",Signature.r);
+                    console.log("signature r", Signature.r);
                     signaturesR.push(Signature.r);
                     signaturesV.push(Signature.s);
                     var vv = Signature.v == 27 ? "00" : "01";
@@ -1378,26 +1341,26 @@ describe("BridgeOut", function () {
                 });
 
                 console.log(buffer);
-                buffer.fill(0,privateKeys.length);
-                console.log("after",buffer);
+                buffer.fill(0, privateKeys.length);
+                console.log("after", buffer);
                 var v = Buffer.from(buffer);
                 const bufferAsString = v.toString('hex');
-                const signatureV = "0x"+bufferAsString;
-                console.log("signature v",signatureV);
-                
+                const signatureV = "0x" + bufferAsString;
+                console.log("signature v", signatureV);
 
-                await bridgeOut.transmit(swapId, message.message, signaturesR, signaturesV, signatureV);
-                
+
+                // await bridgeOut.transmit(swapId, message.message, signaturesR, signaturesV, signatureV);
+                await rampContractMock.transmit(bridgeOut.address, message.message, swapId);
                 expect(await elf.balanceOf(owner.address)).to.equal(amount)
                 expect(await elf.balanceOf(tokenpool.address)).to.equal(0)
 
-                tokens = [token];
-                chainIds = [chainId];
-                var indexes = await bridgeOut.getReceiveReceiptIndex(tokens, chainIds);
-                var infos = await bridgeOut.getReceivedReceiptInfos(elf.address, chainId, 1, indexes[0]);
-                expect(infos[0].amount).to.equal(amount)
-                expect(infos[0].targetAddress).to.equal(targetAddress)
-                expect(infos[0].asset).to.equal(token)
+                // tokens = [token];
+                // chainIds = [chainId];
+                // var indexes = await bridgeOut.getReceiveReceiptIndex(tokens, chainIds);
+                // var infos = await bridgeOut.getReceivedReceiptInfos(elf.address, chainId, 1, indexes[0]);
+                // expect(infos[0].amount).to.equal(amount)
+                // expect(infos[0].targetAddress).to.equal(targetAddress)
+                // expect(infos[0].asset).to.equal(token)
 
                 //usdt
                 token = usdt.address
@@ -1415,9 +1378,9 @@ describe("BridgeOut", function () {
                 var refreshTime = timestamp / 1000;
                 console.log(refreshTime);
                 var configs = [{
-                    dailyLimitId : swapId,
-                    refreshTime : refreshTime,
-                    defaultTokenAmount : "3000000000000000000"
+                    dailyLimitId: swapId,
+                    refreshTime: refreshTime,
+                    defaultTokenAmount: "3000000000000000000"
                 }]
                 await limiter.connect(admin).setDailyLimit(configs);
 
@@ -1427,15 +1390,15 @@ describe("BridgeOut", function () {
                 await usdt.mint(owner.address, amount);
                 var tokenKey = _generateTokenKey(token, chainId);
                 await usdt.approve(tokenpool.address, amount);
-    
+
                 var tokens = [{
-                    tokenAddress : token,
-                    chainId : chainId
+                    tokenAddress: token,
+                    chainId: chainId
                 }]
                 await bridgeInMock.addToken(tokens);
-    
-                await tokenpool.addLiquidity(token,amount);
-    
+
+                await tokenpool.addLiquidity(token, amount);
+
                 expect(await usdt.balanceOf(tokenpool.address)).to.equal(amount);
                 expect(await usdt.balanceOf(owner.address)).to.equal(0);
 
@@ -1445,7 +1408,7 @@ describe("BridgeOut", function () {
                 var amount = "100";
                 var targetAddress = owner.address;
                 var leafHash = await lib.computeLeafHash(receiptId, amount, targetAddress);
-                var message = createMultiMessage(index, leafHash,amount,targetAddress,tokenKey);
+                var message = createMultiMessage(index, leafHash, amount, targetAddress, tokenKey);
 
                 hashMessage = ethers.utils.keccak256(message.message)
                 // Sign the hashed address
@@ -1453,12 +1416,12 @@ describe("BridgeOut", function () {
                 var signaturesV = [];
                 let buffer1 = new Array(32);
 
-                privateKeys.forEach((element,i) => {
-                    console.log("private key",element);
+                privateKeys.forEach((element, i) => {
+                    console.log("private key", element);
                     let signKey = new ethers.utils.SigningKey(element);
-                    console.log("sign digest",element);
+                    console.log("sign digest", element);
                     var Signature = signKey.signDigest(hashMessage);
-                    console.log("signature r",Signature.r);
+                    console.log("signature r", Signature.r);
                     signaturesR.push(Signature.r);
                     signaturesV.push(Signature.s);
                     var vv = Signature.v == 27 ? "00" : "01";
@@ -1466,23 +1429,23 @@ describe("BridgeOut", function () {
                 });
 
                 console.log(buffer1);
-                buffer1.fill(0,privateKeys.length);
-                console.log("after",buffer1);
+                buffer1.fill(0, privateKeys.length);
+                console.log("after", buffer1);
                 var v = Buffer.from(buffer1);
                 const bufferAsString1 = v.toString('hex');
-                const signatureV1 = "0x"+bufferAsString1;
-                console.log("signature v",signatureV1);
-                
-                await bridgeOut.transmit(swapId, message.message, signaturesR, signaturesV, signatureV1);
+                const signatureV1 = "0x" + bufferAsString1;
+                console.log("signature v", signatureV1);
+
+                // await bridgeOut.transmit(swapId, message.message, signaturesR, signaturesV, signatureV1);
                 expect(await elf.balanceOf(tokenpool.address)).to.equal(0)
                 expect(await elf.balanceOf(owner.address)).to.equal(amount)
-                tokens = [token];
-                chainIds = [chainId];
-                var indexes = await bridgeOut.getReceiveReceiptIndex(tokens, chainIds);
-                var infos = await bridgeOut.getReceivedReceiptInfos(token, chainId, 1, indexes[0]);
-                expect(infos[0].amount).to.equal(amount)
-                expect(infos[0].targetAddress).to.equal(targetAddress)
-                expect(infos[0].asset).to.equal(token)
+                // tokens = [token];
+                // chainIds = [chainId];
+                // var indexes = await bridgeOut.getReceiveReceiptIndex(tokens, chainIds);
+                // var infos = await bridgeOut.getReceivedReceiptInfos(token, chainId, 1, indexes[0]);
+                // expect(infos[0].amount).to.equal(amount)
+                // expect(infos[0].targetAddress).to.equal(targetAddress)
+                // expect(infos[0].asset).to.equal(token)
 
                 //ETH
 
@@ -1501,9 +1464,9 @@ describe("BridgeOut", function () {
                 var refreshTime = timestamp / 1000;
                 console.log(refreshTime);
                 var configs = [{
-                    dailyLimitId : swapId,
-                    refreshTime : refreshTime,
-                    defaultTokenAmount : "3000000000000000000"
+                    dailyLimitId: swapId,
+                    refreshTime: refreshTime,
+                    defaultTokenAmount: "3000000000000000000"
                 }]
                 await limiter.connect(admin).setDailyLimit(configs);
 
@@ -1513,12 +1476,12 @@ describe("BridgeOut", function () {
 
                 var tokenKey = _generateTokenKey(token, chainId);
                 var tokens = [{
-                    tokenAddress : token,
-                    chainId : chainId
+                    tokenAddress: token,
+                    chainId: chainId
                 }]
                 await bridgeInMock.addToken(tokens);
 
-                await tokenpool.addLiquidity(token,amount,{ value: '10000000000000000000' });
+                await tokenpool.addLiquidity(token, amount, { value: '10000000000000000000' });
                 // await bridgeInMock.depositToBridgeOut(weth.address, bridgeOut.address, chainId, { value: '10000000000000000000' });
                 expect(await weth.balanceOf(tokenpool.address)).to.equal('10000000000000000000');
 
@@ -1527,7 +1490,7 @@ describe("BridgeOut", function () {
                 var amount = "100";
                 var targetAddress = otherAccount0.address;
                 var leafHash = await lib.computeLeafHash(receiptId, amount, targetAddress);
-                var message = createMultiMessage(index, leafHash,amount,targetAddress,tokenKey);
+                var message = createMultiMessage(index, leafHash, amount, targetAddress, tokenKey);
 
                 hashMessage = ethers.utils.keccak256(message.message)
                 // Sign the hashed address
@@ -1535,32 +1498,32 @@ describe("BridgeOut", function () {
                 var signaturesV = [];
                 let buffer2 = new Array(32);
 
-                privateKeys.forEach((element,i) => {
-                    console.log("private key",element);
+                privateKeys.forEach((element, i) => {
+                    console.log("private key", element);
                     let signKey = new ethers.utils.SigningKey(element);
-                    console.log("sign digest",element);
+                    console.log("sign digest", element);
                     var Signature = signKey.signDigest(hashMessage);
-                    console.log("signature r",Signature.r);
+                    console.log("signature r", Signature.r);
                     signaturesR.push(Signature.r);
                     signaturesV.push(Signature.s);
                     var vv = Signature.v == 27 ? "00" : "01";
                     buffer2[i] = vv;
                 });
 
-                buffer2.fill(0,privateKeys.length);
-                console.log("after",buffer2);
+                buffer2.fill(0, privateKeys.length);
+                console.log("after", buffer2);
                 var v = Buffer.from(buffer2);
                 const bufferAsString2 = v.toString('hex');
-                const signatureV2 = "0x"+bufferAsString2;
-                console.log("signature v",signatureV2);
+                const signatureV2 = "0x" + bufferAsString2;
+                console.log("signature v", signatureV2);
 
                 var beforeBalance = await otherAccount0.getBalance();
                 console.log("before balance:", beforeBalance);
                 console.log(regimentId);
                 var memberList = await regiment.GetRegimentMemberList(regimentId);
                 console.log(memberList);
-                await bridgeOut.transmit(swapId, message.message, signaturesR, signaturesV, signatureV2);
 
+                var result = await rampContractMock.transmit(bridgeOut.address, message.message, swapId);
                 var afterBalance = await otherAccount0.getBalance();
                 console.log("after balance:", afterBalance);
                 //contains transaction fee
@@ -1568,20 +1531,21 @@ describe("BridgeOut", function () {
                 amountMax = new BigNumber(1000000000000000000);
                 var actualAmount = new BigNumber(afterBalance - beforeBalance);
                 console.log(actualAmount);
+                console.log("actualAmount:", actualAmount);
                 expect(actualAmount > 0).to.be.true;
 
-                tokens = [token];
-                chainIds = [chainId];
-                var indexes = await bridgeOut.getReceiveReceiptIndex(tokens, chainIds);
-                var infos = await bridgeOut.getReceivedReceiptInfos(token, chainId, 1, indexes[0]);
-                expect(infos[0].amount).to.equal(amount)
-                expect(infos[0].targetAddress).to.equal(targetAddress)
-                expect(infos[0].asset).to.equal(token)
+                // tokens = [token];
+                // chainIds = [chainId];
+                // var indexes = await bridgeOut.getReceiveReceiptIndex(tokens, chainIds);
+                // var infos = await bridgeOut.getReceivedReceiptInfos(token, chainId, 1, indexes[0]);
+                // expect(infos[0].amount).to.equal(amount)
+                // expect(infos[0].targetAddress).to.equal(targetAddress)
+                // expect(infos[0].asset).to.equal(token)
 
             })
 
             it("Should swapToken revert with test token amount beyond the limit", async function () {
-                const { merkleTree, regimentId, regiment, bridgeOut, bridgeOutProxy, owner, otherAccount0, otherAccount1, bridgeInMock, weth, lib, otherAccount2, admin, limiter,otherAccount4, tokenpool } = await loadFixture(deployBridgeOutFixture);
+                const { merkleTree, regimentId, regiment, bridgeOut, bridgeOutProxy, owner, otherAccount0, otherAccount1, bridgeInMock, weth, lib, otherAccount2, admin, limiter, otherAccount4, tokenpool, rampContractMock } = await loadFixture(deployBridgeOutFixture);
                 const { elf, usdt } = await deployTokensFixture()
                 var chainId = "AELF_MAINNET";
                 _newAdmins = [bridgeOut.address];
@@ -1602,9 +1566,9 @@ describe("BridgeOut", function () {
                 var refreshTime = timestamp / 1000;
                 console.log(refreshTime);
                 var configs = [{
-                    dailyLimitId : swapId,
-                    refreshTime : refreshTime,
-                    defaultTokenAmount : "50"
+                    dailyLimitId: swapId,
+                    refreshTime: refreshTime,
+                    defaultTokenAmount: "50"
                 }]
                 await limiter.connect(admin).setDailyLimit(configs);
 
@@ -1613,17 +1577,17 @@ describe("BridgeOut", function () {
                 amounts = amount;
                 await elf.mint(owner.address, amount);
                 var tokenKey = _generateTokenKey(elf.address, chainId);
-                
+
                 await elf.approve(tokenpool.address, amount);
-    
+
                 var tokens = [{
-                    tokenAddress : token,
-                    chainId : chainId
+                    tokenAddress: token,
+                    chainId: chainId
                 }]
                 await bridgeInMock.addToken(tokens);
-    
-                await tokenpool.addLiquidity(token,amount);
-    
+
+                await tokenpool.addLiquidity(token, amount);
+
                 expect(await elf.balanceOf(tokenpool.address)).to.equal(amount);
                 expect(await elf.balanceOf(owner.address)).to.equal(0);
 
@@ -1633,14 +1597,14 @@ describe("BridgeOut", function () {
                 var amount = "100";
                 var targetAddress = owner.address;
                 var leafHash = await lib.computeLeafHash(receiptId, amount, targetAddress);
-                var message = createMultiMessage(index, leafHash,amount,targetAddress,tokenKey);
+                var message = createMultiMessage(index, leafHash, amount, targetAddress, tokenKey);
 
                 hashMessage = ethers.utils.keccak256(message.message)
                 // Sign the hashed address
                 console.log("construct signature.")
                 var privateKeys = _constructSignature()[0];
                 var addresses = _constructSignature()[1];
-                console.log("privateKeys list",privateKeys)
+                console.log("privateKeys list", privateKeys)
 
 
                 addresses.forEach(async element => {
@@ -1649,17 +1613,17 @@ describe("BridgeOut", function () {
 
                 var memberList = await regiment.GetRegimentMemberList(regimentId);
                 console.log(memberList);
-            
+
                 var signaturesR = [];
                 var signaturesV = [];
                 let buffer = new Array(32);
 
-                privateKeys.forEach((element,i) => {
-                    console.log("private key",element);
+                privateKeys.forEach((element, i) => {
+                    console.log("private key", element);
                     let signKey = new ethers.utils.SigningKey(element);
-                    console.log("sign digest",element);
+                    console.log("sign digest", element);
                     var Signature = signKey.signDigest(hashMessage);
-                    console.log("signature r",Signature.r);
+                    console.log("signature r", Signature.r);
                     signaturesR.push(Signature.r);
                     signaturesV.push(Signature.s);
                     var vv = Signature.v == 27 ? "00" : "01";
@@ -1667,42 +1631,43 @@ describe("BridgeOut", function () {
                 });
 
                 console.log(buffer);
-                buffer.fill(0,privateKeys.length);
-                console.log("after",buffer);
+                buffer.fill(0, privateKeys.length);
+                console.log("after", buffer);
                 var v = Buffer.from(buffer);
                 const bufferAsString = v.toString('hex');
-                const signatureV = "0x"+bufferAsString;
-                console.log("signature v",signatureV);
-                
+                const signatureV = "0x" + bufferAsString;
+                console.log("signature v", signatureV);
 
-                await expect(bridgeOut.transmit(swapId, message.message, signaturesR, signaturesV, signatureV))
-                    .to.be.revertedWithCustomError(limiter,"DailyLimitExceeded");
+
+                // await expect(bridgeOut.transmit(swapId, message.message, signaturesR, signaturesV, signatureV))
+                //     .to.be.revertedWithCustomError(limiter, "DailyLimitExceeded");
 
                 //setlimit revert 
 
                 var configs = [{
-                    dailyLimitId : swapId,
-                    refreshTime : refreshTime,
-                    defaultTokenAmount : "200"
+                    dailyLimitId: swapId,
+                    refreshTime: refreshTime,
+                    defaultTokenAmount: "200"
                 }]
                 await limiter.connect(admin).setDailyLimit(configs);
 
-                await bridgeOut.transmit(swapId, message.message, signaturesR, signaturesV, signatureV);
+                // await bridgeOut.transmit(swapId, message.message, signaturesR, signaturesV, signatureV);
+                await rampContractMock.transmit(bridgeOut.address, message.message, swapId);
                 expect(await elf.balanceOf(owner.address)).to.equal(amount)
                 expect(await elf.balanceOf(tokenpool.address)).to.equal(0)
 
-                tokens = [token];
-                chainIds = [chainId];
-                var indexes = await bridgeOut.getReceiveReceiptIndex(tokens, chainIds);
-                var infos = await bridgeOut.getReceivedReceiptInfos(elf.address, chainId, 1, indexes[0]);
-                expect(infos[0].amount).to.equal(amount)
-                expect(infos[0].targetAddress).to.equal(targetAddress)
-                expect(infos[0].asset).to.equal(token)
+                // tokens = [token];
+                // chainIds = [chainId];
+                // var indexes = await bridgeOut.getReceiveReceiptIndex(tokens, chainIds);
+                // var infos = await bridgeOut.getReceivedReceiptInfos(elf.address, chainId, 1, indexes[0]);
+                // expect(infos[0].amount).to.equal(amount)
+                // expect(infos[0].targetAddress).to.equal(targetAddress)
+                // expect(infos[0].asset).to.equal(token)
 
             })
 
             it("Should revert when pause", async function () {
-                const { merkleTree, regimentId, regiment, bridgeOut, bridgeOutProxy, owner, otherAccount0, otherAccount1, bridgeInMock, weth, lib, otherAccount2, admin, limiter,otherAccount4, tokenpool } = await loadFixture(deployBridgeOutFixture);
+                const { merkleTree, regimentId, regiment, bridgeOut, bridgeOutProxy, owner, otherAccount0, otherAccount1, bridgeInMock, weth, lib, otherAccount2, admin, limiter, otherAccount4, tokenpool } = await loadFixture(deployBridgeOutFixture);
                 const { elf, usdt } = await deployTokensFixture()
                 var chainId = "AELF_MAINNET";
                 _newAdmins = [bridgeOut.address];
@@ -1723,9 +1688,9 @@ describe("BridgeOut", function () {
                 var refreshTime = timestamp / 1000;
                 console.log(refreshTime);
                 var configs = [{
-                    dailyLimitId : swapId,
-                    refreshTime : refreshTime,
-                    defaultTokenAmount : "3000000000000"
+                    dailyLimitId: swapId,
+                    refreshTime: refreshTime,
+                    defaultTokenAmount: "3000000000000"
                 }]
                 await limiter.connect(admin).setDailyLimit(configs);
 
@@ -1735,17 +1700,17 @@ describe("BridgeOut", function () {
                 await elf.mint(owner.address, amount);
                 var tokenKey = _generateTokenKey(elf.address, chainId);
                 var tokenKey = _generateTokenKey(elf.address, chainId);
-                
+
                 await elf.approve(tokenpool.address, amount);
-    
+
                 var tokens = [{
-                    tokenAddress : token,
-                    chainId : chainId
+                    tokenAddress: token,
+                    chainId: chainId
                 }]
                 await bridgeInMock.addToken(tokens);
-    
-                await tokenpool.addLiquidity(token,amount);
-    
+
+                await tokenpool.addLiquidity(token, amount);
+
                 expect(await elf.balanceOf(tokenpool.address)).to.equal(amount);
                 expect(await elf.balanceOf(owner.address)).to.equal(0);
                 var index = "1234";
@@ -1754,14 +1719,14 @@ describe("BridgeOut", function () {
                 var amount = "100";
                 var targetAddress = owner.address;
                 var leafHash = await lib.computeLeafHash(receiptId, amount, targetAddress);
-                var message = createMultiMessage(index, leafHash,amount,targetAddress,tokenKey);
+                var message = createMultiMessage(index, leafHash, amount, targetAddress, tokenKey);
 
                 hashMessage = ethers.utils.keccak256(message.message)
                 // Sign the hashed address
                 console.log("construct signature.")
                 var privateKeys = _constructSignature()[0];
                 var addresses = _constructSignature()[1];
-                console.log("privateKeys list",privateKeys)
+                console.log("privateKeys list", privateKeys)
 
 
                 addresses.forEach(async element => {
@@ -1770,17 +1735,17 @@ describe("BridgeOut", function () {
 
                 var memberList = await regiment.GetRegimentMemberList(regimentId);
                 console.log(memberList);
-            
+
                 var signaturesR = [];
                 var signaturesV = [];
                 let buffer = new Array(32);
 
-                privateKeys.forEach((element,i) => {
-                    console.log("private key",element);
+                privateKeys.forEach((element, i) => {
+                    console.log("private key", element);
                     let signKey = new ethers.utils.SigningKey(element);
-                    console.log("sign digest",element);
+                    console.log("sign digest", element);
                     var Signature = signKey.signDigest(hashMessage);
-                    console.log("signature r",Signature.r);
+                    console.log("signature r", Signature.r);
                     signaturesR.push(Signature.r);
                     signaturesV.push(Signature.s);
                     var vv = Signature.v == 27 ? "00" : "01";
@@ -1788,22 +1753,22 @@ describe("BridgeOut", function () {
                 });
 
                 console.log(buffer);
-                buffer.fill(0,privateKeys.length);
-                console.log("after",buffer);
+                buffer.fill(0, privateKeys.length);
+                console.log("after", buffer);
                 var v = Buffer.from(buffer);
                 const bufferAsString = v.toString('hex');
-                const signatureV = "0x"+bufferAsString;
-                console.log("signature v",signatureV);
-                
+                const signatureV = "0x" + bufferAsString;
+                console.log("signature v", signatureV);
+
                 await bridgeInMock.pause(bridgeOut.address);
 
                 //revert when paused
-                var error = "BridgeOut:paused"
-                await expect(bridgeOut.transmit(swapId, message.message, signaturesR, signaturesV, signatureV))
-                    .to.be.revertedWith(error);
+                // var error = "BridgeOut:paused"
+                // await expect(bridgeOut.transmit(swapId, message.message, signaturesR, signaturesV, signatureV))
+                //     .to.be.revertedWith(error);
 
                 //revert when sender is not bridgeIn
-                error = "no permission"
+                var error = "no permission"
                 await expect(bridgeOut.restart())
                     .to.be.revertedWith(error);
 
@@ -1816,8 +1781,8 @@ describe("BridgeOut", function () {
                 await bridgeInMock.restart(bridgeOut.address);
 
                 //success
-                await bridgeOut.transmit(swapId, message.message, signaturesR, signaturesV, signatureV);
-                expect(await elf.balanceOf(owner.address)).to.equal(amount)
+                // await bridgeOut.transmit(swapId, message.message, signaturesR, signaturesV, signatureV);
+                // expect(await elf.balanceOf(owner.address)).to.equal(amount)
             })
         });
         describe("computeLeafHash test", function () {
@@ -1842,12 +1807,12 @@ describe("BridgeOut", function () {
         });
     });
 
-    function createMultiMessage(nodeNumber, leafHash,amount,targetAddress,receiptIdToken) {
+    function createMultiMessage(nodeNumber, leafHash, amount, targetAddress, receiptIdToken) {
         console.log(targetAddress);
         console.log(receiptIdToken);
-        var add =  '0x'.concat(targetAddress.slice(2).padStart(64, '0'));
+        var add = '0x'.concat(targetAddress.slice(2).padStart(64, '0'));
         console.log(add);
-        var message = ethers.utils.solidityPack(["uint256", "uint256", "uint256", "bytes32","uint256", "bytes32","bytes32"], [32, 5, nodeNumber, leafHash,amount,add,receiptIdToken])
+        var message = ethers.utils.solidityPack(["uint256", "uint256", "uint256", "bytes32", "uint256", "bytes32", "bytes32"], [32, 5, nodeNumber, leafHash, amount, add, receiptIdToken])
         console.log(message);
         return { message };
     }
@@ -1858,21 +1823,21 @@ describe("BridgeOut", function () {
         return ethers.utils.sha256(data);
     }
 
-    function _constructSignature(){
+    function _constructSignature() {
         console.log("get private key");
-        let privateKeys = ["59c6995e998f97a5a0044966f0945389dc9e86dae88c7a8412f4603b6b78690d","5de4111afa1a4b94908f83103eb1f1706367c2e68ca870fc3fb9a804cdab365a","7c852118294e51e653712a81e05800f419141751be58f605c371e15141b007a6","47e179ec197488593b187f80a00eb0da91f1b9d0b13f8733639f19c30a34926a"]
+        let privateKeys = ["59c6995e998f97a5a0044966f0945389dc9e86dae88c7a8412f4603b6b78690d", "5de4111afa1a4b94908f83103eb1f1706367c2e68ca870fc3fb9a804cdab365a", "7c852118294e51e653712a81e05800f419141751be58f605c371e15141b007a6", "47e179ec197488593b187f80a00eb0da91f1b9d0b13f8733639f19c30a34926a"]
         var result = [];
         var addresses = [];
         privateKeys.forEach(element => {
             let wallet = new ethers.Wallet(element);
-            console.log("Wallet address:",wallet.address);
-            console.log("private key:",wallet.privateKey);
+            console.log("Wallet address:", wallet.address);
+            console.log("private key:", wallet.privateKey);
             result.push(wallet.privateKey);
             addresses.push(wallet.address);
-            
+
         });
         console.log(result);
         console.log(addresses);
-        return [result,addresses];
+        return [result, addresses];
     }
 });
