@@ -93,6 +93,10 @@ contract BridgeOutImplementationV1 is ProxyStorage {
         require(msg.sender == bridgeIn, "no permission");
         _;
     }
+    modifier onlyOracle() {
+        require(msg.sender == oracleContract, "no permission");
+        _;
+    }
     modifier onlyWallet() {
         require(msg.sender == multiSigWallet, "BridgeOut:only for Wallet call");
         _;
@@ -223,8 +227,9 @@ contract BridgeOutImplementationV1 is ProxyStorage {
         string calldata receiver,
         bytes calldata message,
         IRamp.TokenAmount calldata tokenAmount
-    ) external whenNotPaused {
+    ) external whenNotPaused onlyOracle {
         // require(tokenAmount.amount > 0, "Invalid amount");
+        require(targetChainId == block.chainid, "Invalid target chainId");
 
         BridgeOutLibrary.ReceiptInfo memory receiptInfo = BridgeOutLibrary
             .decodeReportAndVerifyReceipt(message);

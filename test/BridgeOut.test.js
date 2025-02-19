@@ -56,7 +56,13 @@ describe("BridgeOut", function () {
         const TokenPoolProxy = await TokenPool.deploy(bridgeInMock.address, bridgeOut.address, weth.address, admin.address, tokenpoolImplementation.address);
         const tokenpool = TokenPoolImplementation.attach(TokenPoolProxy.address);
         await bridgeOut.connect(otherAccount2).setTokenPool(tokenpool.address);
+        const config = {
+            oracleContract: rampContractMock.address,
+            chainNames: ["Ethereum", "Polygon", "BSC"],
+            chainIds: [1, 137, 56]
+        };
 
+        await bridgeOut.connect(owner).setCrossChainConfig(config);
         await bridgeOut.connect(otherAccount2).setDefaultMerkleTreeDepth(10);
         await bridgeOut.connect(otherAccount2).setLimiter(limiter.address);
         return { merkleTree, regimentId, regiment, bridgeOut, bridgeOutProxy, owner, otherAccount0, otherAccount1, bridgeInMock, weth, lib, otherAccount2, admin, limiter, otherAccount4, tokenpool, rampContractMock };
