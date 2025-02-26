@@ -224,7 +224,7 @@ contract BridgeOutImplementationV1 is ProxyStorage {
         uint256 sourceChainId,
         uint256 targetChainId,
         string calldata sender,
-        string calldata receiver,
+        address calldata receiver,
         bytes calldata message,
         IRamp.TokenAmount calldata tokenAmount
     ) external whenNotPaused onlyOracle {
