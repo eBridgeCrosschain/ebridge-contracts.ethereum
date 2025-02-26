@@ -233,21 +233,21 @@ contract BridgeOutImplementationV1 is ProxyStorage {
 
         BridgeOutLibrary.ReceiptInfo memory receiptInfo = BridgeOutLibrary
             .decodeReportAndVerifyReceipt(message);
-        require(
-            ledger[receiptInfo.receiptHash].leafNodeIndex == 0,
-            "Already recorded"
-        );
-        ledger[receiptInfo.receiptHash].leafNodeIndex = 1;
-        bytes32 swapId = BridgeOutLibrary.stringToBytes32(tokenAmount.swapId);
-        SwapInfo storage swapInfo = swapInfos[swapId];
-        _completeReceipt(receiptInfo, swapInfo);
+        // require(
+        //     ledger[receiptInfo.receiptHash].leafNodeIndex == 0,
+        //     "Already recorded"
+        // );
+        // ledger[receiptInfo.receiptHash].leafNodeIndex = 1;
+        // bytes32 swapId = BridgeOutLibrary.stringToBytes32(tokenAmount.swapId);
+        // SwapInfo storage swapInfo = swapInfos[swapId];
+        // _completeReceipt(receiptInfo, swapInfo);
 
-        emit NewTransmission(
-            swapId,
-            msg.sender,
-            receiptInfo.receiptId,
-            receiptInfo.receiptHash
-        );
+        // emit NewTransmission(
+        //     swapId,
+        //     msg.sender,
+        //     receiptInfo.receiptId,
+        //     receiptInfo.receiptHash
+        // );
     }
 
     function _checkParams(
