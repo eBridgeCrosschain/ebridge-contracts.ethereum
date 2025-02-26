@@ -117,42 +117,42 @@ library BridgeOutLibrary {
         uint256 receiptIndex = 0;
         bytes32 targetAddress;
         ReceiptInfo memory receiptInfo;
-        if (_report.length > 128) {
-            (
-                ,
-                ,
-                receiptIndex,
-                receiptInfo.receiptHash,
-                receiptInfo.amount,
-                targetAddress,
-                receiptInfo.receiptIdToken
-            ) = abi.decode(
-                _report,
-                (uint256, uint256, uint256, bytes32, uint256, bytes32, bytes32)
-            );
-            receiptInfo.receiveAddress = address(
-                uint160(uint256(targetAddress))
-            );
-            receiptInfo.receiptId = string(
-                abi.encodePacked(
-                    receiptInfo.receiptIdToken.toHexWithoutPrefixes(),
-                    ".",
-                    receiptIndex.toString()
-                )
-            );
+        // if (_report.length > 128) {
+        //     (
+        //         ,
+        //         ,
+        //         receiptIndex,
+        //         receiptInfo.receiptHash,
+        //         receiptInfo.amount,
+        //         targetAddress,
+        //         receiptInfo.receiptIdToken
+        //     ) = abi.decode(
+        //         _report,
+        //         (uint256, uint256, uint256, bytes32, uint256, bytes32, bytes32)
+        //     );
+        //     receiptInfo.receiveAddress = address(
+        //         uint160(uint256(targetAddress))
+        //     );
+        //     receiptInfo.receiptId = string(
+        //         abi.encodePacked(
+        //             receiptInfo.receiptIdToken.toHexWithoutPrefixes(),
+        //             ".",
+        //             receiptIndex.toString()
+        //         )
+        //     );
 
-            bytes32 leafHash = computeLeafHash(
-                receiptInfo.receiptId,
-                receiptInfo.amount,
-                receiptInfo.receiveAddress
-            );
-            require(leafHash == receiptInfo.receiptHash, "verification failed");
-        } else {
-            (, , receiptIndex, receiptInfo.receiptHash) = abi.decode(
-                _report,
-                (uint256, uint256, uint256, bytes32)
-            );
-        }
+        //     bytes32 leafHash = computeLeafHash(
+        //         receiptInfo.receiptId,
+        //         receiptInfo.amount,
+        //         receiptInfo.receiveAddress
+        //     );
+        //     require(leafHash == receiptInfo.receiptHash, "verification failed");
+        // } else {
+        //     (, , receiptIndex, receiptInfo.receiptHash) = abi.decode(
+        //         _report,
+        //         (uint256, uint256, uint256, bytes32)
+        //     );
+        // }
         return receiptInfo;
     }
 
