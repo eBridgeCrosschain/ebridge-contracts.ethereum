@@ -21,7 +21,7 @@ async function main() {
     const bridgeOutLibAddress = '0x15BBf8aBBC1c9cfcAc1498dD4E066f1483bAF185';
     const LimiterAddress = '';
     const LimiterImplementationAddress = '';
-    const tokenPoolImplementationAddress = '0xcBE05A71Fba4cBf7490758305411B6F261722d68';
+    const tokenPoolImplementationAddress = '0x06dFaE0488FCa172500EeAd593Cb978DC5c32193';
     const tokenPoolAddress = '0xce037d7175C530E0c5e0B9473B8318eea111dA7a';
 
     const wethAddress = "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2";

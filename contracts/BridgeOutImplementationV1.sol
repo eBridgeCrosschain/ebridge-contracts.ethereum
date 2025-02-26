@@ -238,11 +238,12 @@ contract BridgeOutImplementationV1 is ProxyStorage {
             "Already recorded"
         );
         ledger[receiptInfo.receiptHash].leafNodeIndex = 1;
-        SwapInfo storage swapInfo = swapInfos[tokenAmount.swapId];
+        bytes32 swapId = BridgeOutLibrary.stringToBytes32(tokenAmount.swapId);
+        SwapInfo storage swapInfo = swapInfos[swapId];
         _completeReceipt(receiptInfo, swapInfo);
 
         emit NewTransmission(
-            tokenAmount.swapId,
+            swapId,
             msg.sender,
             receiptInfo.receiptId,
             receiptInfo.receiptHash

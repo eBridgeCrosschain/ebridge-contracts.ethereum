@@ -1,16 +1,16 @@
-// const dotenv = require('dotenv');
+const dotenv = require('dotenv');
 require('solidity-coverage');
 require("@nomiclabs/hardhat-etherscan");
 require('hardhat-contract-sizer');
 require("@nomicfoundation/hardhat-toolbox");
-// const result = dotenv.config();
-// if (result.error) {
-//   throw result.error;
-// }
-// console.log(result.parsed);
-// const API_KEY = process.env.apikey;
+const result = dotenv.config();
+if (result.error) {
+  throw result.error;
+}
+console.log(result.parsed);
+const API_KEY = process.env.apikey;
 
-// console.log("API_KEY--------" + API_KEY)
+console.log("API_KEY--------" + API_KEY)
 // Replace this private key with your Goerli account private key
 // To export your private key from Metamask, open Metamask and
 // go to Account Details > Export Private Key
@@ -48,19 +48,19 @@ module.exports = {
     disambiguatePaths: false,
   },
   networks: {
-    hardhat: {
-      allowUnlimitedContractSize: true
-    }
-    // bsc_test: {
-    //   url: "https://data-seed-prebsc-1-s1.binance.org:8545",
-    //   chainId: 97,
-    //   accounts: [process.env.key0,process.env.key1]
-    // },
-    // sepolia: {
-    //   url: "https://sepolia.infura.io/v3/" + API_KEY,
-    //   chainId: 11155111,
-    //   accounts: [process.env.key0,process.env.key1]
+    // hardhat: {
+    //   allowUnlimitedContractSize: true
     // }
+    bsc_test: {
+      url: "https://data-seed-prebsc-1-s1.binance.org:8545",
+      chainId: 97,
+      accounts: [process.env.key0,process.env.key1]
+    },
+    sepolia: {
+      url: "https://sepolia.infura.io/v3/" + API_KEY,
+      chainId: 11155111,
+      accounts: [process.env.key0,process.env.key1]
+    }
     // bsc: {
     //   url: "https://bsc-dataseed2.binance.org",
     //   chainId: 56,
@@ -87,10 +87,10 @@ module.exports = {
     apiKey: {
       // mainnet: process.env.ethscan_api_key,
       // bsc: process.env.bscscan_api_key
-      // sepolia: process.env.ethscan_api_key,
+      sepolia: process.env.ethscan_api_key,
       // base_sepolia:process.env.basescan_api_key,
       // base:process.env.basescan_api_key
-      // bscTestnet :process.env.bscscan_api_key
+      bscTestnet :process.env.bscscan_api_key
     },
     customChains: [
       // {

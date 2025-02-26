@@ -10,19 +10,19 @@ async function main() {
     console.log("Deploying contracts with the account:", deployer.address);
     console.log("Account balance:", (await deployer.getBalance()).toString());
 
-    const regimentAddress = '';
-    const merkleTreeAddress = '';
+    const regimentAddress = '0x9D5a36b132C3bE5F7F55DedBF5361fF405f35A5B';
+    const merkleTreeAddress = '0x18cE1AFF5cdc8bAB0017b42d22a71265E82Ce606';
     const multiSigWalletAddress = '';
-    const bridgeInAddress = '0xf9Ab39c7A0A925BAf94f9C1c1d1CE8bFc9F9b2b3';
-    const bridgeInImplementationAddress = '0xb91792be3213ac933865BF41e6F0D8Bc3fB713E7';
-    const bridgeOutAddress = '0x276A12Bd934cb9753AdB89DFe88CA1442c5B1B47';
-    const bridgeOutImplementationAddress = '0x3CcAc50282B1b69d66f659A6c6871C8218B7Ea5f';
-    const bridgeInLibAddress = '0xd17F75f62C6eDbF2eD7CaFEBDBAA8172909bc897';
-    const bridgeOutLibAddress = '0x16e4232c5Bc41d91BB45cd739897439c38b10866';
-    const LimiterAddress = '';
-    const LimiterImplementationAddress = '';
-    const tokenPoolImplementationAddress = '0xE2f11d5983C0cc144260a1666bD157f439335d04';
-    const tokenPoolAddress = '0xd4aaab5bF10955e98918a00b14e1b4fdd73E97e4';
+    const bridgeInAddress = '0x8243C4927257ef20dbF360b012C9f72f9A6427c3';
+    const bridgeInImplementationAddress = '0x81910075A4e78f6F077177C07685aDda39a4E557';
+    const bridgeOutAddress = '0x3c37E0A09eAFEaA7eFB57107802De1B28A6f5F07';
+    const bridgeOutImplementationAddress = '0x4444f8F677afEDcfC2C3B115E865c79ed43395dE';
+    const bridgeInLibAddress = '0xC219369D89c8feb01c0F04fc52c5729B4Ce8DF05';
+    const bridgeOutLibAddress = '0xA5e40114cAaA39982863119f5007a00823688e2a';
+    const LimiterAddress = '0x69aDad711f41C32FF48A6B95f0d66c635185D521';
+    const LimiterImplementationAddress = '0x24D5f480430cB9C49c71fCCA8ae38F8a62c68DDc';
+    const tokenPoolImplementationAddress = '0x64b6D9edf93b05aB24dEb95E96Ae606d78874A01';
+    const tokenPoolAddress = '0x57932F1F3eBCadb6f03B29ab8ac1986DD6250c1a';
 
     const wethAddress = "0x035900292c309d8beCBCAFb3227238bec0EBa253";
 
@@ -44,6 +44,13 @@ async function main() {
     // const bridgeInImplementation = await BridgeInImplementation.deploy();
     // console.log("BridgeInImplementation address:", bridgeInImplementation.address);
 
+    // // BridgeIn
+    // console.log("Start to deploy BrigdeIn");
+    // const BridgeIn = await ethers.getContractFactory("BridgeIn");
+    // const bridgeIn = await BridgeIn.deploy(deployer.address,wethAddress,deployer.address,bridgeInImplementationAddress);
+    // console.log("bridge in address:",bridgeIn.address);
+
+
     // //BridgeOut library
     // console.log("Start to deploy BridgeOutLib.");
     // const BridgeOutLib = await ethers.getContractFactory("BridgeOutLibrary");
@@ -61,29 +68,71 @@ async function main() {
     // const bridgeOutImplementation = await BridgeOutImplementation.deploy();
     // console.log("BridgeOutImplementation address:", bridgeOutImplementation.address);
 
-    await run("verify:verify", {
-            address: bridgeInImplementationAddress,
-            constructorArguments: [],
-            contract: "contracts/BridgeInImplementation.sol:BridgeInImplementation"
-          })
+    // // BridgeOut
+    // console.log("Start to deploy BrigdeOut");
+    // const BridgeOut = await ethers.getContractFactory("BridgeOut");
+    // const bridgeOut = await BridgeOut.deploy(merkleTreeAddress,regimentAddress,bridgeInAddress,deployer.address,deployer.address,wethAddress,bridgeOutImplementationAddress);
+    // console.log("bridge out address:",bridgeOut.address);
 
     // await run("verify:verify", {
-    //     address: bridgeOutLibAddress,
-    //     constructorArguments: [],
-    //     contract: "contracts/libraries/BridgeOutLibrary.sol:BridgeOutLibrary"
-    // })
+    //         address: bridgeInImplementationAddress,
+    //         constructorArguments: [],
+    //         contract: "contracts/BridgeInImplementation.sol:BridgeInImplementation"
+    //       })
+
+    await run("verify:verify", {
+        address: bridgeOutLibAddress,
+        constructorArguments: [],
+        contract: "contracts/libraries/BridgeOutLibrary.sol:BridgeOutLibrary"
+    })
     // await run("verify:verify", {
     //     address: bridgeInLibAddress,
     //     constructorArguments: [],
     //     contract: "contracts/libraries/BridgeInLibrary.sol:BridgeInLibrary"
     // })
     // await run("verify:verify", {
-    //         address: bridgeOutImplementationAddress,
-    //         constructorArguments: [],
-    //         contract: "contracts/BridgeOutImplementationV1.sol:BridgeOutImplementationV1"
+    //     address: bridgeInAddress,
+    //     constructorArguments: [deployer.address,wethAddress,deployer.address,bridgeInImplementationAddress],
+    //     contract: "contracts/BridgeOut.sol:BridgeOut"
+    //       })
+    await run("verify:verify", {
+            address: bridgeOutImplementationAddress,
+            constructorArguments: [],
+            contract: "contracts/BridgeOutImplementationV1.sol:BridgeOutImplementationV1"
+          })
+    // await run("verify:verify", {
+    //     address: bridgeOutAddress,
+    //     constructorArguments: [merkleTreeAddress,regimentAddress,bridgeInAddress,deployer.address,deployer.address,wethAddress,bridgeOutImplementationAddress],
+    //     contract: "contracts/BridgeOut.sol:BridgeOut"
     //       })
 
-    //  // TokenPoolImplementation
+    // //LimiterImplementation
+    // console.log("start deploy limiter implementation.")
+    // const LimiterImplementation = await ethers.getContractFactory("LimiterImplementation",{
+    //     libraries:{
+    //          BridgeInLibrary : bridgeInLibAddress
+    //     }
+    // });
+    // const limiterImplementation = await LimiterImplementation.deploy();
+    // console.log("limiterImplementation address:", limiterImplementation.address);
+    // await run("verify:verify", {
+    //     address: LimiterImplementationAddress,
+    //     constructorArguments: [],
+    //     contract: "contracts/LimiterImplementation.sol:LimiterImplementation"
+    //       })
+    
+    // // Limiter
+    // console.log("start deploy limiter.")
+    // const Limiter = await ethers.getContractFactory("Limiter");
+    // const LimiterProxy = await Limiter.deploy(bridgeInAddress,bridgeOutAddress,deployer.address,LimiterImplementationAddress);
+    // console.log("Limiter address:", LimiterProxy.address);
+    // await run("verify:verify", {
+    //     address: LimiterAddress,
+    //     constructorArguments: [bridgeInAddress,bridgeOutAddress,deployer.address,LimiterImplementationAddress],
+    //     contract: "contracts/Limiter.sol:Limiter"
+    //       })
+
+    // //  TokenPoolImplementation
     // console.log("start deploy tokenPool implementation.")
     // const TokenPoolImplementation = await ethers.getContractFactory("TokenPoolImplementation");
     // const tokenpoolImplementation = await TokenPoolImplementation.deploy();
@@ -94,14 +143,18 @@ async function main() {
     // const TokenPoolProxy = await TokenPool.deploy(bridgeInAddress,bridgeOutAddress,wethAddress,deployer.address,tokenPoolImplementationAddress);
     // console.log("TokenPool address:", TokenPoolProxy.address);
 
-
+    // await run("verify:verify", {
+    //     address: tokenPoolImplementationAddress,
+    //     constructorArguments: [],
+    //     contract: "contracts/TokenPoolImplementation.sol:TokenPoolImplementation"
+    //       })
     // await run("verify:verify", {
     //     address: tokenPoolAddress,
     //     constructorArguments: [bridgeInAddress,bridgeOutAddress,wethAddress,deployer.address,tokenPoolImplementationAddress],
     //     contract: "contracts/TokenPool.sol:TokenPool"
     //  })
     // await run("verify:verify", {
-    //     address: tokenPoolImplementationAddress,
+    //     address: "",
     //     constructorArguments: [],
     //     contract: "contracts/TokenPoolImplementation.sol:TokenPoolImplementation"
     // })

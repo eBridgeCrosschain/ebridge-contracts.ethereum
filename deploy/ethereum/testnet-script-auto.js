@@ -40,7 +40,6 @@ async function main() {
     wethAddress = "0x035900292c309d8beCBCAFb3227238bec0EBa253";
     wusdAddress = "0x50A9FC9f46401f2e0AF52835aCD50238431C8ebc";
     sgrAddress = "0x310e7bD119253b9F9F3AC0cD191A1b8b5b1b3b84";
-    addAddress = "0x4f36F2beb2A104bb7f9BdA1fB16ef219E577066C";
     
 
 
@@ -103,117 +102,338 @@ async function main() {
     var chainIdSide = "SideChain_tDVW";
     var regimentId = '0xf7296bf942ea75763b3ffffd0133a94558c87477c0a7e595bf9543cd7540602f';
 
-    const crossChainConfig = {
-        oracleContract: "0xdaEe625927C292BB4E29b800ABeCe0Dadf10EbAb",
-        chainNames: ["MainChain_AELF", "SideChain_tDVW"],
-        chainIds: [9992731,1931928],
-    };
-    await bridgeInImplementation.setCrossChainConfig(crossChainConfig);
-
     // // step 1: add token
     // var tokens = [{
-    //     tokenAddress : addAddress,
+    //     tokenAddress : elfAddress,
     //     chainId : chainIdMain
     // },
     // {
-    //     tokenAddress : addAddress,
+    //     tokenAddress : elfAddress,
+    //     chainId : chainIdSide
+    // },{
+    //     tokenAddress : usdtAddress,
+    //     chainId : chainIdMain
+    // },
+    // {
+    //     tokenAddress : usdtAddress,
+    //     chainId : chainIdSide
+    // },{
+    //     tokenAddress : wethAddress,
+    //     chainId : chainIdMain
+    // },
+    // {
+    //     tokenAddress : wethAddress,
+    //     chainId : chainIdSide
+    // },
+    // {
+    //     tokenAddress : sgrAddress,
+    //     chainId : chainIdSide
+    // },{
+    //     tokenAddress : wusdAddress,
+    //     chainId : chainIdMain
+    // },
+    // {
+    //     tokenAddress : wusdAddress,
     //     chainId : chainIdSide
     // }]
     // await bridgeInImplementation.addToken(tokens);
-    // // step 2: create swap
-    // var targetTokenusdtauMain = {
-    //     token: addAddress,
-    //     fromChainId: chainIdMain,
-    //     originShare: 1,
-    //     targetShare: 10000000000
-    // }
-    // var targetTokenusdtauSide = {
-    //     token: addAddress,
-    //     fromChainId: chainIdSide,
-    //     originShare: 1,
-    //     targetShare: 10000000000
-    // }
+    // step 2: create swap
+    var targetTokenelfMain = {
+        token: elfAddress,
+        fromChainId: chainIdMain,
+        originShare: 1,
+        targetShare: 10000000000
+    }
+    var targetTokenelfSide = {
+        token: elfAddress,
+        fromChainId: chainIdSide,
+        originShare: 1,
+        targetShare: 10000000000
+    }
+    var targetTokenusdtMain = {
+        token: usdtAddress,
+        fromChainId: chainIdMain,
+        originShare: 1,
+        targetShare: 1
+    }
+    var targetTokenusdtSide = {
+        token: usdtAddress,
+        fromChainId: chainIdSide,
+        originShare: 1,
+        targetShare: 1
+    }
+    var targetTokenwethMain = {
+        token: wethAddress,
+        fromChainId: chainIdMain,
+        originShare: 1,
+        targetShare: 10000000000
+    }
+    var targetTokenwethSide = {
+        token: wethAddress,
+        fromChainId: chainIdSide,
+        originShare: 1,
+        targetShare: 10000000000
+    }
+    var targetTokenwusdMain = {
+        token: wusdAddress,
+        fromChainId: chainIdMain,
+        originShare: 1,
+        targetShare: 1
+    }
+    var targetTokenwusdSide = {
+        token: wusdAddress,
+        fromChainId: chainIdSide,
+        originShare: 1,
+        targetShare: 1
+    }
+    var targetTokensgrSide = {
+        token: sgrAddress,
+        fromChainId: chainIdSide,
+        originShare: 1,
+        targetShare: 10000000000
+    }
     // console.log("Start to create main swap.");
-    // await bridgeOutImplementation.connect(managerAddress).createSwap(targetTokenusdtauMain,regimentId);
+    // await bridgeOutImplementation.connect(managerAddress).createSwap(targetTokenelfMain,regimentId);
     // console.log("Start to create side swap.");
-    // await bridgeOutImplementation.connect(managerAddress).createSwap(targetTokenusdtauSide,regimentId);
+    // await bridgeOutImplementation.connect(managerAddress).createSwap(targetTokenelfSide,regimentId);
+    // console.log("Start to create main swap.");
+    // await bridgeOutImplementation.connect(managerAddress).createSwap(targetTokenusdtMain,regimentId);
+    // console.log("Start to create side swap.");
+    // await bridgeOutImplementation.connect(managerAddress).createSwap(targetTokenusdtSide,regimentId);
+    // console.log("Start to create main swap.");
+    // await bridgeOutImplementation.connect(managerAddress).createSwap(targetTokenwethMain,regimentId);
+    // console.log("Start to create side swap.");
+    // await bridgeOutImplementation.connect(managerAddress).createSwap(targetTokenwethSide,regimentId);
+    // console.log("Start to create main swap.");
+    // await bridgeOutImplementation.connect(managerAddress).createSwap(targetTokenwusdMain,regimentId);
+    // console.log("Start to create side swap.");
+    // await bridgeOutImplementation.connect(managerAddress).createSwap(targetTokenwusdSide,regimentId);
+    // console.log("Start to create main swap.");
+    // await bridgeOutImplementation.connect(managerAddress).createSwap(targetTokensgrSide,regimentId);
 
     // // get swap info
-    // var swapIdMain = await bridgeOutImplementation.getSwapId(addAddress, chainIdMain);
+    // var swapIdMain = await bridgeOutImplementation.getSwapId(wusdAddress, chainIdMain);
     // console.log("main swap id:",swapIdMain);
     // var info = await bridgeOutImplementation.getSwapInfo(swapIdMain);
     // console.log("from chain id:",info.fromChainId);
     // console.log("regiment id:",info.regimentId);
     // console.log("token:",info.token);
-    // var tokenKeyMain = _generateTokenKey(addAddress,chainIdMain);
+    // var tokenKeyMain = _generateTokenKey(wusdAddress,chainIdMain);
     // console.log("token key:",tokenKeyMain);
 
-    // var swapIdSide = await bridgeOutImplementation.getSwapId(addAddress, chainIdSide);
+    // var swapIdSide = await bridgeOutImplementation.getSwapId(sgrAddress, chainIdSide);
     // console.log("side swap id:",swapIdSide);
     // var infoSide = await bridgeOutImplementation.getSwapInfo(swapIdSide);
     // console.log("from chain id:",infoSide.fromChainId);
     // console.log("regiment id:",infoSide.regimentId);
     // console.log("token:",infoSide.token);
-    // var tokenKeySide = _generateTokenKey(addAddress,chainIdSide);
+    // var tokenKeySide = _generateTokenKey(sgrAddress,chainIdSide);
     // console.log("token key:",tokenKeySide);
 
-    // // step 3: set daily limit
-    // console.log("Start to set daily limit.")
-    // const date = new Date();
-    // const timestamp = Date.UTC(date.getFullYear(), date.getMonth(), date.getUTCDate(), 0, 0, 0, 0);
-    // var refreshTime = timestamp  / 1000;
-    // console.log(refreshTime);
-    // var config = [
-    //     {
-    //        "dailyLimitId": "0xe5b30d58c8734dbffc6a7f38a7287e26a100d85f52a00ad4da2778799ceda3bc",
-    //        "refreshTime": refreshTime,
-    //        "defaultTokenAmount": "100000000000000000000000"
-    //     },
-    //     {
-    //         "dailyLimitId": "0x18524025053fea3bc15323165056c34cfe8ade923353c7c167e302f9f832e48b",
-    //         "refreshTime": refreshTime,
-    //         "defaultTokenAmount": "100000000000000000000000"
-    //     },
-    //     {
-    //        "dailyLimitId": "0x6b16c1b5498e42032008d3c1db1852c02da818ca675f15c98fbbae0e63a9bc35",
-    //        "refreshTime": refreshTime,
-    //        "defaultTokenAmount": "100000000000000000000000"
-    //     },
-    //     {
-    //         "dailyLimitId": "0xb73990965f7b5c0436e93ccc39ce535dd2e701e8bd5ae02f2d8a5bf3c0234d8e",
-    //         "refreshTime": refreshTime,
-    //         "defaultTokenAmount": "100000000000000000000000"
-    //     }
-    // ];
+    // step 3: set daily limit
+    console.log("Start to set daily limit.")
+    const date = new Date();
+    const timestamp = Date.UTC(date.getFullYear(), date.getMonth(), date.getUTCDate(), 0, 0, 0, 0);
+    var refreshTime = timestamp  / 1000;
+    console.log(refreshTime);
+    var config = [
+        {
+           "dailyLimitId": "0x815ad056f615f06c2dc9c414c96fa940da5a4b101ebb697ec00665a26677dc9b",
+           "refreshTime": refreshTime,
+           "defaultTokenAmount": "100000000000000000000000"
+        },
+        {
+            "dailyLimitId": "0x3a3deea64135a8a86208198b5c366950d7af11b37644d873af1f4e659142601f",
+            "refreshTime": refreshTime,
+            "defaultTokenAmount": "100000000000000000000000"
+        },
+        {
+           "dailyLimitId": "0xe618bdef3a8b055ac6aabc2743185dd1b35f4ea4d0f4ce72fea9dc4d53ba2580",
+           "refreshTime": refreshTime,
+           "defaultTokenAmount": "100000000000000000000000"
+        },
+        {
+            "dailyLimitId": "0x127ac2881adde353466dd12fb4b6d1e40dd6c73fd4945d46e2695aa138949859",
+            "refreshTime": refreshTime,
+            "defaultTokenAmount": "100000000000000000000000"
+        },
+        {
+            "dailyLimitId": "0x4db322fb153062a29d74ab5eac2396b437c23219d77dac03636c6de3a13cb4bf",
+            "refreshTime": refreshTime,
+            "defaultTokenAmount": "100000000000000000000000"
+         },
+         {
+             "dailyLimitId": "0x62279e5c498740c33cb30835a3c45dabcb76bcd6f9b67937c9db91f71236ed56",
+             "refreshTime": refreshTime,
+             "defaultTokenAmount": "100000000000000000000000"
+         },
+         {
+            "dailyLimitId": "0x8657ca68cd44163b1caf5570ba8186eb506f7e0079dc8aa581e9f022d968cdd0",
+            "refreshTime": refreshTime,
+            "defaultTokenAmount": "100000000000000000000000"
+         },
+         {
+             "dailyLimitId": "0x40cf7038c3b88609739b71719f84d0141a0afc20b7eee493da1dd4368331f092",
+             "refreshTime": refreshTime,
+             "defaultTokenAmount": "100000000000000000000000"
+         },
+         {
+            "dailyLimitId": "0x7716175f8edee0f77e02062214018b44f6baaa60390782df9bdf2846bf22f508",
+            "refreshTime": refreshTime,
+            "defaultTokenAmount": "100000000000000000000000"
+         },
+         {
+             "dailyLimitId": "0xec2254e74a111a096e62efecdec614231ae7b08851350c8158cf213adb338f01",
+             "refreshTime": refreshTime,
+             "defaultTokenAmount": "100000000000000000000000"
+         },
+         {
+            "dailyLimitId": "0x7a7760656cd274440f3804148d8cc5ba0799a8d3b6f97a9f337164080807c7c6",
+            "refreshTime": refreshTime,
+            "defaultTokenAmount": "100000000000000000000000"
+         },
+         {
+             "dailyLimitId": "0x1c5d755eb3fae8857875d209787235f4bc6934273af27253309e49d82b0c9aca",
+             "refreshTime": refreshTime,
+             "defaultTokenAmount": "100000000000000000000000"
+         },
+         {
+             "dailyLimitId": "0x1158bbf6e2db8ba582cbf5de5c5880b40e5bd50c57c0515596fe8b101763bc88",
+             "refreshTime": refreshTime,
+             "defaultTokenAmount": "100000000000000000000000"
+          },
+          {
+              "dailyLimitId": "0xe97e434a5cc2d3457769ef8c9f282da519e424aa4e8b93d218feb65ac9809089",
+              "refreshTime": refreshTime,
+              "defaultTokenAmount": "100000000000000000000000"
+          },
+          {
+             "dailyLimitId": "0x12363a4e045159563262a0a639a22541cd74e0237a7817c7b376a104aa2ed1f9",
+             "refreshTime": refreshTime,
+             "defaultTokenAmount": "100000000000000000000000"
+          },
+          {
+              "dailyLimitId": "0x52c703dc28cef70cfb1200aefe6dba934218bdc5fe6800b17b7ee9e6f4f05a50",
+              "refreshTime": refreshTime,
+              "defaultTokenAmount": "100000000000000000000000"
+          },
+          {
+            "dailyLimitId": "0x62ff59ff196699298fb1fb330aff521ffd0d7c9a2f988b4c4bd0a235b63f765a",
+            "refreshTime": refreshTime,
+            "defaultTokenAmount": "100000000000000000000000"
+         },
+         {
+             "dailyLimitId": "0x78dc4c6428e9d309507c25e94ebd2ecc6b60b4dbd23cd87405c0b8c1d3cc8835",
+             "refreshTime": refreshTime,
+             "defaultTokenAmount": "100000000000000000000000"
+         }
+    ];
     // await limiterImplementation.setDailyLimit(config);
-    // // step 4: set rate limit
-    // console.log("Start to set rate limit.")
-    // var configs = [{
-    //     "bucketId": "0xe5b30d58c8734dbffc6a7f38a7287e26a100d85f52a00ad4da2778799ceda3bc",
-    //     "isEnabled": true,
-    //     "tokenCapacity": "10000000000000000000000",
-    //     "rate": "10000000000000000000000"
-    //   },
-    //   {
-    //     "bucketId": "0x18524025053fea3bc15323165056c34cfe8ade923353c7c167e302f9f832e48b",
-    //     "isEnabled": true,
-    //     "tokenCapacity": "10000000000000000000000",
-    //     "rate": "10000000000000000000000"
-    //   },
-    //   {
-    //     "bucketId": "0x6b16c1b5498e42032008d3c1db1852c02da818ca675f15c98fbbae0e63a9bc35",
-    //     "isEnabled": true,
-    //     "tokenCapacity": "10000000000000000000000",
-    //     "rate": "10000000000000000000000"
-    //   },
-    //   {
-    //     "bucketId": "0xb73990965f7b5c0436e93ccc39ce535dd2e701e8bd5ae02f2d8a5bf3c0234d8e",
-    //     "isEnabled": true,
-    //     "tokenCapacity": "10000000000000000000000",
-    //     "rate": "10000000000000000000000"
-    //   }
-    // ];
-    // await limiterImplementation.setTokenBucketConfig(configs);
+    // step 4: set rate limit
+    console.log("Start to set rate limit.")
+    var configs = [
+      {
+        "bucketId": "0x815ad056f615f06c2dc9c414c96fa940da5a4b101ebb697ec00665a26677dc9b",
+        "isEnabled": true,
+        "tokenCapacity": "10000000000000000000000",
+        "rate": "10000000000000000000000"
+      },
+      {
+        "bucketId": "0x3a3deea64135a8a86208198b5c366950d7af11b37644d873af1f4e659142601f",
+        "isEnabled": true,
+        "tokenCapacity": "10000000000000000000000",
+        "rate": "10000000000000000000000"
+      },
+      {
+        "bucketId": "0xe618bdef3a8b055ac6aabc2743185dd1b35f4ea4d0f4ce72fea9dc4d53ba2580",
+        "isEnabled": true,
+        "tokenCapacity": "10000000000000000000000",
+        "rate": "10000000000000000000000"
+      },
+      {
+        "bucketId": "0x127ac2881adde353466dd12fb4b6d1e40dd6c73fd4945d46e2695aa138949859",
+        "isEnabled": true,
+        "tokenCapacity": "10000000000000000000000",
+        "rate": "10000000000000000000000"
+      },
+      {
+        "bucketId": "0x4db322fb153062a29d74ab5eac2396b437c23219d77dac03636c6de3a13cb4bf",
+        "isEnabled": true,
+        "tokenCapacity": "10000000000000000000000",
+        "rate": "10000000000000000000000"
+      },
+      {
+        "bucketId": "0x62279e5c498740c33cb30835a3c45dabcb76bcd6f9b67937c9db91f71236ed56",
+        "isEnabled": true,
+        "tokenCapacity": "10000000000000000000000",
+        "rate": "10000000000000000000000"
+      },
+      {
+        "bucketId": "0x8657ca68cd44163b1caf5570ba8186eb506f7e0079dc8aa581e9f022d968cdd0",
+        "isEnabled": true,
+        "tokenCapacity": "10000000000000000000000",
+        "rate": "10000000000000000000000"
+      },
+      {
+        "bucketId": "0x40cf7038c3b88609739b71719f84d0141a0afc20b7eee493da1dd4368331f092",
+        "isEnabled": true,
+        "tokenCapacity": "10000000000000000000000",
+        "rate": "10000000000000000000000"
+      },
+      {
+        "bucketId": "0x7716175f8edee0f77e02062214018b44f6baaa60390782df9bdf2846bf22f508",
+        "isEnabled": true,
+        "tokenCapacity": "10000000000000000000000",
+        "rate": "10000000000000000000000"
+      },
+      {
+        "bucketId": "0xec2254e74a111a096e62efecdec614231ae7b08851350c8158cf213adb338f01",
+        "isEnabled": true,
+        "tokenCapacity": "10000000000000000000000",
+        "rate": "10000000000000000000000"
+      },
+      {
+        "bucketId": "0x7a7760656cd274440f3804148d8cc5ba0799a8d3b6f97a9f337164080807c7c6",
+        "isEnabled": true,
+        "tokenCapacity": "10000000000000000000000",
+        "rate": "10000000000000000000000"
+      },
+      {
+        "bucketId": "0x1158bbf6e2db8ba582cbf5de5c5880b40e5bd50c57c0515596fe8b101763bc88",
+        "isEnabled": true,
+        "tokenCapacity": "10000000000000000000000",
+        "rate": "10000000000000000000000"
+      },{
+        "bucketId": "0xe97e434a5cc2d3457769ef8c9f282da519e424aa4e8b93d218feb65ac9809089",
+        "isEnabled": true,
+        "tokenCapacity": "10000000000000000000000",
+        "rate": "10000000000000000000000"
+      },
+      {
+        "bucketId": "0x12363a4e045159563262a0a639a22541cd74e0237a7817c7b376a104aa2ed1f9",
+        "isEnabled": true,
+        "tokenCapacity": "10000000000000000000000",
+        "rate": "10000000000000000000000"
+      },
+      {
+        "bucketId": "0x52c703dc28cef70cfb1200aefe6dba934218bdc5fe6800b17b7ee9e6f4f05a50",
+        "isEnabled": true,
+        "tokenCapacity": "10000000000000000000000",
+        "rate": "10000000000000000000000"
+      },
+      {
+        "bucketId": "0x62ff59ff196699298fb1fb330aff521ffd0d7c9a2f988b4c4bd0a235b63f765a",
+        "isEnabled": true,
+        "tokenCapacity": "10000000000000000000000",
+        "rate": "10000000000000000000000"
+      },{
+        "bucketId": "0x78dc4c6428e9d309507c25e94ebd2ecc6b60b4dbd23cd87405c0b8c1d3cc8835",
+        "isEnabled": true,
+        "tokenCapacity": "10000000000000000000000",
+        "rate": "10000000000000000000000"
+      }
+    ];
+    await limiterImplementation.setTokenBucketConfig(configs);
 
     // let ABI1 = [
     //     "function setTokenPool(address _tokenPool)"
