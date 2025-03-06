@@ -49,6 +49,7 @@ module.exports = {
   },
   networks: {
     hardhat: {
+      chainId: 11155111,
       allowUnlimitedContractSize: true
     }
     // bsc_test: {
