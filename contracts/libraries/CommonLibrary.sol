@@ -10,7 +10,7 @@ library CommonLibrary {
     using Strings for uint256;
 
     function addressToString(address _address) public pure returns (string memory) {
-        return string(abi.encodePacked("0x", _address.toHexString()));
+        return Strings.toHexString(uint160(_address), 20);
     }
 
     struct CrossChainConfig {

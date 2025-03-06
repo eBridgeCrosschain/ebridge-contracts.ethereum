@@ -31,8 +31,8 @@ interface IBridgeOut {
     ) external view returns (bytes32);
 
     function setCrossChainConfig(
-        CommonLibrary.CrossChainConfig[] calldata configs, 
-        address oracleContract) 
+        CommonLibrary.CrossChainConfig[] calldata _configs, 
+        address _oracleContract) 
     external;
 
     function forwardMessage(

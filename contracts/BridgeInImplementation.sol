@@ -8,9 +8,11 @@ import "./interfaces/RampInterface.sol";
 import "./interfaces/TokenPoolInterface.sol";
 import "./libraries/CommonLibrary.sol";
 import "./libraries/StringHex.sol";
+import "./libraries/BridgeInLibrary.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
+import "hardhat/console.sol";
 
 contract BridgeInImplementation is ProxyStorage {
     using SafeMath for uint256;
@@ -40,6 +42,7 @@ contract BridgeInImplementation is ProxyStorage {
     address public limiter;
     address public tokenPool;
     address public oracleContract;
+    BridgeInLibrary.ChainMapping private chainMapping;
     mapping(string => CommonLibrary.CrossChainConfig) private crossChainConfigMap;
 
     modifier whenNotPaused() {
@@ -82,7 +85,8 @@ contract BridgeInImplementation is ProxyStorage {
         address owner,
         uint256 amount,
         string targetChainId,
-        string targetAddress
+        string targetAddress,
+        uint256 blockTime
     );
 
     function initialize(
@@ -247,7 +251,7 @@ contract BridgeInImplementation is ProxyStorage {
             targetAddress
         );
         sendMessageToRamp(targetChainId, message, amount, token);
-        emit NewReceipt(receiptId, token, msg.sender, amount, targetChainId, targetAddress);
+        emit NewReceipt(receiptId, token, msg.sender, amount, targetChainId, targetAddress,block.timestamp);
     }
 
     function generateMessage(

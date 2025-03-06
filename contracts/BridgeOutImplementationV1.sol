@@ -51,6 +51,7 @@ contract BridgeOutImplementationV1 is ProxyStorage {
     address public limiter;
     uint8 public signatureThreshold;
     address public tokenPool;
+
     address public oracleContract;
     mapping(uint32 => CommonLibrary.CrossChainConfig) private crossChainConfigMap;
 
@@ -85,7 +86,14 @@ contract BridgeOutImplementationV1 is ProxyStorage {
     }
 
     event SwapPairAdded(bytes32 swapId, address token, string chainId);
-    event TokenSwapEvent(address receiveAddress, address token, uint256 amount, string receiptId, string fromChainId);
+    event TokenSwapEvent(
+        address receiveAddress,
+        address token,
+        uint256 amount,
+        string receiptId,
+        string fromChainId,
+        uint256 blockTime
+    );
     event NewTransmission(
         bytes32 swapId,
         address transmiter,
@@ -136,7 +144,7 @@ contract BridgeOutImplementationV1 is ProxyStorage {
         isPaused = false;
     }
 
-    function setCrossChainConfig(CommonLibrary.CrossChainConfig[] calldata _configs, address _oracleContract) external onlyBridgeInContract {
+    function setCrossChainConfig(CommonLibrary.CrossChainConfig[] calldata _configs, address _oracleContract) external {
         oracleContract = _oracleContract;
         require(_configs.length > 0, "invalid input");
         for (uint i = 0; i < _configs.length; i++) {
@@ -246,7 +254,8 @@ contract BridgeOutImplementationV1 is ProxyStorage {
             token,
             targetTokenAmount,
             receiptInfo.receiptId,
-            swapInfo.targetToken.fromChainId
+            swapInfo.targetToken.fromChainId,
+            block.timestamp
         );
         swapAmounts.receivedAmounts[token] = targetTokenAmount;
     }

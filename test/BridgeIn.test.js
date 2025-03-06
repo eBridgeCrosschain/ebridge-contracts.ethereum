@@ -10,7 +10,8 @@ const BigNumber = require("bignumber.js")
 describe("BridgeIn", function () {
     async function deployBridgeInFixture() {
         // Contracts are deployed using the first signer/account by default
-
+        const { merkleTree, regimentId, regiment }
+            = await deployMerkleTreeFixture()
         const WETH = await ethers.getContractFactory("WETH9");
         const weth = await WETH.deploy();
 
@@ -24,18 +25,28 @@ describe("BridgeIn", function () {
 
         const RampMock = await ethers.getContractFactory("MockRamp");
         const rampMock = await RampMock.deploy();
-
-        const multiSigWalletMockAddress = otherAccount0.address;
-
         const BridgeInImplementation = await ethers.getContractFactory("BridgeInImplementation",{
             libraries : {
                 CommonLibrary:lib.address
             }
         });
+        const multiSigWalletMockAddress = otherAccount0.address;
+        
         const BridgeIn = await ethers.getContractFactory("BridgeIn");
         const bridgeInImplementation = await BridgeInImplementation.deploy();
         const bridgeInProxy = await BridgeIn.deploy(multiSigWalletMockAddress, weth.address, otherAccount1.address, bridgeInImplementation.address);
         const bridgeIn = BridgeInImplementation.attach(bridgeInProxy.address);
+        const BridgeOut = await ethers.getContractFactory("BridgeOut");
+        const BridgeOutImplementation = await ethers.getContractFactory("BridgeOutImplementationV1"
+            ,{
+                libraries:{
+                    CommonLibrary : lib.address
+                }
+            });
+        const bridgeOutImplementation = await BridgeOutImplementation.deploy();
+        const bridgeOutProxy = await BridgeOut.deploy(merkleTree.address, regiment.address, bridgeIn.address, otherAccount0.address, multiSigWalletMockAddress, weth.address, bridgeOutImplementation.address);
+        const bridgeOut = BridgeOutImplementation.attach(bridgeOutProxy.address);
+        
 
         const LimiterImplementation = await ethers.getContractFactory("LimiterImplementation");
 
@@ -49,7 +60,7 @@ describe("BridgeIn", function () {
         const TokenPoolProxy = await TokenPool.deploy(bridgeIn.address,bridgeOutMock.address,weth.address,admin.address,tokenpoolImplementation.address);
         const tokenpool = TokenPoolImplementation.attach(TokenPoolProxy.address);
         
-        await bridgeIn.connect(otherAccount0).setContractConfig(bridgeOutMock.address,limiter.address,tokenpool.address);
+        await bridgeIn.connect(otherAccount0).setContractConfig(bridgeOut.address,limiter.address,tokenpool.address);
         var configs = [{
             bridgeContractAddress:"2rC1X1fudEkJ4Yungj5tYNJ93GmBxbSRiyJqfBkzcT6JshSqz9",
             targetChainId:"MainChain_AELF",
@@ -60,10 +71,55 @@ describe("BridgeIn", function () {
             chainId:1931928
         }];
         await bridgeIn.connect(otherAccount0).setCrossChainConfig(configs,rampMock.address);
+        const config = await bridgeIn.getCrossChainConfig("MainChain_AELF");
+        console.log(config);
+        await bridgeOut.connect(otherAccount0).setCrossChainConfig(configs,rampMock.address);
+        const config1 = await bridgeOut.getCrossChainConfig(9992731);
+        console.log(config1);
         return { bridgeIn, owner, otherAccount0, otherAccount1, bridgeOutMock, weth, otherAccount2, limiter, admin, tokenpool };
 
     }
+    async function deployMerkleTreeFixture() {
+        // Contracts are deployed using the first signer/account by default
+        const { regiment, owner, regimentId } = await loadFixture(deployRegimentFixture);
 
+        const MerkleTreeImplementation = await ethers.getContractFactory("MerkleTreeImplementation");
+        const MerkleTree = await ethers.getContractFactory("MerkleTree");
+        const merkleTreeImplementation = await MerkleTreeImplementation.deploy();
+        const merkleTreeProxy = await MerkleTree.deploy(regiment.address,merkleTreeImplementation.address);
+        const merkleTree = MerkleTreeImplementation.attach(merkleTreeProxy.address);
+
+        return { merkleTree, owner, regimentId, regiment };
+    }
+    async function deployRegimentFixture() {
+        // Contracts are deployed using the first signer/account by default
+        const _memberJoinLimit = 10;
+        const _regimentLimit = 20;
+        const _maximumAdminsCount = 3;
+
+        const [owner] = await ethers.getSigners();
+        const RegimentImplementation = await ethers.getContractFactory("RegimentImplementation");
+        const Regiment = await ethers.getContractFactory("Regiment");
+        const regimentImplementation = await RegimentImplementation.deploy();
+        const regimentProxy = await Regiment.deploy(_memberJoinLimit, _regimentLimit, _maximumAdminsCount,regimentImplementation.address);
+        const regiment = RegimentImplementation.attach(regimentProxy.address);
+
+        const _manager = owner.address;
+        const _initialMemberList = [owner.address];
+
+        var tx = await regiment.CreateRegiment(_manager, _initialMemberList);
+        const receipt = await tx.wait();
+        const data = receipt.logs[0].data;
+        const topics = receipt.logs[0].topics;
+        const interface = new ethers.utils.Interface(["event RegimentCreated(uint256 create_time, address manager,address[] InitialMemberList,bytes32 regimentId)"]);
+        const event = interface.decodeEventLog("RegimentCreated", data, topics);
+        var regimentId = event.regimentId;
+        var _newAdmins = [owner.address];
+        var originSenderAddress = owner.address;
+        await regiment.AddAdmins(regimentId, _newAdmins);
+
+        return { regiment, owner, regimentId };
+    }
     async function deployTokensFixture() {
         const ELF = await ethers.getContractFactory("ELF");
         const elf = await ELF.deploy();
@@ -88,7 +144,6 @@ describe("BridgeIn", function () {
             it("Should revert when sender is not owner", async function () {
                 const { elf, usdt } = await deployTokensFixture();
                 const { bridgeIn, owner, otherAccount0, otherAccount1 } = await loadFixture(deployBridgeInFixture);
-
                 var error = "BridgeIn:only for Wallet call"
                 var chainId = "AELF_MAINNET"
                 var tokens = [{
