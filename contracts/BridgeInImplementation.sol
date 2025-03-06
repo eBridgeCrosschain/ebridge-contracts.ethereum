@@ -1,16 +1,17 @@
 pragma solidity 0.8.9;
 
-import "@openzeppelin/contracts/utils/math/SafeMath.sol";
-import "@openzeppelin/contracts/utils/Strings.sol";
-import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
-import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "./Proxy.sol";
-import "./libraries/StringHex.sol";
 import "./interfaces/BridgeOutInterface.sol";
-import "./interfaces/NativeTokenInterface.sol";
 import "./interfaces/LimiterInterface.sol";
-import "./libraries/BridgeInLibrary.sol";
+import "./interfaces/NativeTokenInterface.sol";
+import "./interfaces/RampInterface.sol";
 import "./interfaces/TokenPoolInterface.sol";
+import "./libraries/CommonLibrary.sol";
+import "./libraries/StringHex.sol";
+import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import "@openzeppelin/contracts/utils/math/SafeMath.sol";
+import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
+import "hardhat/console.sol";
 
 contract BridgeInImplementation is ProxyStorage {
     using SafeMath for uint256;
@@ -38,9 +39,11 @@ contract BridgeInImplementation is ProxyStorage {
         private ownerToReceiptsIndexMap; //from 0
     address public limiter;
     address public tokenPool;
+    address public oracleContract;
+    mapping(string => CommonLibrary.CrossChainConfig) private crossChainConfigMap;
 
     modifier whenNotPaused() {
-        require(!isPaused, "BrigeIn:paused");
+        require(!isPaused, "BridgeIn:paused");
         _;
     }
     modifier onlyWallet() {
@@ -50,7 +53,7 @@ contract BridgeInImplementation is ProxyStorage {
     modifier onlyPauseController() {
         require(
             msg.sender == pauseController,
-            "BrigeIn:only for pause controller"
+            "BridgeIn:only for pause controller"
         );
         _;
     }
@@ -65,17 +68,22 @@ contract BridgeInImplementation is ProxyStorage {
         string targetAddress; // User address in aelf
         string receiptId;
     }
+
     struct Token {
         address tokenAddress;
         string chainId;
     }
+
     event TokenAdded(address token, string chainId);
     event TokenRemoved(address token, string chainId);
     event NewReceipt(
         string receiptId,
         address asset,
         address owner,
-        uint256 amount
+        uint256 amount,
+        string targetChainId,
+        string targetAddress,
+        uint256 blockTime
     );
 
     function initialize(
@@ -113,6 +121,24 @@ contract BridgeInImplementation is ProxyStorage {
         pauseController = _pauseController;
     }
 
+    function setCrossChainConfig(CommonLibrary.CrossChainConfig[] calldata _configs, address _oracleContract) external onlyWallet {
+        require(_oracleContract != address(0), "invalid oracle");
+        oracleContract = _oracleContract;
+        require(_configs.length > 0, "invalid input");
+        for (uint i = 0; i < _configs.length; i++) {
+            crossChainConfigMap[_configs[i].targetChainId] = CommonLibrary.CrossChainConfig(
+                _configs[i].bridgeContractAddress,
+                _configs[i].targetChainId,
+                _configs[i].chainId
+            );
+        }
+        IBridgeOut(bridgeOut).setCrossChainConfig(_configs, _oracleContract);
+    }
+    
+    function getCrossChainConfig(string calldata targetChainId) external view returns (CommonLibrary.CrossChainConfig memory) {
+        return crossChainConfigMap[targetChainId];
+    }
+    
     function addToken(Token[] calldata tokens) public onlyWallet {
         require(
             tokenList.length().add(tokens.length) <= MaxTokenCount && tokens.length <= MaxTokenCountPerAddOrRemove,
@@ -204,80 +230,50 @@ contract BridgeInImplementation is ProxyStorage {
         _approveAndLockToken(token,amount,targetChainId);
         tokenReceiptIndex[tokenKey] = tokenReceiptIndex[tokenKey].add(1);
         uint256 receiptIndex = tokenReceiptIndex[tokenKey];
-        string memory receiptId = BridgeInLibrary._generateReceiptId(tokenKey, receiptIndex.toString());
-        receiptIndexMap[tokenKey][receiptIndex] = Receipt(
-            token,
-            msg.sender,
-            amount,
-            block.number,
-            block.timestamp,
-            targetChainId,
-            targetAddress,
-            receiptId
-        );
+        string memory receiptId = _generateReceiptId(tokenKey, receiptIndex.toString());
         totalAmountInReceipts[tokenKey] = totalAmountInReceipts[tokenKey].add(
             amount
         );
-        uint256 index = ownerToReceiptsIndexMap[msg.sender][tokenKey];
-        ownerToReceiptsIndexMap[msg.sender][tokenKey] = ownerToReceiptsIndexMap[msg.sender][tokenKey].add(1);
-        ownerToReceiptIdMap[msg.sender][tokenKey][index] = receiptId;
-        emit NewReceipt(receiptId, token, msg.sender, amount);
-    }
-
-    function getMyReceipts(
-        address user,
-        address token,
-        string calldata targetChainId
-    ) external view returns (string[] memory receipt_ids) {
-        bytes32 tokenKey = _getTokenKey(token, targetChainId);
-        uint256 index = ownerToReceiptsIndexMap[user][tokenKey];
-        receipt_ids = new string[](index);
-        for (uint256 i = 0; i < index; i++) {
-            receipt_ids[i] = ownerToReceiptIdMap[user][tokenKey][i];
-        }
-        return receipt_ids;
-    }
-
-    function getSendReceiptIndex(
-        address[] memory tokens,
-        string[] calldata targetChainIds
-    ) external view returns (uint256[] memory indexes) {
-        require(
-            tokens.length == targetChainIds.length,
-            "invalid input"
+        // generate message and send to oracle oracleContract
+        bytes memory message = generateMessage(
+            receiptIndex,
+            tokenKey,
+            amount,
+            targetAddress
         );
-        indexes = new uint256[](tokens.length);
-        for (uint256 i = 0; i < tokens.length; i++) {
-            bytes32 tokenKey = _getTokenKey(tokens[i], targetChainIds[i]);
-            uint256 index = tokenReceiptIndex[tokenKey];
-            indexes[i] = index;
-        }
-        return indexes;
+        sendMessageToRamp(targetChainId, message, amount, token);
+        emit NewReceipt(receiptId, token, msg.sender, amount, targetChainId, targetAddress,block.timestamp);
     }
 
-    function getSendReceiptInfos(
-        address token,
-        string calldata targetChainId,
-        uint256 fromIndex,
-        uint256 endIndex
-    ) public view returns (Receipt[] memory _receipts) {
-        bytes32 tokenKey = _getTokenKey(token, targetChainId);
-        if (tokenReceiptIndex[tokenKey] == 0) {
-            return _receipts;
-        }
-        require(
-            endIndex <= tokenReceiptIndex[tokenKey] &&
-                fromIndex > 0 &&
-                fromIndex <= endIndex,
-            "Invalid input"
+    function generateMessage(
+        uint256 receiptIndex,
+        bytes32 receiptIdToken,
+        uint256 amount,
+        string memory receiverAddress
+    ) internal returns (bytes memory) {
+        bytes32 receiptHash = CommonLibrary.computeLeafHashForSend(
+            receiptIndex,
+            receiptIdToken,
+            amount,
+            receiverAddress
         );
-        uint256 length = endIndex.sub(fromIndex).add(1);
-        require(length <= MaxQueryRange, "Query range is exceeded");
-        _receipts = new Receipt[](length);
-        for (uint256 i = 0; i < length; i++) {
-            _receipts[i] = receiptIndexMap[tokenKey][i.add(fromIndex)];
-        }
-        return _receipts;
+        return abi.encode(receiptIndex, receiptIdToken, amount, receiptHash, receiverAddress);
+    }
+
+    function sendMessageToRamp(string memory targetChainId, bytes memory message, uint256 amount, address token) internal {
+        IRamp(oracleContract).sendRequest(
+            uint256(crossChainConfigMap[targetChainId].chainId),
+            crossChainConfigMap[targetChainId].bridgeContractAddress,
+            message,
+            IRamp.TokenAmount(
+                "",
+                uint256(crossChainConfigMap[targetChainId].chainId),
+                crossChainConfigMap[targetChainId].bridgeContractAddress,
+                CommonLibrary.addressToString(token),
+                "",
+                amount
+            )
+        );
     }
 
     function getTotalAmountInReceipts(
@@ -287,18 +283,17 @@ contract BridgeInImplementation is ProxyStorage {
         bytes32 tokenKey = _getTokenKey(token, chainId);
         return totalAmountInReceipts[tokenKey];
     }
-    
 
-    function _getTokenKey(address token,string memory chainId) private pure returns (bytes32){
-        return BridgeInLibrary._generateTokenKey(token, chainId);
+    function _getTokenKey(address token, string memory chainId) private pure returns (bytes32){
+        return CommonLibrary.generateTokenKey(token, chainId);
     }
 
     function _checkTokenSupport(bytes32 tokenKey) internal view {
-        BridgeInLibrary.checkTokenSupport(tokenList,tokenKey);
+        require(tokenList.contains(tokenKey), "not support");
     }
 
     function _checkTokenNotExist(bytes32 tokenKey) internal view {
-        BridgeInLibrary.checkTokenNotExist(tokenList,tokenKey);
+        require(!tokenList.contains(tokenKey), "tokenKey already added");
     }
 
     function _transfer(address token,address receiver,uint256 amount) internal {
@@ -311,5 +306,14 @@ contract BridgeInImplementation is ProxyStorage {
 
     function _lock(address token,uint256 amount,string calldata chainId,address sender) internal {
         ITokenPool(tokenPool).lock(token,amount,chainId,sender);
+    }
+
+    function _generateReceiptId(
+        bytes32 tokenKey,
+        string memory suffix
+    ) internal pure returns (string memory) {
+        string memory prefix = tokenKey.toHex();
+        string memory separator = '.';
+        return string(abi.encodePacked(prefix, separator, suffix));
     }
 }
