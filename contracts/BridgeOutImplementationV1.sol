@@ -207,11 +207,11 @@ contract BridgeOutImplementationV1 is ProxyStorage {
     function forwardMessage(
         uint256 sourceChainId,
         uint256 targetChainId,
-        IRamp.TokenAmount memory tokenAmount,
-        bytes memory message,
         string memory sender,
-        address receiver
-    ) external onlyOracle {
+        address receiver,
+        bytes memory message,
+        IRamp.TokenAmount memory tokenAmount
+    ) external whenNotPaused onlyOracle {
         require(targetChainId == block.chainid, "invalid chain id");
         CommonLibrary.CrossChainConfig memory crossChainConfig = crossChainConfigMap[uint32(sourceChainId)];
         require(crossChainConfig.chainId == uint32(sourceChainId), "invalid source chain id");

@@ -14,10 +14,10 @@ async function main() {
     const merkleTreeAddress = '';
     const multiSigWalletAddress = '';
     const bridgeInAddress = '0xFA51BBf197183ce43509C67ce28095f66F60a518';
-    const bridgeInImplementationAddress = '0x811C35F98913Dac06E5Ee3C649A5e60F9eC728BB';
+    const bridgeInImplementationAddress = '0x7B8Fa96571994A33B99EA98BEb296c73D9b17e8C';
     const bridgeOutAddress = '0xA56cb58f75D440258973dBC2a3D78237ca67b705';
-    const bridgeOutImplementationAddress = '0x9c1D3042b3f3d8BD1285329a514510F325398446';
-    const commonLibAddress = '0xd8fD5a6603A28bd21f895c2659Fb5e0D33ab4580';
+    const bridgeOutImplementationAddress = '0x64D9AAcF2035F4BaCa5f50360251F3DBC6999e4E';
+    const commonLibAddress = '0xd6f8Aca66ac307BB2d26Bc9490cd1E5301A755e0';
     const LimiterAddress = '';
     const LimiterImplementationAddress = '';
     const tokenPoolImplementationAddress = '';
@@ -59,27 +59,27 @@ async function main() {
     // const bridgeOutImplementation = await BridgeOutImplementation.deploy();
     // console.log("BridgeOutImplementation address:", bridgeOutImplementation.address);
 
-    // await run("verify:verify", {
-    //     address: bridgeInImplementationAddress,
-    //     constructorArguments: [],
-    //     contract: "contracts/BridgeInImplementation.sol:BridgeInImplementation"
-    // })
+    await run("verify:verify", {
+        address: bridgeInImplementationAddress,
+        constructorArguments: [],
+        contract: "contracts/BridgeInImplementation.sol:BridgeInImplementation"
+    })
     // //
-    // await run("verify:verify", {
-    //     address: commonLibAddress,
-    //     constructorArguments: [],
-    //     contract: "contracts/libraries/CommonLibrary.sol:CommonLibrary"
-    // })
+    await run("verify:verify", {
+        address: commonLibAddress,
+        constructorArguments: [],
+        contract: "contracts/libraries/CommonLibrary.sol:CommonLibrary"
+    })
     // await run("verify:verify", {
     //     address: bridgeInLibAddress,
     //     constructorArguments: [],
     //     contract: "contracts/libraries/BridgeInLibrary.sol:BridgeInLibrary"
     // })
-    // await run("verify:verify", {
-    //     address: bridgeOutImplementationAddress,
-    //     constructorArguments: [],
-    //     contract: "contracts/BridgeOutImplementationV1.sol:BridgeOutImplementationV1"
-    // })
+    await run("verify:verify", {
+        address: bridgeOutImplementationAddress,
+        constructorArguments: [],
+        contract: "contracts/BridgeOutImplementationV1.sol:BridgeOutImplementationV1"
+    })
 
     //  // TokenPoolImplementation
     // console.log("start deploy tokenPool implementation.")

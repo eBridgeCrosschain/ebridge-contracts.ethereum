@@ -38,9 +38,9 @@ interface IBridgeOut {
     function forwardMessage(
         uint256 sourceChainId,
         uint256 targetChainId,
-        IRamp.TokenAmount memory tokenAmount,
-        bytes memory message,
-        string memory sender,
-        address receiver
+        string calldata sender,
+        address receiver,
+        bytes calldata message,
+        IRamp.TokenAmount calldata tokenAmount
     ) external;
 }

@@ -85,7 +85,7 @@ contract BridgeInImplementation is ProxyStorage {
         address owner,
         uint256 amount,
         string targetChainId,
-        string targetAddress,
+        bytes32 targetAddress,
         uint256 blockTime
     );
 
@@ -193,7 +193,7 @@ contract BridgeInImplementation is ProxyStorage {
 
     function createNativeTokenReceipt(
         string calldata targetChainId,
-        string calldata targetAddress
+        bytes32 targetAddress
     ) external payable whenNotPaused {
         consumeReceiptLimit(tokenAddress, msg.value, targetChainId);
         INativeToken(tokenAddress).deposit{value: msg.value}();
@@ -205,7 +205,7 @@ contract BridgeInImplementation is ProxyStorage {
         address token,
         uint256 amount,
         string calldata targetChainId,
-        string calldata targetAddress
+        bytes32 targetAddress
     ) external whenNotPaused {
         consumeReceiptLimit(token, amount, targetChainId);
         IERC20(token).safeTransferFrom(msg.sender, address(this), amount);
@@ -233,7 +233,7 @@ contract BridgeInImplementation is ProxyStorage {
         address token,
         uint256 amount,
         string calldata targetChainId,
-        string calldata targetAddress
+        bytes32 targetAddress
     ) internal {
         bytes32 tokenKey = _getTokenKey(token, targetChainId);
         _approveAndLockToken(token, amount, targetChainId, tokenKey);
@@ -258,7 +258,7 @@ contract BridgeInImplementation is ProxyStorage {
         uint256 receiptIndex,
         bytes32 receiptIdToken,
         uint256 amount,
-        string memory receiverAddress
+        bytes32 receiverAddress
     ) internal returns (bytes memory) {
         bytes32 receiptHash = CommonLibrary.computeLeafHashForSend(
             receiptIndex,
@@ -266,7 +266,7 @@ contract BridgeInImplementation is ProxyStorage {
             amount,
             receiverAddress
         );
-        return abi.encode(receiptIndex, receiptIdToken, amount, receiptHash, receiverAddress);
+        return abi.encodePacked(receiptIndex, receiptIdToken, amount, receiverAddress, receiptHash);
     }
 
     function sendMessageToRamp(string memory targetChainId, bytes memory message, uint256 amount, address token) internal {

@@ -7,6 +7,7 @@ const { anyValue } = require("@nomicfoundation/hardhat-chai-matchers/withArgs");
 const { ethers } = require("hardhat");
 const { expect } = require("chai");
 const BigNumber = require("bignumber.js")
+const aelf = require("aelf-sdk");
 describe("BridgeIn", function () {
     async function deployBridgeInFixture() {
         // Contracts are deployed using the first signer/account by default
@@ -282,6 +283,18 @@ describe("BridgeIn", function () {
         })
 
         describe("create receipt test", function () {
+            it('aaa======',async function() {
+                const { bridgeIn, owner, otherAccount0, otherAccount1, bridgeOutMock,weth, otherAccount2, limiter, admin, tokenpool } = await loadFixture(deployBridgeInFixture);
+                const { elf, usdt } = await deployTokensFixture();
+
+                var chainId = "SideChain_tDVW";
+                var amount = '200000000000000000';
+                var targetAddress = "ZVJHCVCzixThco58iqe4qnE79pmxeDuYtMsM8k71RhLLxdqB5";
+                var a = aelf.utils.base58.decode(targetAddress);
+                console.log(a.toString('hex'));
+                var tokenAddress = "0x8adD57b8aD6C291BC3E3ffF89F767fcA08e0E7Ab";
+                await bridgeIn.createReceipt(tokenAddress, amount, chainId, a);
+            });
             it("Should revert when trigger error", async function () {
                 const { bridgeIn, owner, otherAccount0, otherAccount1, bridgeOutMock,weth, otherAccount2, limiter, admin } = await loadFixture(deployBridgeInFixture);
 

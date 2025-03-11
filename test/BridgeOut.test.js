@@ -799,51 +799,50 @@ describe("BridgeOut", function () {
                 var addresses = _constructSignature()[1];
                 console.log("privateKeys list", privateKeys)
 
-
-                addresses.forEach(async element => {
-                    await regiment.AddRegimentMember(regimentId, element);
-                });
-
-                var memberList = await regiment.GetRegimentMemberList(regimentId);
-                console.log(memberList);
-
-                // var signaturesR = [];
-                // var signaturesV = [];
-                // let buffer = new Array(32);
-
-                // privateKeys.forEach((element, i) => {
-                //     console.log("private key", element);
-                //     let signKey = new ethers.utils.SigningKey(element);
-                //     console.log("sign digest", element);
-                //     var Signature = signKey.signDigest(hashMessage);
-                //     console.log("signature r", Signature.r);
-                //     signaturesR.push(Signature.r);
-                //     signaturesV.push(Signature.s);
-                //     var vv = Signature.v == 27 ? "00" : "01";
-                //     buffer[i] = vv;
-                // });
-
-                // console.log(buffer);
-                // buffer.fill(0, privateKeys.length);
-                // console.log("after", buffer);
-                // var v = Buffer.from(buffer);
-                // const bufferAsString = v.toString('hex');
-                // const signatureV = "0x" + bufferAsString;
-                // console.log("signature v", signatureV);
-
-                var result = await rampMock.transmit(bridgeOut.address, message.message, swapId);
+                var result = await rampMock.transmit(9992731,11155111,message.message,"2rC1X1fudEkJ4Yungj5tYNJ93GmBxbSRiyJqfBkzcT6JshSqz9",bridgeOut.address,tokenAmount);
                 console.log(result);
                 var isReceiptRecorded = await bridgeOut.isReceiptRecorded(leafHash);
                 expect(isReceiptRecorded).to.equal(true)
                 expect(await elf.balanceOf(owner.address)).to.equal(amount)
-                // tokens = [token];
-                // chainIds = [chainId];
-                // var indexes = await bridgeOut.getReceiveReceiptIndex(tokens, chainIds);
-                // var infos = await bridgeOut.getReceivedReceiptInfos(elf.address, chainId, 1, indexes[0]);
-                // expect(infos[0].amount).to.equal(amount)
-                // expect(infos[0].targetAddress).to.equal(targetAddress)
-                // expect(infos[0].asset).to.equal(token)
+
             })
+            it("aaaaaaaaa======", async function () {
+                const { merkleTree, regimentId, regiment, bridgeOut, bridgeOutProxy, owner, otherAccount0, otherAccount1, bridgeInMock, weth, lib, otherAccount2, admin, limiter, otherAccount4, tokenpool, rampMock } = await loadFixture(deployBridgeOutFixture);
+                const { elf, usdt } = await deployTokensFixture()
+                var chainId = "SideChain_tDVW";
+                // var index = "1234";
+                // var tokenKey = _generateTokenKey(elf.address, chainId);
+                // var receiptId = tokenKey.toString().substring(2) + "." + index;
+                // var amount = "100";
+                // var targetAddress = owner.address;
+                // var leafHash = await lib.computeLeafHashForReceive(index,Buffer.from(tokenKey.toString().substring(2), "hex"), amount, targetAddress);
+                // var messageCreate = createMultiMessage(index, leafHash,amount,targetAddress,Buffer.from(tokenKey.toString().substring(2), "hex"));
+                // console.log("message:",messageCreate.message);
+                const message = "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAE5P1jHAMVja9UIuBCAEFDO/EgeWNfGQKYjpdK/44tWLgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAJUC+QAtJ6taWB9S7wX4Pyb0deed2DBMsMG449QZ3AYqJE5q30AAAAAAAAAAAAAAACiJj1cFPnHEaizxKov1SLv211eRA==";
+                const buffer = Buffer.from(message, "base64"); // Base64 转 Buffer
+                // const messageHex =  "0x" + buffer.toString("hex");
+                // console.log(messageHex);
+                const messageHex = "0x0000000000000000000000000000000000000000000000000000000000000029a1b2e4b980a70b0540967af854beecf176844da55c36601f7849c614e6ecfb500000000000000000000000000000000000000000000000000000000005f5e1000feaf05dabfd8a5f64d7c4293ec20aaf1ab4765a5482f195dc906c3804b2be2d000000000000000000000000f8a143451383e5c5a58fde92664dae08fb9f7f1b";
+                const bytesData = ethers.utils.arrayify(messageHex);
+
+                let tokenAmount = {
+                    swapId:"0x7716175f8edee0f77e02062214018b44f6baaa60390782df9bdf2846bf22f508",
+                    targetChainId: 11155111,
+                    targetContractAddress: "0x3c37E0A09eAFEaA7eFB57107802De1B28A6f5F07",
+                    tokenAddress: "0x8adD57b8aD6C291BC3E3ffF89F767fcA08e0E7Ab",
+                    originToken:"ELF",
+                    amount:0
+                };
+                var tokenKey = "0x393f58c700c5636bd508b810801050cefc481e58d7c640a623a5d2bfe38b562e";
+                
+                var leafHash = await lib.computeLeafHashForReceive(1,Buffer.from(tokenKey.toString().substring(2), "hex"), 10000000000, "0xa2263d5c14f9c711a8b3c4aa2fd522efdb5d5e44");
+                console.log("leaf hash", leafHash);
+                var result = await rampMock.transmit(9992731,11155111,bytesData,"293dHYMKjfEuTEkveb5h775avTyW69jBgHMYiWQqtdSdTfsfEP",bridgeOut.address,tokenAmount);
+                console.log(result);
+                var isReceiptRecorded = await bridgeOut.isReceiptRecorded(leafHash);
+                expect(isReceiptRecorded).to.equal(true)
+                expect(await elf.balanceOf(owner.address)).to.equal(amount)
+            });
             it("Should tramsmit and receive failed", async function () {
 
                 const { merkleTree, regimentId, regiment, bridgeOut, bridgeOutProxy, owner, otherAccount0, otherAccount1, bridgeInMock, weth, lib, otherAccount2, admin, limiter, otherAccount4, tokenpool } = await loadFixture(deployBridgeOutFixture);
@@ -1626,12 +1625,12 @@ describe("BridgeOut", function () {
     });
 
     function createMultiMessage(index, leafHash,amount,targetAddress,receiptIdToken) {
-        console.log(targetAddress);
-        console.log(receiptIdToken);
+        console.log("targetAddress",targetAddress);
+        console.log("receiptIdToken",receiptIdToken);
         var add =  '0x'.concat(targetAddress.slice(2).padStart(64, '0'));
-        console.log(add);
+        console.log("targetAddress",add);
         var message = ethers.utils.solidityPack(["uint256", "bytes32","uint256", "bytes32","bytes32"], [index,receiptIdToken,amount,leafHash,add])
-        console.log(message);
+        console.log("message:",message);
         return { message };
     }
 

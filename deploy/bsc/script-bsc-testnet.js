@@ -5,6 +5,7 @@ const { ethers } = require("hardhat");
 const { string } = require("hardhat/internal/core/params/argumentTypes");
 const BigNumber = require('bignumber.js');
 const {getCurrentTimestampBigInt} = require("hardhat/internal/hardhat-network/provider/utils/getCurrentTimestamp");
+const aelf = require("aelf-sdk");
 async function main() {
     const [sender,managerAddress,account2] = await ethers.getSigners();
     //initailize
@@ -88,18 +89,24 @@ async function main() {
     var chainIdSide = "SideChain_tDVW";
     var regimentId = '0xf7296bf942ea75763b3ffffd0133a94558c87477c0a7e595bf9543cd7540602f';
 
-    var configs = [{
-        bridgeContractAddress:"2rC1X1fudEkJ4Yungj5tYNJ93GmBxbSRiyJqfBkzcT6JshSqz9",
-        targetChainId:"MainChain_AELF",
-        chainId:9992731
-    },{
-        bridgeContractAddress:"293dHYMKjfEuTEkveb5h775avTyW69jBgHMYiWQqtdSdTfsfEP",
-        targetChainId:"SideChain_tDVW",
-        chainId:1931928
-    }];
-    const ramp = "0x9943E098D7E907a519F8a3deBB8e3705B7F26B8E";
-    console.log(configs);
-    await bridgeInImplementation.setCrossChainConfig(configs,ramp);
+    // var configs = [{
+    //     bridgeContractAddress:"2rC1X1fudEkJ4Yungj5tYNJ93GmBxbSRiyJqfBkzcT6JshSqz9",
+    //     targetChainId:"MainChain_AELF",
+    //     chainId:9992731
+    // },{
+    //     bridgeContractAddress:"293dHYMKjfEuTEkveb5h775avTyW69jBgHMYiWQqtdSdTfsfEP",
+    //     targetChainId:"SideChain_tDVW",
+    //     chainId:1931928
+    // }];
+    // const ramp = "0x9943E098D7E907a519F8a3deBB8e3705B7F26B8E";
+    // console.log(configs);
+    // await bridgeInImplementation.setCrossChainConfig(configs,ramp);
+
+    var amount = '1000000000000000000';
+    var targetAddress = "ZVJHCVCzixThco58iqe4qnE79pmxeDuYtMsM8k71RhLLxdqB5";
+    var a = aelf.utils.base58.decode(targetAddress);
+    await bridgeInImplementation.createReceipt(elfAddress, amount, chainIdSide, a);
+    
     // const config1 = await bridgeOutImplementation.getCrossChainConfig(1931928);
     // console.log(config1);
 
