@@ -17,10 +17,10 @@ async function main() {
     const limiterImplementationAddress = '';
     const tokenPoolAddress = '';
     const tokenPoolImplementationAddress = '';
-    const commonLibAddress = '';
-    const bridgeInImplementationAddress = '';
+    const commonLibAddress = '0xB7d9a6C5D1Bee6e98d2d5ff475CcCa36e00bDBd6';
+    const bridgeInImplementationAddress = '0xD9A80aEF60B09cA8B9b80713390FD1A16dfcFbe3';
     const bridgeInAddress = '0x7e308DC172faa2a6560C2cd806e8282C51E5BFA5';
-    const bridgeOutImplementationAddress = '';
+    const bridgeOutImplementationAddress = '0x612d92e2B0EdE580d12b48b21D526A60E74B65c8';
     const bridgeOutAddress = '0xA251aE4C14C53d980699b14319bf2Ad5A4bC4A14';
     const multiSigWalletAddress = '';
     const timelockAddress = '';
@@ -124,11 +124,11 @@ async function main() {
     //     contract: "contracts/TokenPoolImplementation.sol:TokenPoolImplementation"
     // })
 
-    // Common library
-    console.log("Start to deploy CommonLib.");
-    const CommonLib = await ethers.getContractFactory("CommonLibrary");
-    const commonLib = await CommonLib.deploy();
-    console.log("common lib address:", commonLib.address);
+    // // Common library
+    // console.log("Start to deploy CommonLib.");
+    // const CommonLib = await ethers.getContractFactory("CommonLibrary");
+    // const commonLib = await CommonLib.deploy();
+    // console.log("common lib address:", commonLib.address);
 
 
     // // BridgeInImplementation
@@ -148,16 +148,16 @@ async function main() {
     // const bridgeInProxy = await BridgeIn.deploy(mockMultiSigWalletAddress, nativeTokenAddress, pauseController,limiterAddress,tokenPoolAddress,bridgeInImplementationAddress);
     // console.log("BridgeIn address:", bridgeInProxy.address);
 
-    // await run("verify:verify", {
-    //     address: bridgeInLibAddress,
-    //     constructorArguments: [],
-    //     contract: "contracts/libraries/BridgeInLibrary.sol:BridgeInLibrary"
-    // })
-    // await run("verify:verify", {
-    //     address: bridgeInImplementationAddress,
-    //     constructorArguments: [],
-    //     contract: "contracts/BridgeInImplementation.sol:BridgeInImplementation"
-    // })
+    await run("verify:verify", {
+        address: commonLibAddress,
+        constructorArguments: [],
+        contract: "contracts/libraries/CommonLibrary.sol:CommonLibrary"
+    })
+    await run("verify:verify", {
+        address: bridgeInImplementationAddress,
+        constructorArguments: [],
+        contract: "contracts/BridgeInImplementation.sol:BridgeInImplementation"
+    })
     // await run("verify:verify", {
     //     address: bridgeInAddress,
     //     constructorArguments: [mockMultiSigWalletAddress, nativeTokenAddress, pauseController,limiterAddress,tokenPoolAddress,bridgeInImplementationAddress],
@@ -193,11 +193,11 @@ async function main() {
     //     constructorArguments: [],
     //     contract: "contracts/libraries/BridgeOutLibrary.sol:BridgeOutLibrary"
     // })
-    // await run("verify:verify", {
-    //     address: bridgeOutImplementationAddress,
-    //     constructorArguments: [],
-    //     contract: "contracts/BridgeOutImplementationV1.sol:BridgeOutImplementationV1"
-    // })
+    await run("verify:verify", {
+        address: bridgeOutImplementationAddress,
+        constructorArguments: [],
+        contract: "contracts/BridgeOutImplementationV1.sol:BridgeOutImplementationV1"
+    })
     // await run("verify:verify", {
     //     address: bridgeOutAddress,
     //     constructorArguments: [regimentAddress, bridgeInAddress ,mockMultiSigWalletAddress, nativeTokenAddress, limiterAddress, tokenPoolAddress, bridgeOutImplementationAddress],
@@ -205,14 +205,14 @@ async function main() {
     // })
 
     //MultiSigWallet
-    var members = [
-        "0x00378D56583235ECc92E7157A8BdaC1483094223",
-        "0xEA7Dfc13498E2Ca99a3a74e144F4Afa4dD28b3fc",
-        "0x2B5BD5995D6AAeC027c2f6d6a80ae2D792b52aFA",
-        "0xA36FF0f2cB7A35E597Bf862C5618c201bD44Dd29",
-        "0xE91839Cb35e0c67B5179B31d7A9DE4fde269aBD4",
-        ];
-    var required = 3;
+    // var members = [
+    //     "0x00378D56583235ECc92E7157A8BdaC1483094223",
+    //     "0xEA7Dfc13498E2Ca99a3a74e144F4Afa4dD28b3fc",
+    //     "0x2B5BD5995D6AAeC027c2f6d6a80ae2D792b52aFA",
+    //     "0xA36FF0f2cB7A35E597Bf862C5618c201bD44Dd29",
+    //     "0xE91839Cb35e0c67B5179B31d7A9DE4fde269aBD4",
+    //     ];
+    // var required = 3;
 
     // console.log("Start to deploy MultiSigWallet contract.");
     // const MultiSigWallet = await ethers.getContractFactory("MultiSigWallet");

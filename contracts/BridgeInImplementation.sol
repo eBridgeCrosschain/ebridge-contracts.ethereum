@@ -82,7 +82,7 @@ contract BridgeInImplementation is ProxyStorage {
         address owner,
         uint256 amount,
         string targetChainId,
-        string targetAddress,
+        bytes32 targetAddress,
         uint256 blockTime
     );
 
@@ -224,7 +224,7 @@ contract BridgeInImplementation is ProxyStorage {
         address token,
         uint256 amount,
         string calldata targetChainId,
-        string calldata targetAddress
+        bytes32 targetAddress
     ) internal {
         bytes32 tokenKey = _getTokenKey(token, targetChainId);
         _approveAndLockToken(token,amount,targetChainId);
