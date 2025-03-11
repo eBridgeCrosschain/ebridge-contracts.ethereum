@@ -15,8 +15,8 @@ describe("BridgeIn", function () {
         const weth = await WETH.deploy();
 
         const [owner, otherAccount0, otherAccount1, otherAccount2, admin] = await ethers.getSigners();
-        const BridgeInLib = await ethers.getContractFactory("BridgeInLibrary");
-        const lib = await BridgeInLib.deploy();
+        const CommonLib = await ethers.getContractFactory("CommonLibrary");
+        const lib = await CommonLib.deploy();
 
 
         const BridgeOutMock = await ethers.getContractFactory("MockBridgeOut");
@@ -26,7 +26,7 @@ describe("BridgeIn", function () {
 
         const BridgeInImplementation = await ethers.getContractFactory("BridgeInImplementation",{
             libraries : {
-                BridgeInLibrary:lib.address
+                CommonLibrary:lib.address
             }
         });
 

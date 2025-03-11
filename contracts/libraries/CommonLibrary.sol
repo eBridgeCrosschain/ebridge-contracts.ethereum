@@ -31,10 +31,11 @@ library CommonLibrary {
         uint256 receiptIndex = 0;
         ReceiptInfo memory receiptInfo;
         bytes32 targetAddress;
+        require(_message.length == 160 , "invalid message length");
         (receiptIndex, receiptInfo.receiptIdToken, receiptInfo.amount, receiptInfo.receiptHash, targetAddress) = abi.decode(
             _message, (uint256, bytes32, uint256, bytes32, bytes32));
         receiptInfo.receiveAddress = address(uint160(uint256(targetAddress)));
-        receiptInfo.receiptId = string(abi.encodePacked(receiptInfo.receiptIdToken, '.', receiptIndex.toString()));
+        receiptInfo.receiptId = string(abi.encodePacked(receiptInfo.receiptIdToken.toHexWithoutPrefixes(), '.', receiptIndex.toString()));
         bytes32 leafHash = computeLeafHashForReceive(receiptIndex, receiptInfo.receiptIdToken, receiptInfo.amount, receiptInfo.receiveAddress);
         require(leafHash == receiptInfo.receiptHash, "verification failed");
         return receiptInfo;
@@ -47,8 +48,7 @@ library CommonLibrary {
         address _receiverAddress
     ) public pure returns (bytes32 _leafHash) {
         bytes32 _receiptIndexHash = sha256(abi.encodePacked(_receiptIndex));
-        bytes32 _receiptIdTokenHash = sha256(abi.encodePacked(_receiptIdToken));
-        bytes32 _receiptIdHash = sha256(abi.encodePacked(_receiptIdTokenHash, _receiptIndexHash));
+        bytes32 _receiptIdHash = sha256(abi.encodePacked(_receiptIdToken, _receiptIndexHash));
         bytes32 _hashFromAmount = sha256(abi.encodePacked(_amount));
         bytes32 _hashFromAddress = sha256(abi.encodePacked(_receiverAddress));
         _leafHash = sha256(
@@ -60,13 +60,12 @@ library CommonLibrary {
         uint256 _receiptIndex,
         bytes32 _receiptIdToken,
         uint256 _amount,
-        string memory _receiverAddress
+        bytes32 _receiverAddress
     ) public pure returns (bytes32 _leafHash) {
         bytes32 _receiptIndexHash = sha256(abi.encodePacked(_receiptIndex));
-        bytes32 _receiptIdTokenHash = sha256(abi.encodePacked(_receiptIdToken));
-        bytes32 _receiptIdHash = sha256(abi.encodePacked(_receiptIdTokenHash, _receiptIndexHash));
+        bytes32 _receiptIdHash = sha256(abi.encodePacked(_receiptIdToken, _receiptIndexHash));
         bytes32 _hashFromAmount = sha256(abi.encodePacked(_amount));
-        bytes32 _hashFromAddress = sha256(abi.encode(_receiverAddress));
+        bytes32 _hashFromAddress = sha256(abi.encodePacked(_receiverAddress));
         _leafHash = sha256(
             abi.encode(_receiptIdHash, _hashFromAmount, _hashFromAddress)
         );

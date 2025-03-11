@@ -104,18 +104,18 @@ async function main() {
     //     contract: "contracts/TokenPoolImplementation.sol:TokenPoolImplementation"
     // })
 
-    // // BridgeIn library
-    // console.log("Start to deploy BridgeInLib.");
-    // const BridgeInLib = await ethers.getContractFactory("BridgeInLibrary");
-    // const bridgeInLib = await BridgeInLib.deploy();
-    // console.log("bridgeInLib address:", bridgeInLib.address);
+    // Common library
+    console.log("Start to deploy CommonLib.");
+    const CommonLib = await ethers.getContractFactory("CommonLibrary");
+    const commonLib = await CommonLib.deploy();
+    console.log("common lib address:", commonLib.address);
 
 
     // // BridgeInImplementation
     // console.log("Start to deploy BridgeInImplementation contract.");
     // const BridgeInImplementation = await ethers.getContractFactory("BridgeInImplementation",{
     //         libraries:{
-    //             BridgeInLibrary : bridgeInLibAddress
+    //             CommonLibrary : commonLibAddress
     //         }
     //     });
     // const bridgeInImplementation = await BridgeInImplementation.deploy();
@@ -156,7 +156,7 @@ async function main() {
     // console.log("Start to deploy BridgeOutImplementationV1 contract.");
     // const BridgeOutImplementation = await ethers.getContractFactory("BridgeOutImplementationV1",{
     //     libraries:{
-    //         BridgeOutLibrary : bridgeOutLibAddress
+    //         CommonLibrary : commonLibAddress
     //     }
     // });
     // const bridgeOutImplementation = await BridgeOutImplementation.deploy();

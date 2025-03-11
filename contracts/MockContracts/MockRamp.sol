@@ -55,10 +55,10 @@ contract MockRamp {
         IBridgeOut(receiver).forwardMessage(
             sourceChainId,
             targetChainId,
-            tokenAmount,
-            message,
             sender,
-            receiver
+            receiver,
+            message,
+            tokenAmount
         );
     }
 }
