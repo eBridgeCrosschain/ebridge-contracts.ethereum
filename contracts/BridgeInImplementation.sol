@@ -172,13 +172,13 @@ contract BridgeInImplementation is ProxyStorage {
     }
 
     function pause() external onlyPauseController {
-        require(!isPaused, "already paused");
+        require(!isPaused, "BridgeIn:already paused");
         isPaused = true;
         IBridgeOut(bridgeOut).pause();
     }
 
     function restart() public onlyWallet {
-        require(isPaused == true, "not paused");
+        require(isPaused == true, "BridgeIn:not paused");
         isPaused = false;
         IBridgeOut(bridgeOut).restart();
     }
@@ -251,7 +251,7 @@ contract BridgeInImplementation is ProxyStorage {
             targetAddress
         );
         sendMessageToRamp(targetChainId, message, amount, token);
-        emit NewReceipt(receiptId, token, msg.sender, amount, targetChainId, targetAddress,block.timestamp);
+        emit NewReceipt(receiptId, token, msg.sender, amount, targetChainId, targetAddress, block.timestamp);
     }
 
     function generateMessage(
@@ -274,13 +274,12 @@ contract BridgeInImplementation is ProxyStorage {
             uint256(crossChainConfigMap[targetChainId].chainId),
             crossChainConfigMap[targetChainId].bridgeContractAddress,
             message,
-            IRamp.TokenAmount(
-                "",
+            IRamp.TokenTransferMetadata(
                 uint256(crossChainConfigMap[targetChainId].chainId),
-                crossChainConfigMap[targetChainId].bridgeContractAddress,
                 CommonLibrary.addressToString(token),
                 "",
-                amount
+                amount,
+                ""
             )
         );
     }
@@ -308,7 +307,7 @@ contract BridgeInImplementation is ProxyStorage {
     function _transfer(address token, address receiver, uint256 amount) internal {
         IERC20(token).safeTransfer(receiver, amount);
     }
-    
+
     function _approve(address token, address spender, uint256 amount) internal {
         IERC20(token).safeApprove(spender, amount);
     }

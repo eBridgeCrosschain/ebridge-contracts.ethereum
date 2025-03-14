@@ -119,7 +119,6 @@ describe("BridgeOut", function () {
                 expect(await bridgeOut.owner()).to.equal(owner.address);
             });
         })
-
         describe("update contract test", function () {
 
             it("Should revert when address is not a contract", async function () {
@@ -128,7 +127,7 @@ describe("BridgeOut", function () {
                 await expect(bridgeOutProxy.updateImplementation(owner.address))
                     .to.be.revertedWith(error);
             });
-            // it("Should update contract success", async function () {
+            it("Should update contract success", async function () {
             //     const { bridgeOutProxy, owner } = await loadFixture(deployBridgeOutFixture);
             //     const LIB = await ethers.getContractFactory("MockBridgeOutLib");
             //     const lib = await LIB.deploy();
@@ -141,7 +140,7 @@ describe("BridgeOut", function () {
             //     await bridgeOutProxy.updateImplementation(mockBridgeOut.address);
             //     var implementation = await bridgeOutProxy.implementation();
             //     expect(implementation).to.equal(mockBridgeOut.address);
-            // });
+            });
         })
     });
 
@@ -825,19 +824,20 @@ describe("BridgeOut", function () {
                 const messageHex = "0x0000000000000000000000000000000000000000000000000000000000000029a1b2e4b980a70b0540967af854beecf176844da55c36601f7849c614e6ecfb500000000000000000000000000000000000000000000000000000000005f5e1000feaf05dabfd8a5f64d7c4293ec20aaf1ab4765a5482f195dc906c3804b2be2d000000000000000000000000f8a143451383e5c5a58fde92664dae08fb9f7f1b";
                 const bytesData = ethers.utils.arrayify(messageHex);
 
-                let tokenAmount = {
-                    swapId:"0x7716175f8edee0f77e02062214018b44f6baaa60390782df9bdf2846bf22f508",
+                let swapId = "6FRiKTEz64lJseNv4GOPQo8MhYsyhzsJP3wryU+wlz8=";
+                let buf = Buffer.from(swapId, "base64");
+                let tokenTransferMetadata = {
+                    extraData:buf,
                     targetChainId: 11155111,
-                    targetContractAddress: "0x3c37E0A09eAFEaA7eFB57107802De1B28A6f5F07",
                     tokenAddress: "0x8adD57b8aD6C291BC3E3ffF89F767fcA08e0E7Ab",
-                    originToken:"ELF",
+                    symbol:"ELF",
                     amount:0
                 };
                 var tokenKey = "0x393f58c700c5636bd508b810801050cefc481e58d7c640a623a5d2bfe38b562e";
                 
-                var leafHash = await lib.computeLeafHashForReceive(1,Buffer.from(tokenKey.toString().substring(2), "hex"), 10000000000, "0xa2263d5c14f9c711a8b3c4aa2fd522efdb5d5e44");
-                console.log("leaf hash", leafHash);
-                var result = await rampMock.transmit(9992731,11155111,bytesData,"293dHYMKjfEuTEkveb5h775avTyW69jBgHMYiWQqtdSdTfsfEP",bridgeOut.address,tokenAmount);
+                // var leafHash = await lib.computeLeafHashForReceive(1,Buffer.from(tokenKey.toString().substring(2), "hex"), 10000000000, "0xa2263d5c14f9c711a8b3c4aa2fd522efdb5d5e44");
+                // console.log("leaf hash", leafHash);
+                var result = await rampMock.transmit(9992731,11155111,bytesData,"293dHYMKjfEuTEkveb5h775avTyW69jBgHMYiWQqtdSdTfsfEP",bridgeOut.address,tokenTransferMetadata);
                 console.log(result);
                 var isReceiptRecorded = await bridgeOut.isReceiptRecorded(leafHash);
                 expect(isReceiptRecorded).to.equal(true)

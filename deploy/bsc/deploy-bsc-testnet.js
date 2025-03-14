@@ -14,10 +14,10 @@ async function main() {
     const merkleTreeAddress = '';
     const multiSigWalletAddress = '';
     const bridgeInAddress = '0xFA51BBf197183ce43509C67ce28095f66F60a518';
-    const bridgeInImplementationAddress = '0x7B8Fa96571994A33B99EA98BEb296c73D9b17e8C';
+    const bridgeInImplementationAddress = '0xa2eeACe4f5bBCA1628344a888f1D77C239d5403B';
     const bridgeOutAddress = '0xA56cb58f75D440258973dBC2a3D78237ca67b705';
-    const bridgeOutImplementationAddress = '0x64D9AAcF2035F4BaCa5f50360251F3DBC6999e4E';
-    const commonLibAddress = '0xd6f8Aca66ac307BB2d26Bc9490cd1E5301A755e0';
+    const bridgeOutImplementationAddress = '0xa6FcB6786Fe84eC020b5C848d83f382e201918aF';
+    const commonLibAddress = '0x73BFDA05033b63Ac4A0D3e4bCcE64b2696F6C1d1';
     const LimiterAddress = '';
     const LimiterImplementationAddress = '';
     const tokenPoolImplementationAddress = '';

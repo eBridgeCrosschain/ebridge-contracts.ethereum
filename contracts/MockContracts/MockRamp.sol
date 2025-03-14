@@ -12,7 +12,7 @@ contract MockRamp {
         uint256 targetChain,
         string receiver,
         bytes message,
-        IRamp.TokenAmount tokenAmount,
+        IRamp.TokenTransferMetadata tokenAmount,
         bytes32 requestId
     );
 
@@ -20,7 +20,7 @@ contract MockRamp {
         uint256 targetChainId,
         string calldata receiver,
         bytes calldata message,
-        IRamp.TokenAmount calldata tokenAmount
+        IRamp.TokenTransferMetadata calldata tokenAmount
     ) external returns (bytes32 requestId) {
         requestId = keccak256(
             abi.encodePacked(
@@ -50,7 +50,7 @@ contract MockRamp {
         bytes memory message,
         string memory sender,
         address receiver,
-        IRamp.TokenAmount memory tokenAmount
+        IRamp.TokenTransferMetadata memory tokenTransferMetadata
     ) external {
         IBridgeOut(receiver).forwardMessage(
             sourceChainId,
@@ -58,7 +58,7 @@ contract MockRamp {
             sender,
             receiver,
             message,
-            tokenAmount
+            tokenTransferMetadata
         );
     }
 }
