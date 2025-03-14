@@ -67,4 +67,30 @@ library StringHex {
                 )
             );
     }
+
+    function hexStringToBytes32(string memory hexString) internal pure returns (bytes32) {
+        require(bytes(hexString).length == 66, "Invalid hex string length");
+        require(bytes(hexString)[0] == '0' && bytes(hexString)[1] == 'x', "Invalid hex string format");
+
+        bytes memory bytesString = bytes(hexString);
+        
+        bytes memory hexBytes = new bytes(32);
+        for (uint256 i = 0; i < 32; i++) {
+            uint8 high = uint8(bytesString[2 + i * 2]) - (uint8(bytesString[2 + i * 2]) >= 97 ? 87 : 48);
+            uint8 low = uint8(bytesString[2 + i * 2 + 1]) - (uint8(bytesString[2 + i * 2 + 1]) >= 97 ? 87 : 48);
+            hexBytes[i] = bytes1((high << 4) | low);
+        }
+        bytes32 result;
+        assembly {
+            result := mload(add(hexBytes, 32))
+        }
+        return result;
+    }
+
+    function bytesToBytes32(bytes memory data) internal pure returns (bytes32 result) {
+        require(data.length <= 32, "Input too long!");
+        assembly {
+            result := mload(add(data, 32))
+        }
+    }
 }

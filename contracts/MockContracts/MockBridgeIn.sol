@@ -83,5 +83,9 @@ contract MockBridgeIn {
         IERC20(token).safeApprove(tokenPool, amount);
         ITokenPool(tokenPool).lock(token,amount,targetChainId,msg.sender);
     }
+
+    function setCrossChainConfig(address _bridgeOut,CommonLibrary.CrossChainConfig[] calldata _configs, address _oracleContract) external {
+        IBridgeOut(_bridgeOut).setCrossChainConfig(_configs, _oracleContract);
+    }
     
 }

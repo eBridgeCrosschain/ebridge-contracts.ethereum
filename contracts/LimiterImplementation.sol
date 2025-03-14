@@ -1,11 +1,10 @@
 pragma solidity 0.8.9;
 
+import './Proxy.sol';
+import './interfaces/BridgeOutInterface.sol';
 import {RateLimiter} from './libraries/RateLimiter.sol';
 import {DailyLimiter} from './libraries/DailyLimiter.sol';
-import './libraries/BridgeInLibrary.sol';
-import './Proxy.sol';
 import '@openzeppelin/contracts/utils/math/SafeMath.sol';
-import './interfaces/BridgeOutInterface.sol';
 
 contract LimiterImplementation is ProxyStorage {
   using DailyLimiter for DailyLimiter.DailyLimitTokenInfo;
@@ -69,7 +68,7 @@ contract LimiterImplementation is ProxyStorage {
     address token,
     string memory targetChainId
   ) public view returns (DailyLimiter.DailyLimitTokenInfo memory) {
-    bytes32 dailyLimitId = BridgeInLibrary._generateTokenKey(token, targetChainId);
+    bytes32 dailyLimitId = _generateTokenKey(token, targetChainId);
     return dailyLimit[dailyLimitId]._currentDailyLimit();
   }
 
@@ -90,7 +89,7 @@ contract LimiterImplementation is ProxyStorage {
     address token,
     string memory targetChainId
   ) public view returns (RateLimiter.TokenBucket memory) {
-    bytes32 bucketId = BridgeInLibrary._generateTokenKey(token, targetChainId);
+    bytes32 bucketId = _generateTokenKey(token, targetChainId);
     return tokenBucket[bucketId]._currentTokenBucketState();
   }
 
@@ -100,7 +99,7 @@ contract LimiterImplementation is ProxyStorage {
   ) public view returns (RateLimiter.TokenBucket[] memory _tokenBuckets) {
     _tokenBuckets = new RateLimiter.TokenBucket[](tokens.length);
     for (uint i = 0; i < tokens.length; i++) {
-      bytes32 bucketId = BridgeInLibrary._generateTokenKey(tokens[i], targetChainIds[i]);
+      bytes32 bucketId = _generateTokenKey(tokens[i], targetChainIds[i]);
       _tokenBuckets[i] = tokenBucket[bucketId]._currentTokenBucketState();
     }
     return _tokenBuckets;
@@ -131,7 +130,7 @@ contract LimiterImplementation is ProxyStorage {
     address token,
     string memory targetChainId
   ) public view returns (uint256) {
-    bytes32 bucketId = BridgeInLibrary._generateTokenKey(token, targetChainId);
+    bytes32 bucketId = _generateTokenKey(token, targetChainId);
     return getMinWaitSeconds(bucketId,amount);
   }
 
@@ -154,5 +153,12 @@ contract LimiterImplementation is ProxyStorage {
     } else {
       return 0;
     }
+  }
+
+  function _generateTokenKey(
+    address token,
+    string memory chainId
+  ) private pure returns (bytes32) {
+    return sha256(abi.encodePacked(token, chainId));
   }
 }
