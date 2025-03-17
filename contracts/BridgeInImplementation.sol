@@ -265,13 +265,12 @@ contract BridgeInImplementation is ProxyStorage {
             uint256(crossChainConfigMap[targetChainId].chainId),
             crossChainConfigMap[targetChainId].bridgeContractAddress,
             message,
-            IRamp.TokenAmount(
-                "",
+            IRamp.TokenTransferMetadata(
                 uint256(crossChainConfigMap[targetChainId].chainId),
-                crossChainConfigMap[targetChainId].bridgeContractAddress,
                 CommonLibrary.addressToString(token),
                 "",
-                amount
+                amount,
+                ""
             )
         );
     }

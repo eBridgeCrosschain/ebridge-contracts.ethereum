@@ -17,12 +17,12 @@ async function main() {
     const limiterImplementationAddress = '0x4A91FE2893c77F7C9a44bbDE1a4d226DDe0612ed';
     const tokenPoolAddress = '0x61e8A390c0bD8a49E2E54568F62169beb2026115';
     const tokenPoolImplementationAddress = '0x15BBf8aBBC1c9cfcAc1498dD4E066f1483bAF185';
-    const bridgeInLibAddress = '0x0C5ADDA344F68961038739E9B405202dd8F7DEd8';
-    const bridgeInImplementationAddress = '0xfBB968F14DE8C5F7E0f3085223D341bb6D1B432E';
-    const bridgeInAddress = '0x06dFaE0488FCa172500EeAd593Cb978DC5c32193';
-    const bridgeOutLibAddress = '0xC33cC89EF5D4Ef845eD280886dee803937506857';
-    const bridgeOutImplementationAddress = '0xD7C80E5035D4Bb2630E8367Ca7a0b9Db9F3A2717';
-    const bridgeOutAddress = '0xE30382636E09a94aAF7b7e8e03a948624AbdE284';
+    const commonLibAddress = '0xB7d9a6C5D1Bee6e98d2d5ff475CcCa36e00bDBd6';
+    const bridgeInImplementationAddress = '0x2C058424c076c9E12f299C0Af07DC89284c841c8';
+    const bridgeInAddress = '0x7e308DC172faa2a6560C2cd806e8282C51E5BFA5';
+
+    const bridgeOutImplementationAddress = '0x2a4494Cd792Fa979180555F19f521E8D2C28c619';
+    const bridgeOutAddress = '0xA251aE4C14C53d980699b14319bf2Ad5A4bC4A14';
     const multiSigWalletAddress = '';
 
     const nativeTokenAddress = '0x4200000000000000000000000000000000000006';
@@ -34,13 +34,11 @@ async function main() {
 
     const BridgeInImplementation = await ethers.getContractFactory("BridgeInImplementation",{
         libraries:{
-            BridgeInLibrary : bridgeInLibAddress
+            CommonLibrary : commonLibAddress
         }
     });
     const bridgeInImplementation = await BridgeInImplementation.attach(bridgeInAddress);
-
-    const BridgeOutLibrary = await ethers.getContractFactory("BridgeOutLibrary");
-    const lib = await BridgeOutLibrary.attach(bridgeOutLibAddress);
+    
 
     const BridgeIn = await ethers.getContractFactory("BridgeIn");
     const bridgeIn = await BridgeIn.attach(bridgeInAddress);
@@ -59,7 +57,7 @@ async function main() {
 
     const BridgeOutImplementation = await ethers.getContractFactory("BridgeOutImplementationV1",{
         libraries:{
-            BridgeOutLibrary : bridgeOutLibAddress
+            CommonLibrary : commonLibAddress
         }
     });
     const bridgeOutImplementation = await BridgeOutImplementation.attach(bridgeOutAddress);
@@ -87,6 +85,8 @@ async function main() {
     
     var chainIdMain = "MainChain_AELF";
     var chainIdSide = "SideChain_tDVV";
+    
+    await bridgeInImplementation.updateImplementation(bridgeInImplementationAddress);
 
     // // 1. set bridge
     // console.log("Start to set bridge.")
@@ -383,105 +383,105 @@ async function main() {
     // ];
     // await limiterImplementation.setDailyLimit(config);
     // 9. set rate limit
-    console.log("Start to set rate limit.")
-    var configs = [{
-        "bucketId": "0x39fceedcff2181d7f7fc7ea0121caad608db6f9b24b8e5f20b7512f93b524957",
-        "isEnabled": true,
-        "tokenCapacity": "8333000000",
-        "rate": "83330000"
-      },
-      {
-        "bucketId": "0xa76fc97793c23ede857672b5a1913b25741d815ff60dd4a31db7efe14ef5b890",
-        "isEnabled": true,
-        "tokenCapacity": "8333000000",
-        "rate": "83330000"
-      },
-      {
-        "bucketId": "0xaf0962a364b3321a9f6fb092a985d9a0056b3a7cbcea2115633331bfe8d2c426",
-        "isEnabled": true,
-        "tokenCapacity": "8333000000",
-        "rate": "83330000"
-      },
-      {
-        "bucketId": "0x2b93f8645c421a34e286aea501cd1c297f2c031b5449955daebd121ea7b14693",
-        "isEnabled": true,
-        "tokenCapacity": "8333000000",
-        "rate": "83330000"
-      },
-      {
-        "bucketId": "0xac146f3a7ec09abac39052a91b4a5d467877b6282cd068bfd89114dfeb4f8b67",
-        "isEnabled": true,
-        "tokenCapacity": "8333000000000000000000",
-        "rate": "83330000000000000000"
-      },
-      {
-        "bucketId": "0x819567a8a9156e50161d52b0bda1712e79ef96a858b769e03a207cd142ca38f3",
-        "isEnabled": true,
-        "tokenCapacity": "8333000000000000000000",
-        "rate": "83330000000000000000"
-      },
-      {
-        "bucketId": "0xb672066b5871698a78283faea2ca2dd89a4d182247f79d5385ae6c2dcb9b64ca",
-        "isEnabled": true,
-        "tokenCapacity": "8333000000000000000000",
-        "rate": "83330000000000000000"
-      },
-      {
-        "bucketId": "0x5652757c1fb5a80d7d42810bfad46b3ad6e23f0ab435471ea289a17cc44763ff",
-        "isEnabled": true,
-        "tokenCapacity": "8333000000000000000000",
-        "rate": "83330000000000000000"
-      },
-      {
-        "bucketId": "0xa6279c922dc887016011a609fd75d7e6ad51d6333773e9ca192219a077ae7f2b",
-        "isEnabled": true,
-        "tokenCapacity": "4500000000000000000",
-        "rate": "45000000000000000"
-      },
-      {
-        "bucketId": "0x35dea88cc491d0dde965cb776e03814a715d84bddf96a1d52c53080e3e42cf39",
-        "isEnabled": true,
-        "tokenCapacity": "4500000000000000000",
-        "rate": "45000000000000000"
-      },
-      {
-        "bucketId": "0x227f80632ffe43cb6829a232b064fd1c04ac386c60d22ae62e436e6356f5bc06",
-        "isEnabled": true,
-        "tokenCapacity": "4500000000000000000",
-        "rate": "45000000000000000"
-      },
-      {
-        "bucketId": "0x2ef8770a04203ac423da8f11eb31bc679cad54a36387b5bbcbb5e30fdd755406",
-        "isEnabled": true,
-        "tokenCapacity": "4500000000000000000",
-        "rate": "45000000000000000"
-      },
-      {
-        "bucketId": "0x9d8237765b23eaa42b03fc276a36a2e877170348c3fdae728070a887d7f84764",
-        "isEnabled": true,
-        "tokenCapacity": "50000000000000000000000000",
-        "rate": "500000000000000000000000"
-      },
-      {
-        "bucketId": "0x1692bace47fe97c2077255672e881bae8766b3979257aa89fc906f070e1b9b6c",
-        "isEnabled": true,
-        "tokenCapacity": "50000000000000000000000000",
-        "rate": "500000000000000000000000"
-      },
-      {
-        "bucketId": "0x5955ed7cba8334255d638f5cd812a8c5f5a29e8d9c6bc12cebf13edd7f2a2c1e",
-        "isEnabled": true,
-        "tokenCapacity": "50000000000000000000000000",
-        "rate": "500000000000000000000000"
-      },
-      {
-        "bucketId": "0xced116d97648253094ff9934724f25fb1f1e9dd8be0f90ff431fe77514594a68",
-        "isEnabled": true,
-        "tokenCapacity": "50000000000000000000000000",
-        "rate": "500000000000000000000000"
-      }
-    ];
-    await limiterImplementation.setTokenBucketConfig(configs);
+    // console.log("Start to set rate limit.")
+    // var configs = [{
+    //     "bucketId": "0x39fceedcff2181d7f7fc7ea0121caad608db6f9b24b8e5f20b7512f93b524957",
+    //     "isEnabled": true,
+    //     "tokenCapacity": "8333000000",
+    //     "rate": "83330000"
+    //   },
+    //   {
+    //     "bucketId": "0xa76fc97793c23ede857672b5a1913b25741d815ff60dd4a31db7efe14ef5b890",
+    //     "isEnabled": true,
+    //     "tokenCapacity": "8333000000",
+    //     "rate": "83330000"
+    //   },
+    //   {
+    //     "bucketId": "0xaf0962a364b3321a9f6fb092a985d9a0056b3a7cbcea2115633331bfe8d2c426",
+    //     "isEnabled": true,
+    //     "tokenCapacity": "8333000000",
+    //     "rate": "83330000"
+    //   },
+    //   {
+    //     "bucketId": "0x2b93f8645c421a34e286aea501cd1c297f2c031b5449955daebd121ea7b14693",
+    //     "isEnabled": true,
+    //     "tokenCapacity": "8333000000",
+    //     "rate": "83330000"
+    //   },
+    //   {
+    //     "bucketId": "0xac146f3a7ec09abac39052a91b4a5d467877b6282cd068bfd89114dfeb4f8b67",
+    //     "isEnabled": true,
+    //     "tokenCapacity": "8333000000000000000000",
+    //     "rate": "83330000000000000000"
+    //   },
+    //   {
+    //     "bucketId": "0x819567a8a9156e50161d52b0bda1712e79ef96a858b769e03a207cd142ca38f3",
+    //     "isEnabled": true,
+    //     "tokenCapacity": "8333000000000000000000",
+    //     "rate": "83330000000000000000"
+    //   },
+    //   {
+    //     "bucketId": "0xb672066b5871698a78283faea2ca2dd89a4d182247f79d5385ae6c2dcb9b64ca",
+    //     "isEnabled": true,
+    //     "tokenCapacity": "8333000000000000000000",
+    //     "rate": "83330000000000000000"
+    //   },
+    //   {
+    //     "bucketId": "0x5652757c1fb5a80d7d42810bfad46b3ad6e23f0ab435471ea289a17cc44763ff",
+    //     "isEnabled": true,
+    //     "tokenCapacity": "8333000000000000000000",
+    //     "rate": "83330000000000000000"
+    //   },
+    //   {
+    //     "bucketId": "0xa6279c922dc887016011a609fd75d7e6ad51d6333773e9ca192219a077ae7f2b",
+    //     "isEnabled": true,
+    //     "tokenCapacity": "4500000000000000000",
+    //     "rate": "45000000000000000"
+    //   },
+    //   {
+    //     "bucketId": "0x35dea88cc491d0dde965cb776e03814a715d84bddf96a1d52c53080e3e42cf39",
+    //     "isEnabled": true,
+    //     "tokenCapacity": "4500000000000000000",
+    //     "rate": "45000000000000000"
+    //   },
+    //   {
+    //     "bucketId": "0x227f80632ffe43cb6829a232b064fd1c04ac386c60d22ae62e436e6356f5bc06",
+    //     "isEnabled": true,
+    //     "tokenCapacity": "4500000000000000000",
+    //     "rate": "45000000000000000"
+    //   },
+    //   {
+    //     "bucketId": "0x2ef8770a04203ac423da8f11eb31bc679cad54a36387b5bbcbb5e30fdd755406",
+    //     "isEnabled": true,
+    //     "tokenCapacity": "4500000000000000000",
+    //     "rate": "45000000000000000"
+    //   },
+    //   {
+    //     "bucketId": "0x9d8237765b23eaa42b03fc276a36a2e877170348c3fdae728070a887d7f84764",
+    //     "isEnabled": true,
+    //     "tokenCapacity": "50000000000000000000000000",
+    //     "rate": "500000000000000000000000"
+    //   },
+    //   {
+    //     "bucketId": "0x1692bace47fe97c2077255672e881bae8766b3979257aa89fc906f070e1b9b6c",
+    //     "isEnabled": true,
+    //     "tokenCapacity": "50000000000000000000000000",
+    //     "rate": "500000000000000000000000"
+    //   },
+    //   {
+    //     "bucketId": "0x5955ed7cba8334255d638f5cd812a8c5f5a29e8d9c6bc12cebf13edd7f2a2c1e",
+    //     "isEnabled": true,
+    //     "tokenCapacity": "50000000000000000000000000",
+    //     "rate": "500000000000000000000000"
+    //   },
+    //   {
+    //     "bucketId": "0xced116d97648253094ff9934724f25fb1f1e9dd8be0f90ff431fe77514594a68",
+    //     "isEnabled": true,
+    //     "tokenCapacity": "50000000000000000000000000",
+    //     "rate": "500000000000000000000000"
+    //   }
+    // ];
+    // await limiterImplementation.setTokenBucketConfig(configs);
 
     // var amount = '2000000';
     // var targetAddress = "ZVJHCVCzixThco58iqe4qnE79pmxeDuYtMsM8k71RhLLxdqB5";

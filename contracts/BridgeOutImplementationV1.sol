@@ -27,6 +27,7 @@ contract BridgeOutImplementationV1 is ProxyStorage {
     using EnumerableSet for EnumerableSet.AddressSet;
     using StringHex for string;
     using Strings for address;
+    using StringHex for bytes;
 
     address public regiment;
     address public bridgeIn;
@@ -185,20 +186,19 @@ contract BridgeOutImplementationV1 is ProxyStorage {
         string memory sender,
         address receiver,
         bytes memory message,
-        IRamp.TokenAmount memory tokenAmount
+        IRamp.TokenTransferMetadata memory tokenTransferMetadata
     ) external whenNotPaused onlyOracle {
         require(targetChainId == block.chainid, "invalid chain id");
         CommonLibrary.CrossChainConfig memory crossChainConfig = crossChainConfigMap[uint32(sourceChainId)];
         require(crossChainConfig.chainId == uint32(sourceChainId), "invalid source chain id");
         require(CommonLibrary.compareStrings(sender, crossChainConfig.bridgeContractAddress), "invalid sender");
         require(receiver == address(this), "invalid receiver");
-        string memory swapId = tokenAmount.swapId;
-        bytes32 swapHashId = swapId.hexStringToBytes32();
+        bytes32 swapHashId = tokenTransferMetadata.extraData.bytesToBytes32();
         CommonLibrary.ReceiptInfo memory receiptInfo = CommonLibrary.decodeMessageAndVerify(message);
         SwapInfo storage swapInfo = swapInfos[swapHashId];
         require(ledger[receiptInfo.receiptHash].leafNodeIndex == 0, "already recorded");
         require(receiptInfo.amount > 0, "invalid amount");
-        require(swapInfo.targetToken.token == CommonLibrary.toAddress(tokenAmount.tokenAddress), "invalid token");
+        require(swapInfo.targetToken.token == CommonLibrary.toAddress(tokenTransferMetadata.tokenAddress), "invalid token");
         ledger[receiptInfo.receiptHash].leafNodeIndex = 1;
         _completeReceipt(receiptInfo, swapInfo);
         emit NewTransmission(swapHashId, msg.sender, receiptInfo.receiptId, receiptInfo.receiptHash);

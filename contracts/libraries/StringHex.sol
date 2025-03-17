@@ -86,4 +86,11 @@ library StringHex {
         }
         return result;
     }
+
+    function bytesToBytes32(bytes memory data) internal pure returns (bytes32 result) {
+        require(data.length <= 32, "Input too long!");
+        assembly {
+            result := mload(add(data, 32))
+        }
+    }
 }
