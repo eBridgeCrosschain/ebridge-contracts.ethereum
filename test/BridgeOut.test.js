@@ -817,20 +817,19 @@ describe("BridgeOut", function () {
                 // var leafHash = await lib.computeLeafHashForReceive(index,Buffer.from(tokenKey.toString().substring(2), "hex"), amount, targetAddress);
                 // var messageCreate = createMultiMessage(index, leafHash,amount,targetAddress,Buffer.from(tokenKey.toString().substring(2), "hex"));
                 // console.log("message:",messageCreate.message);
-                const message = "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAE5P1jHAMVja9UIuBCAEFDO/EgeWNfGQKYjpdK/44tWLgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAJUC+QAtJ6taWB9S7wX4Pyb0deed2DBMsMG449QZ3AYqJE5q30AAAAAAAAAAAAAAACiJj1cFPnHEaizxKov1SLv211eRA==";
+                const message = "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAGnLyTOw6SMBdPZKmb46FecEANo8LRDjnw4E8P7hsZs2AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD0JAFgjCOJgQfZ9axsX7fc/mt4B7JB7p3OgLqHDwFiDa/bYAAAAAAAAAAAAAAADWQdBWhqIUiZQfU2oChBFtz5xzUA==";
                 const buffer = Buffer.from(message, "base64"); // Base64 转 Buffer
-                // const messageHex =  "0x" + buffer.toString("hex");
+                const messageHex =  "0x" + buffer.toString("hex");
                 // console.log(messageHex);
-                const messageHex = "0x0000000000000000000000000000000000000000000000000000000000000029a1b2e4b980a70b0540967af854beecf176844da55c36601f7849c614e6ecfb500000000000000000000000000000000000000000000000000000000005f5e1000feaf05dabfd8a5f64d7c4293ec20aaf1ab4765a5482f195dc906c3804b2be2d000000000000000000000000f8a143451383e5c5a58fde92664dae08fb9f7f1b";
                 const bytesData = ethers.utils.arrayify(messageHex);
 
-                let swapId = "6FRiKTEz64lJseNv4GOPQo8MhYsyhzsJP3wryU+wlz8=";
+                let swapId = "EjY6TgRRWVYyYqCmOaIlQc104CN6eBfHs3ahBKou0fk=";
                 let buf = Buffer.from(swapId, "base64");
                 let tokenTransferMetadata = {
                     extraData:buf,
                     targetChainId: 11155111,
-                    tokenAddress: "0x8adD57b8aD6C291BC3E3ffF89F767fcA08e0E7Ab",
-                    symbol:"ELF",
+                    tokenAddress: "0x310e7bD119253b9F9F3AC0cD191A1b8b5b1b3b84",
+                    symbol:"SGR-1",
                     amount:0
                 };
                 var tokenKey = "0x393f58c700c5636bd508b810801050cefc481e58d7c640a623a5d2bfe38b562e";

@@ -218,7 +218,6 @@ contract BridgeOutImplementationV1 is ProxyStorage {
         require(crossChainConfig.chainId == uint32(sourceChainId), "invalid source chain id");
         require(CommonLibrary.compareStrings(sender, crossChainConfig.bridgeContractAddress), "invalid sender");
         require(receiver == address(this), "invalid receiver");
-        console.logBytes(tokenTransferMetadata.extraData);
         bytes32 swapHashId = tokenTransferMetadata.extraData.bytesToBytes32();
         CommonLibrary.ReceiptInfo memory receiptInfo = CommonLibrary.decodeMessageAndVerify(message);
         SwapInfo storage swapInfo = swapInfos[swapHashId];
@@ -289,13 +288,15 @@ contract BridgeOutImplementationV1 is ProxyStorage {
         string memory fromChainId,
         bytes32 regimentId,
         bytes32 spaceId,
-        address token
+        address token,
+        SwapTargetToken memory targetToken
     )
     {
         fromChainId = swapInfos[swapId].targetToken.fromChainId;
         regimentId = swapInfos[swapId].regimentId;
         spaceId = swapInfos[swapId].spaceId;
         token = swapInfos[swapId].targetToken.token;
+        targetToken = swapInfos[swapId].targetToken;
     }
 
 }

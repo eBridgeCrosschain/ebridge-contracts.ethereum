@@ -14,9 +14,9 @@ async function main() {
     const merkleTreeAddress = '';
     const multiSigWalletAddress = '';
     const bridgeInAddress = '0x8243C4927257ef20dbF360b012C9f72f9A6427c3';
-    const bridgeInImplementationAddress = '0x7074Eb731E3202A9645e82475C0bF761758ef99f';
+    const bridgeInImplementationAddress = '0xD0718b58D7B7f8F830d172364b876546674F0d9B';
     const bridgeOutAddress = '0x3c37E0A09eAFEaA7eFB57107802De1B28A6f5F07';
-    const bridgeOutImplementationAddress = '0x26839357eb6Bd52c1cFD04e8C9005B58Aa7FF68d';
+    const bridgeOutImplementationAddress = '0x214521DdadaAe5561916aAe5c842C51438ab7dF0';
     const bridgeInLibAddress = '';
     const bridgeOutLibAddress = '';
     const LimiterAddress = '';
@@ -32,11 +32,11 @@ async function main() {
     // const mock = await MockRampTest.deploy();
     // console.log("commonLib address:", mock.address);
 
-    // // common library
-    // console.log("Start to deploy CommonLib.");
-    // const CommonLib = await ethers.getContractFactory("CommonLibrary");
-    // const commonLib = await CommonLib.deploy();
-    // console.log("commonLib address:", commonLib.address);
+    // common library
+    console.log("Start to deploy CommonLib.");
+    const CommonLib = await ethers.getContractFactory("CommonLibrary");
+    const commonLib = await CommonLib.deploy();
+    console.log("commonLib address:", commonLib.address);
 
     // //BridgeIn library
     // console.log("Start to deploy BridgeInLib.");
@@ -62,7 +62,7 @@ async function main() {
     // console.log("bridgeOutLib address:", bridgeOutLib.address);
 
     //
-    // // BridgeOutImplementationV1
+    // BridgeOutImplementationV1
     // console.log("Start to deploy BridgeOutImplementationV1 contract.");
     // const BridgeOutImplementation = await ethers.getContractFactory("BridgeOutImplementationV1",{
     //     libraries:{
@@ -78,17 +78,17 @@ async function main() {
     //     contract: "contracts/testContract.sol:MockRampTest"
     // })
     //
-    await run("verify:verify", {
-            address: bridgeInImplementationAddress,
-            constructorArguments: [],
-            contract: "contracts/BridgeInImplementation.sol:BridgeInImplementation"
-          })
-
-    await run("verify:verify", {
-        address: commonLibAddress,
-        constructorArguments: [],
-        contract: "contracts/libraries/CommonLibrary.sol:CommonLibrary"
-    })
+    // await run("verify:verify", {
+    //         address: bridgeInImplementationAddress,
+    //         constructorArguments: [],
+    //         contract: "contracts/BridgeInImplementation.sol:BridgeInImplementation"
+    //       })
+    //
+    // await run("verify:verify", {
+    //     address: commonLibAddress,
+    //     constructorArguments: [],
+    //     contract: "contracts/libraries/CommonLibrary.sol:CommonLibrary"
+    // })
     // await run("verify:verify", {
     //     address: bridgeInLibAddress,
     //     constructorArguments: [],
