@@ -52,11 +52,11 @@ module.exports = {
       chainId: 11155111,
       allowUnlimitedContractSize: true
     },
-    // bsc_test: {
-    //   url: "https://data-seed-prebsc-1-s1.binance.org:8545",
-    //   chainId: 97,
-    //   accounts: [process.env.key0,process.env.key1]
-    // },
+    bsc_test: {
+      url: "https://data-seed-prebsc-1-s1.binance.org:8545",
+      chainId: 97,
+      accounts: [process.env.key0,process.env.key1]
+    },
     sepolia: {
       url: "https://sepolia.infura.io/v3/" + API_KEY,
       chainId: 11155111,
@@ -91,7 +91,7 @@ module.exports = {
       sepolia: process.env.ethscan_api_key,
       // base_sepolia:process.env.basescan_api_key,
       // base:process.env.basescan_api_key
-      // bscTestnet :process.env.bscscan_api_key
+      bscTestnet :process.env.bscscan_api_key
     },
     customChains: [
       // {

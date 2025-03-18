@@ -24,8 +24,8 @@ async function main() {
     
     const BridgeOutAddress = '0xA56cb58f75D440258973dBC2a3D78237ca67b705';
 
-    const LimiterAddress = '0x37cf44B567bA9e2a26E38B777Cc1001b7289324B';
-    const LimiterImplementationAddress = '0xF38C0Ba707b2398477B26BEa7EF28189290e7bD2';
+    const LimiterAddress = '0x22A05FEAb252fC903880EB37002862c997404AA0';
+    const LimiterImplementationAddress = '0xD63752C40a7d4827d7A20Ff3F982a2e72DA1D4fe';
 
     const TimelockAddress = '0x5e3c4c00aC600B00030a667D44bD96d299cdE2dc';
     const MultiSigWalletAddress = '0xcDEA4ba71a873D2e4A702219644751a235e0a495';
@@ -102,10 +102,10 @@ async function main() {
     // console.log(configs);
     // await bridgeInImplementation.setCrossChainConfig(configs,ramp);
 
-    var amount = '1000000000000000000';
-    var targetAddress = "ZVJHCVCzixThco58iqe4qnE79pmxeDuYtMsM8k71RhLLxdqB5";
-    var a = aelf.utils.base58.decode(targetAddress);
-    await bridgeInImplementation.createReceipt(elfAddress, amount, chainIdSide, a);
+    // var amount = '1000000000000000000';
+    // var targetAddress = "ZVJHCVCzixThco58iqe4qnE79pmxeDuYtMsM8k71RhLLxdqB5";
+    // var a = aelf.utils.base58.decode(targetAddress);
+    // await bridgeInImplementation.createReceipt(elfAddress, amount, chainIdSide, a);
     
     // const config1 = await bridgeOutImplementation.getCrossChainConfig(1931928);
     // console.log(config1);
@@ -200,34 +200,16 @@ async function main() {
     //     }
     // ];
     // await limiterImplementation.setDailyLimit(config);
-    // // step 4: set rate limit
-    // console.log("Start to set rate limit.")
-    // var configs = [{
-    //     "bucketId": "0x84e2d7a1b46b78b674e9c8bc819ef44376010d356db81f755ce4e56569cc28dd",
-    //     "isEnabled": true,
-    //     "tokenCapacity": "10000000000000000000000",
-    //     "rate": "10000000000000000000000"
-    //   },
-    //   {
-    //     "bucketId": "0x09fab89c0f8c9da14b697737de77d3abb4356c3deb6da1d6f049f620390bbed0",
-    //     "isEnabled": true,
-    //     "tokenCapacity": "10000000000000000000000",
-    //     "rate": "10000000000000000000000"
-    //   },
-    //   {
-    //     "bucketId": "0x854518791703abea8507f0004e9b1a8331bd5616a3cb8d7e0e5933ff581f8ffc",
-    //     "isEnabled": true,
-    //     "tokenCapacity": "10000000000000000000000",
-    //     "rate": "10000000000000000000000"
-    //   },
-    //   {
-    //     "bucketId": "0xef9639bf4102e36447cf5f1f4d67739032890f04849b64714a90e4a55dbfe689",
-    //     "isEnabled": true,
-    //     "tokenCapacity": "10000000000000000000000",
-    //     "rate": "10000000000000000000000"
-    //   }
-    // ];
-    // await limiterImplementation.setTokenBucketConfig(configs);
+    // step 4: set rate limit
+    console.log("Start to set rate limit.")
+    let configs = [{
+        "bucketId": "0xfc2442047e53dacf39be8ab33f53fadba5c121c41c21e53649e4cae93d807aad",
+        "isEnabled": true,
+        "tokenCapacity": "1000000000000000000",
+        "rate": "1000000000000000"
+      }
+    ];
+    await limiterImplementation.setTokenBucketConfig(configs);
 
     // var chainIdMain = "MainChain_AELF";
     // var chainIdSide = "SideChain_tDVW";

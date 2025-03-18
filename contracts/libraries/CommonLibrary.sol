@@ -31,13 +31,13 @@ library CommonLibrary {
         uint256 receiptIndex = 0;
         ReceiptInfo memory receiptInfo;
         bytes32 targetAddress;
-        require(_message.length == 160 , "invalid message length");
+        require(_message.length == 160 , "CommonLibrary:invalid message length");
         (receiptIndex, receiptInfo.receiptIdToken, receiptInfo.amount, receiptInfo.receiptHash, targetAddress) = abi.decode(
             _message, (uint256, bytes32, uint256, bytes32, bytes32));
         receiptInfo.receiveAddress = address(uint160(uint256(targetAddress)));
         receiptInfo.receiptId = string(abi.encodePacked(receiptInfo.receiptIdToken.toHexWithoutPrefixes(), '.', receiptIndex.toString()));
         bytes32 leafHash = computeLeafHashForReceive(receiptIndex, receiptInfo.receiptIdToken, receiptInfo.amount, receiptInfo.receiveAddress);
-        require(leafHash == receiptInfo.receiptHash, "verification failed");
+        require(leafHash == receiptInfo.receiptHash, "CommonLibrary:verification failed");
         return receiptInfo;
     }
 
@@ -98,7 +98,7 @@ library CommonLibrary {
 
     function toAddress(string memory s) public returns (address) {
         bytes memory _bytes = hexStringToAddress(s);
-        require(_bytes.length >= 1 + 20, "toAddress_outOfBounds");
+        require(_bytes.length >= 1 + 20, "CommonLibrary:invalid address length");
         address tempAddress;
 
         assembly {

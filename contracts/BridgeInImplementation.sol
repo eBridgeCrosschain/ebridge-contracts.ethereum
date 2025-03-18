@@ -101,22 +101,22 @@ contract BridgeInImplementation is ProxyStorage {
     }
 
     function changeMultiSignWallet(address _wallet) external onlyOwner {
-        require(_wallet != address(0), "invalid input");
+        require(_wallet != address(0), "BridgeIn:invalid address");
         multiSigWallet = _wallet;
     }
 
     function setContractConfig(address _bridgeOut, address _limiter, address _tokenPool) external onlyWallet {
         require(
-            bridgeOut == address(0) && _bridgeOut != address(0),
-            "invalid bridge out address"
+            _bridgeOut != address(0),
+            "BridgeIn:invalid bridge out address"
         );
         require(
-            limiter == address(0) && _limiter != address(0),
-            "invalid limiter address"
+            _limiter != address(0),
+            "BridgeIn:invalid limiter address"
         );
         require(
-            tokenPool == address(0) && _tokenPool != address(0),
-            "invalid token pool address"
+            _tokenPool != address(0),
+            "BridgeIn:invalid token pool address"
         );
         tokenPool = _tokenPool;
         bridgeOut = _bridgeOut;
@@ -124,9 +124,9 @@ contract BridgeInImplementation is ProxyStorage {
     }
 
     function setCrossChainConfig(CommonLibrary.CrossChainConfig[] calldata _configs, address _oracleContract) external onlyWallet {
-        require(_oracleContract != address(0), "invalid oracle");
+        require(_oracleContract != address(0), "BridgeIn:invalid oracle");
         oracleContract = _oracleContract;
-        require(_configs.length > 0, "invalid input");
+        require(_configs.length > 0, "BridgeIn:invalid input");
         for (uint i = 0; i < _configs.length; i++) {
             crossChainConfigMap[_configs[i].targetChainId] = CommonLibrary.CrossChainConfig(
                 _configs[i].bridgeContractAddress,
@@ -144,14 +144,14 @@ contract BridgeInImplementation is ProxyStorage {
     function changePauseController(
         address _pauseController
     ) external onlyWallet {
-        require(_pauseController != address(0), "invalid input");
+        require(_pauseController != address(0), "BridgeIn:invalid input");
         pauseController = _pauseController;
     }
 
     function addToken(Token[] calldata tokens) public onlyWallet {
         require(
             tokenList.length().add(tokens.length) <= MaxTokenCount && tokens.length <= MaxTokenCountPerAddOrRemove,
-            "token count exceed"
+            "BridgeIn:token count exceed"
         );
         for (uint256 i = 0; i < tokens.length; i++) {
             bytes32 tokenKey = _getTokenKey(tokens[i].tokenAddress, tokens[i].chainId);
@@ -162,7 +162,7 @@ contract BridgeInImplementation is ProxyStorage {
     }
 
     function removeToken(Token[] calldata tokens) public onlyWallet {
-        require(tokens.length <= MaxTokenCountPerAddOrRemove, "input token count exceed");
+        require(tokens.length <= MaxTokenCountPerAddOrRemove, "BridgeIn:input token count exceed");
         for (uint256 i = 0; i < tokens.length; i++) {
             bytes32 tokenKey = _getTokenKey(tokens[i].tokenAddress, tokens[i].chainId);
             _checkTokenSupport(tokenKey);
@@ -224,7 +224,7 @@ contract BridgeInImplementation is ProxyStorage {
     ) internal {
         bytes32 tokenKey = _getTokenKey(token, targetChainId);
         _checkTokenSupport(tokenKey);
-        require(amount > 0, "invalid amount");
+        require(amount > 0, "BridgeIn:invalid amount");
         ILimiter(limiter).consumeDailyLimit(tokenKey, token, amount);
         ILimiter(limiter).consumeTokenBucket(tokenKey, token, amount);
     }
@@ -297,11 +297,11 @@ contract BridgeInImplementation is ProxyStorage {
     }
 
     function _checkTokenSupport(bytes32 tokenKey) internal view {
-        require(tokenList.contains(tokenKey), "not support");
+        require(tokenList.contains(tokenKey), "BridgeIn:token not support");
     }
 
     function _checkTokenNotExist(bytes32 tokenKey) internal view {
-        require(!tokenList.contains(tokenKey), "tokenKey already added");
+        require(!tokenList.contains(tokenKey), "BridgeIn:tokenKey already added");
     }
 
     function _transfer(address token, address receiver, uint256 amount) internal {
