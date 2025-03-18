@@ -86,18 +86,18 @@ async function main() {
     // await bridgeIn.updateImplementation(bridgeInImplementationAddress);
     // await bridgeOut.updateImplementation(bridgeOutImplementationAddress);
 
-    var configs = [{
-        bridgeContractAddress:"2rC1X1fudEkJ4Yungj5tYNJ93GmBxbSRiyJqfBkzcT6JshSqz9",
-        targetChainId:"MainChain_AELF",
-        chainId:9992731
-    },{
-        bridgeContractAddress:"293dHYMKjfEuTEkveb5h775avTyW69jBgHMYiWQqtdSdTfsfEP",
-        targetChainId:"SideChain_tDVW",
-        chainId:1931928
-    }];
-    const ramp = "0x32104E04c7a688b8bF45E60385Ca4C57221cd861";
-    console.log(configs);
-    await bridgeInImplementation.setCrossChainConfig(configs,ramp);
+    // var configs = [{
+    //     bridgeContractAddress:"2rC1X1fudEkJ4Yungj5tYNJ93GmBxbSRiyJqfBkzcT6JshSqz9",
+    //     targetChainId:"MainChain_AELF",
+    //     chainId:9992731
+    // },{
+    //     bridgeContractAddress:"293dHYMKjfEuTEkveb5h775avTyW69jBgHMYiWQqtdSdTfsfEP",
+    //     targetChainId:"SideChain_tDVW",
+    //     chainId:1931928
+    // }];
+    // const ramp = "0x32104E04c7a688b8bF45E60385Ca4C57221cd861";
+    // console.log(configs);
+    // await bridgeInImplementation.setCrossChainConfig(configs,ramp);
     // // 1. set bridge
     // console.log("Start to set bridge.")
     // await limiterImplementation.connect(admin).setBridge(bridgeInAddress,bridgeOutAddress);
@@ -406,6 +406,62 @@ async function main() {
     //   }
     // ];
     // await limiterImplementation.connect(admin).setTokenBucketConfig(configs);
+
+    console.log("Start to set daily limit.")
+    const date = new Date();
+    const timestamp = Date.UTC(date.getFullYear(), date.getMonth(), date.getUTCDate(), 0, 0, 0, 0);
+    var refreshTime = timestamp  / 1000;
+    console.log(refreshTime);
+    var config = [
+        {
+           "dailyLimitId": "0xce016c3bb62b1fd5d108e6bebd194c153ede63a42086f6b87c334615f312e0ec",
+           "refreshTime": refreshTime,
+           "defaultTokenAmount": "10000000000000000000000"
+        },
+        {
+            "dailyLimitId": "0x26432b3a347fb0b02445a5d39baf777f5bcf2c0d8ae0d65bc3dc85d78dd63264",
+            "refreshTime": refreshTime,
+            "defaultTokenAmount": "10000000000000000000000"
+        },
+        {
+            "dailyLimitId": "0xac9d371b5f02a7f9c268be354e55ef9b0e00252d2e6cdd7aa716a4e0dd454496",
+            "refreshTime": refreshTime,
+            "defaultTokenAmount": "10000000000000000000000"
+        },
+        {
+            "dailyLimitId": "0xe024d4db7dce5de30681eb24f3ae9de11e585fba13b6d149d5f93fef56cdcb96",
+            "refreshTime": refreshTime,
+            "defaultTokenAmount": "10000000000000000000000"
+        }
+    ];
+    await limiterImplementation.connect(admin).setDailyLimit(config);
+    
+    var configs = [{
+        "bucketId": "0xce016c3bb62b1fd5d108e6bebd194c153ede63a42086f6b87c334615f312e0ec",
+        "isEnabled": true,
+        "tokenCapacity": "1000000000000000000000",
+        "rate": "100000000000000000000"
+      },
+      {
+        "bucketId": "0x26432b3a347fb0b02445a5d39baf777f5bcf2c0d8ae0d65bc3dc85d78dd63264",
+        "isEnabled": true,
+        "tokenCapacity": "1000000000000000000000",
+        "rate": "100000000000000000000"
+      },
+        {
+            "bucketId": "0xac9d371b5f02a7f9c268be354e55ef9b0e00252d2e6cdd7aa716a4e0dd454496",
+            "isEnabled": true,
+            "tokenCapacity": "1000000000000000000000",
+            "rate": "100000000000000000000"
+        },
+        {
+            "bucketId": "0xe024d4db7dce5de30681eb24f3ae9de11e585fba13b6d149d5f93fef56cdcb96",
+            "isEnabled": true,
+            "tokenCapacity": "1000000000000000000000",
+            "rate": "100000000000000000000"
+        }
+    ];
+    await limiterImplementation.connect(admin).setTokenBucketConfig(configs);
 
     // var amount = '2000000';
     // var targetAddress = "ZVJHCVCzixThco58iqe4qnE79pmxeDuYtMsM8k71RhLLxdqB5";

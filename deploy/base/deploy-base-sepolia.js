@@ -20,7 +20,7 @@ async function main() {
     const commonLibAddress = '0xB7d9a6C5D1Bee6e98d2d5ff475CcCa36e00bDBd6';
     const bridgeInImplementationAddress = '0x2C058424c076c9E12f299C0Af07DC89284c841c8';
     const bridgeInAddress = '0x7e308DC172faa2a6560C2cd806e8282C51E5BFA5';
-    const bridgeOutImplementationAddress = '0x2a4494Cd792Fa979180555F19f521E8D2C28c619';
+    const bridgeOutImplementationAddress = '0xea68cF2b55Da0744750d1De6fb9736c6FC9F91dF';
     const bridgeOutAddress = '0xA251aE4C14C53d980699b14319bf2Ad5A4bC4A14';
     const multiSigWalletAddress = '';
     const timelockAddress = '';
@@ -153,11 +153,11 @@ async function main() {
     //     constructorArguments: [],
     //     contract: "contracts/libraries/CommonLibrary.sol:CommonLibrary"
     // })
-    await run("verify:verify", {
-        address: bridgeInImplementationAddress,
-        constructorArguments: [],
-        contract: "contracts/BridgeInImplementation.sol:BridgeInImplementation"
-    })
+    // await run("verify:verify", {
+    //     address: bridgeInImplementationAddress,
+    //     constructorArguments: [],
+    //     contract: "contracts/BridgeInImplementation.sol:BridgeInImplementation"
+    // })
     // await run("verify:verify", {
     //     address: bridgeInAddress,
     //     constructorArguments: [mockMultiSigWalletAddress, nativeTokenAddress, pauseController,limiterAddress,tokenPoolAddress,bridgeInImplementationAddress],

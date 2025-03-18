@@ -261,11 +261,13 @@ contract BridgeOutImplementationV1 is ProxyStorage {
         view
         returns (
             string memory fromChainId,
-            address token
+            address token,
+            SwapTargetToken memory targetToken
         )
     {
         fromChainId = swapInfos[swapId].targetToken.fromChainId;
         token = swapInfos[swapId].targetToken.token;
+        targetToken = swapInfos[swapId].targetToken;
     }
 
 }
