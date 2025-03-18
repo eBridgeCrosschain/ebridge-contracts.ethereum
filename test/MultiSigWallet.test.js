@@ -11,11 +11,11 @@ describe("MultiSigWallet", function () {
         const weth = await WETH.deploy();
 
         const [owner, account, account1, account2, account3, account4] = await ethers.getSigners();
-        const BridgeInLib = await ethers.getContractFactory("BridgeInLibrary");
-        const lib = await BridgeInLib.deploy();
+        const CommonLibrary = await ethers.getContractFactory("CommonLibrary");
+        const lib = await CommonLibrary.deploy();
         const BridgeInImplementation = await ethers.getContractFactory("BridgeInImplementation",{
             libraries : {
-                BridgeInLibrary:lib.address
+                CommonLibrary:lib.address
             }
         });
         const BridgeOutMock = await ethers.getContractFactory("MockBridgeOut");
@@ -142,10 +142,10 @@ describe("MultiSigWallet", function () {
             it("Should executeTransaction success", async function () {
                 const { bridgeIn, multiSigWallet, owner, account, account1, account2,bridgeOutMock } = await loadFixture(deployMultiSigWalletFixture);
                 let ABI1 = [
-                    "function setBridgeOutAndLimiter(address _bridgeOut,address _limiter)"
+                    "function setContractConfig(address _bridgeOut,address _limiter,address _tokenPool)"
                 ];
                 let iface1 = new ethers.utils.Interface(ABI1);
-                var data1 = iface1.encodeFunctionData("setBridgeOutAndLimiter",[bridgeOutMock.address,owner.address]);
+                var data1 = iface1.encodeFunctionData("setContractConfig",[bridgeOutMock.address,owner.address,account2.address]);
                 await multiSigWallet.connect(account1).submitTransaction(bridgeIn.address, 0, data1);
                 var transactionId = 0;
                 await multiSigWallet.connect(account).confirmTransaction(transactionId);
@@ -205,7 +205,7 @@ describe("MultiSigWallet", function () {
                 var transactionId = 1;
                 await multiSigWallet.connect(account).confirmTransaction(transactionId);
                 await multiSigWallet.connect(account1).confirmTransaction(transactionId);
-                error = "tokenKey already added"
+                error = "BridgeIn:tokenKey already added"
                 await expect(multiSigWallet.connect(account2).confirmTransaction(transactionId))
                     .to.be.revertedWith(error);
                 // const receipt = await result.wait();

@@ -3,6 +3,7 @@ const {
     loadFixture,
 } = require("@nomicfoundation/hardhat-network-helpers");
 const { anyValue } = require("@nomicfoundation/hardhat-chai-matchers/withArgs");
+const {ethers} = require("hardhat");
 const { expect } = require("chai");
 describe("Regiment", function () {
     async function deployRegimentFixture() {

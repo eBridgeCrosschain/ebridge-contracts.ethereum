@@ -5,34 +5,37 @@ const { ethers } = require("hardhat");
 const { string } = require("hardhat/internal/core/params/argumentTypes");
 const BigNumber = require('bignumber.js');
 const {getCurrentTimestampBigInt} = require("hardhat/internal/hardhat-network/provider/utils/getCurrentTimestamp");
+const aelf = require("aelf-sdk");
+
 async function main() {
     const [sender,managerAddress,account2] = await ethers.getSigners();
     //initailize
     console.log("Sending tx with the account:", sender.address);
     console.log("Sender account balance:", (await sender.getBalance()).toString());
 
-    const RegimentAddress = '0x9D5a36b132C3bE5F7F55DedBF5361fF405f35A5B';
-    const RegimentImplementationAddress = '0x44846e35FbAd298c286575daCE76A8b03449c24b';
+    const RegimentAddress = '';
+    const RegimentImplementationAddress = '';
     
-    const MerkleTreeAddress = '0x18cE1AFF5cdc8bAB0017b42d22a71265E82Ce606';
+    const MerkleTreeAddress = '';
     const MerkleTreeImplementationAddress = '0x5c2A9c0dA618c8ba7798A0B16bE091b2d56aaB64';
     
-    const BridgeInLib = '0xd17F75f62C6eDbF2eD7CaFEBDBAA8172909bc897';
-    const BridgeInAddress = '0xf9Ab39c7A0A925BAf94f9C1c1d1CE8bFc9F9b2b3';
-    const BridgeInImplementationAddress = '0x5414e13D4338ad517ee3723db5668fa0e7cE4965';
+    const CommonLib = "0x408c4e6df51bcab94aed8a80f431ce5b1ed32b51";
+    const BridgeInAddress = '0x8243C4927257ef20dbF360b012C9f72f9A6427c3';
+    const BridgeInImplementationAddress = '0xA60C9C8E4d761a8e32AA0985d22E9d9Df0aEF568';
+    
+    const BridgeOutAddress = '0x3c37E0A09eAFEaA7eFB57107802De1B28A6f5F07';
+    const BridgeOutImplementationAddress = '0x2676636Ab661C60F91Aa6f9dfc5c1B4D7C37C04E';
 
-    const BridgeOutLib = '0x16e4232c5Bc41d91BB45cd739897439c38b10866';
-    const BridgeOutAddress = '0x276A12Bd934cb9753AdB89DFe88CA1442c5B1B47';
-    const BridgeOutImplementationAddress = '0x3CcAc50282B1b69d66f659A6c6871C8218B7Ea5f';
+    const LimiterAddress = '0x69aDad711f41C32FF48A6B95f0d66c635185D521';
+    const LimiterImplementationAddress = '';
 
-    const LimiterAddress = '0x82a0951a93f51ce67dE3F45A1381C48050762B8d';
-    const LimiterImplementationAddress = '0x61E7F79FAA6058CbCE3bc5Af2B7607F12a7C5C96';
+    const TimelockAddress = '';
+    const MultiSigWalletAddress = '';
 
-    const TimelockAddress = '0xcbEd324b624bB1B17A7842595B5295E249c44Abb';
-    const MultiSigWalletAddress = '0xC457eE6c82D017C81b97f0d32F3D0480d42E1328';
-
-    const tokenPoolImplementationAddress = '0xE2f11d5983C0cc144260a1666bD157f439335d04';
-    const tokenPoolAddress = '0xd4aaab5bF10955e98918a00b14e1b4fdd73E97e4';
+    const tokenPoolImplementationAddress = '';
+    const tokenPoolAddress = '';
+    
+    const testRamp = '0x83f74F0ABae405b4EE7E0476C6323aFF396B10c8';
 
 
     elfAddress = "0x8adD57b8aD6C291BC3E3ffF89F767fcA08e0E7Ab";
@@ -41,18 +44,19 @@ async function main() {
     wusdAddress = "0x50A9FC9f46401f2e0AF52835aCD50238431C8ebc";
     sgrAddress = "0x310e7bD119253b9F9F3AC0cD191A1b8b5b1b3b84";
     addAddress = "0x4f36F2beb2A104bb7f9BdA1fB16ef219E577066C";
-    
 
+    const CommonLibrary = await ethers.getContractFactory("CommonLibrary");
+    const lib = await CommonLibrary.attach(CommonLib);
+    
+    // const MockRamp = await ethers.getContractFactory("MockRampTest");
+    // const mockRamp = await MockRamp.attach(testRamp);
 
     const BridgeInImplementation = await ethers.getContractFactory("BridgeInImplementation",{
         libraries:{
-            BridgeInLibrary : BridgeInLib
+            CommonLibrary : CommonLib
         }
     });
     const bridgeInImplementation = await BridgeInImplementation.attach(BridgeInAddress);
-
-    const BridgeOutLibrary = await ethers.getContractFactory("BridgeOutLibrary");
-    const lib = await BridgeOutLibrary.attach(BridgeOutLib);
 
     const BridgeIn = await ethers.getContractFactory("BridgeIn");
     const bridgeIn = await BridgeIn.attach(BridgeInAddress);
@@ -77,20 +81,15 @@ async function main() {
 
     const BridgeOutImplementation = await ethers.getContractFactory("BridgeOutImplementationV1",{
         libraries:{
-            BridgeOutLibrary : BridgeOutLib
+            CommonLibrary : CommonLib
         }
     });
     const bridgeOutImplementation = await BridgeOutImplementation.attach(BridgeOutAddress);
 
     const BridgeOut = await ethers.getContractFactory("BridgeOut");
     const bridgeOut = await BridgeOut.attach(BridgeOutAddress);
-
-
-    const LimiterImplementation = await ethers.getContractFactory("LimiterImplementation",{
-        libraries:{
-            BridgeInLibrary : BridgeInLib
-        }
-    });
+    
+    const LimiterImplementation = await ethers.getContractFactory("LimiterImplementation");
     const limiterImplementation = await LimiterImplementation.attach(LimiterAddress);
 
     const TokenPoolImplementation = await ethers.getContractFactory("TokenPoolImplementation");
@@ -98,11 +97,106 @@ async function main() {
 
     const TokenPool = await ethers.getContractFactory("TokenPool");
     const tokenPool = await TokenPool.attach(tokenPoolAddress);
+    
+    const CommobLibrary = await ethers.getContractFactory("CommonLibrary");
+    const commonLibrary = await CommobLibrary.attach(CommonLib);
 
-    var chainIdMain = "MainChain_AELF";
+    // var chainIdMain = "MainChain_AELF";
     var chainIdSide = "SideChain_tDVW";
-    var regimentId = '0xf7296bf942ea75763b3ffffd0133a94558c87477c0a7e595bf9543cd7540602f';
+    // var regimentId = '0xf7296bf942ea75763b3ffffd0133a94558c87477c0a7e595bf9543cd7540602f';
+    
+    // var limit = await limiterImplementation.getCurrentSwapTokenBucketState(sgrAddress,chainIdSide);
+    // console.log(limit);
+    
+    // var swapInfo = await bridgeOutImplementation.getSwapInfo("0x12363a4e045159563262a0a639a22541cd74e0237a7817c7b376a104aa2ed1f9");
+    // console.log(swapInfo);
 
+    // let targetToken = {
+    //     token: sgrAddress,
+    //     fromChainId: chainIdSide,
+    //     originShare: 1,
+    //     targetShare: 1
+    // }
+    // await bridgeOutImplementation.createSwap(targetToken);
+    // let swapId = await bridgeOutImplementation.getSwapId(sgrAddress, chainIdSide);
+    // console.log(swapId);
+    // await bridgeOutImplementation.updateSwapRatio(swapId,1,1);
+    // var swapId = await bridgeOutImplementation.getSwapId(tokenAddress, chainId);
+    // console.log("swap id:",swapId);
+    // var infoSgr = await bridgeOutImplementation.getSwapInfo(swapId);
+    // console.log("from chain id:",infoSgr.fromChainId);
+    // console.log("regiment id:",infoSgr.regimentId);
+    // console.log("token:",infoSgr.token);
+    // console.log("space id:",infoSgr.spaceId);
+    // var spaceId = infoSgr.spaceId;
+    // var spaceInfo = await merkleTreeImplementation.getSpaceInfo(spaceId);
+    // console.log("leaf count",spaceInfo.maxLeafCount);
+    // var tokenKey = _generateTokenKey(tokenAddress,chainId);
+    // console.log("token key:",tokenKey);
+    
+    //
+    // var amount = '1000000000000000000';
+    // var targetAddress = "ZVJHCVCzixThco58iqe4qnE79pmxeDuYtMsM8k71RhLLxdqB5";
+    // let a = aelf.utils.base58.decode(targetAddress);
+    // console.log(a.toString('hex'));
+    // await bridgeInImplementation.createReceipt(elfAddress, amount, chainIdSide, a);
+    // var configs = [{
+    //     bridgeContractAddress:"2rC1X1fudEkJ4Yungj5tYNJ93GmBxbSRiyJqfBkzcT6JshSqz9",
+    //     targetChainId:"MainChain_AELF",
+    //     chainId:9992731
+    // },{
+    //     bridgeContractAddress:"293dHYMKjfEuTEkveb5h775avTyW69jBgHMYiWQqtdSdTfsfEP",
+    //     targetChainId:"SideChain_tDVW",
+    //     chainId:1931928
+    // }];
+    // const ramp = "0xdaEe625927C292BB4E29b800ABeCe0Dadf10EbAb";
+    // console.log(configs);
+    // await bridgeOutImplementation.setCrossChainConfig(configs,ramp);
+    // const config1 = await bridgeOutImplementation.getCrossChainConfig(1931928);
+    // console.log(config1);
+
+    const message = "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAGnLyTOw6SMBdPZKmb46FecEANo8LRDjnw4E8P7hsZs2AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD0JAFgjCOJgQfZ9axsX7fc/mt4B7JB7p3OgLqHDwFiDa/bYAAAAAAAAAAAAAAADWQdBWhqIUiZQfU2oChBFtz5xzUA==";
+    const buffer = Buffer.from(message, "base64"); // Base64 转 Buffer
+    const messageHex =  "0x" + buffer.toString("hex");
+    console.log("messageHex:",messageHex);
+    const bytesData = ethers.utils.arrayify(messageHex);
+    console.log("message bytes",bytesData);
+    const extraData = "EjY6TgRRWVYyYqCmOaIlQc104CN6eBfHs3ahBKou0fk=";
+    const extraDataBuffer = Buffer.from(extraData, "base64"); // Base64 转 Buffer
+    const extraDataHex =  "0x" + extraDataBuffer.toString("hex");
+    console.log("extraDataHex:",extraDataHex);
+    const extra = ethers.utils.arrayify(extraDataHex);
+    console.log("extra bytes",extra);
+    let tokenTransferMetadata = {
+        extraData:extra,
+        targetChainId: 11155111,
+        tokenAddress: "0x310e7bD119253b9F9F3AC0cD191A1b8b5b1b3b84",
+        symbol:"SGR-1",
+        amount:1000000
+    };
+    const encodedData = ethers.utils.defaultAbiCoder.encode(
+        ["uint256", "string", "string", "uint256", "bytes"],
+        [
+            tokenTransferMetadata.targetChainId,
+            tokenTransferMetadata.tokenAddress,
+            tokenTransferMetadata.symbol,
+            tokenTransferMetadata.amount,
+            tokenTransferMetadata.extraData
+        ]
+    );
+    console.log(encodedData);
+    // await mockRamp.transmit(1931928,11155111,bytesData,"293dHYMKjfEuTEkveb5h775avTyW69jBgHMYiWQqtdSdTfsfEP","0x3c37E0A09eAFEaA7eFB57107802De1B28A6f5F07",tokenAmount);
+    await bridgeOutImplementation.forwardMessage(1931928,11155111,"293dHYMKjfEuTEkveb5h775avTyW69jBgHMYiWQqtdSdTfsfEP","0x3c37E0A09eAFEaA7eFB57107802De1B28A6f5F07",bytesData,tokenTransferMetadata);
+    // const report = "0xad7e409ac555674279d727b9613cce7a77187a7ba6b3b66ccb5adf5eab5ef2eb00000000000000000000000000000000000000000000000000000000001d7a980000000000000000000000000000000000000000000000000000000000aa36a700000000000000000000000000000000000000000000000000000000000000a00000000000000000000000003c37e0a09eafeaa7efb57107802de1b28a6f5f0700000000000000000000000000000000000000000000000000000000000000323239336448594d4b6a66457554456b7665623568373735617654795736396a4267484d5969575171746453645466736645500000000000000000000000000000";
+    // const message = "0x0000000000000000000000000000000000000000000000000000000000000029a1b2e4b980a70b0540967af854beecf176844da55c36601f7849c614e6ecfb500000000000000000000000000000000000000000000000000000000005f5e1000feaf05dabfd8a5f64d7c4293ec20aaf1ab4765a5482f195dc906c3804b2be2d000000000000000000000000f8a143451383e5c5a58fde92664dae08fb9f7f1b";
+    // const decode = "0x00000000000000000000000000000000000000000000000000000000000000c00000000000000000000000000000000000000000000000000000000000aa36a7000000000000000000000000000000000000000000000000000000000000014000000000000000000000000000000000000000000000000000000000000001a0000000000000000000000000000000000000000000000000000000000000020000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000042307837373136313735663865646565306637376530323036323231343031386234346636626161613630333930373832646639626466323834366266323266353038000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000002a30783363333745304130396541464561413765464235373130373830324465314232384136663546303700000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000002a307838616444353762386144364332393142433345336666463839463736376663413038653045374162000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000003454c460000000000000000000000000000000000000000000000000000000000";
+    // const bytesData1 = ethers.utils.arrayify(report);
+    // const bytesData2 = ethers.utils.arrayify(message);
+    // const bytesData3 = ethers.utils.arrayify(decode);
+    // await mockRamp.transmit(bytesData1,bytesData2,bytesData3);
+    
+    
+    // await bridgeOutImplementation.forwardMessage(1931928,11155111,"293dHYMKjfEuTEkveb5h775avTyW69jBgHMYiWQqtdSdTfsfEP","0x3c37E0A09eAFEaA7eFB57107802De1B28A6f5F07",bytesData,tokenAmount);
     // // step 1: add token
     // var tokens = [{
     //     tokenAddress : addAddress,
