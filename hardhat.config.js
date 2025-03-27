@@ -1,16 +1,16 @@
-const dotenv = require('dotenv');
+// const dotenv = require('dotenv');
 require('solidity-coverage');
 require("@nomiclabs/hardhat-etherscan");
 require('hardhat-contract-sizer');
 require("@nomicfoundation/hardhat-toolbox");
-const result = dotenv.config();
-if (result.error) {
-  throw result.error;
-}
-console.log(result.parsed);
-const API_KEY = process.env.apikey;
-
-console.log("API_KEY--------" + API_KEY)
+// const result = dotenv.config();
+// if (result.error) {
+//   throw result.error;
+// }
+// console.log(result.parsed);
+// const API_KEY = process.env.apikey;
+//
+// console.log("API_KEY--------" + API_KEY)
 // Replace this private key with your Goerli account private key
 // To export your private key from Metamask, open Metamask and
 // go to Account Details > Export Private Key
