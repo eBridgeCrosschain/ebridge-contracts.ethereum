@@ -18,11 +18,7 @@ describe("Limiter", function () {
         const bridgeInMock = await MockBridgeIn.deploy();
         const MockBridgeOut = await ethers.getContractFactory("MockBridgeOut");
         const bridgeOutMock = await MockBridgeOut.deploy();
-        const LimiterImplementation = await ethers.getContractFactory("LimiterImplementation",{
-            libraries:{
-                BridgeInLibrary : bridgeInLibrary.address
-            }
-        });
+        const LimiterImplementation = await ethers.getContractFactory("LimiterImplementation");
 
         const Limiter = await ethers.getContractFactory("Limiter");
         const limiterImplementation = await LimiterImplementation.deploy();
