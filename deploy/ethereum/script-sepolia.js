@@ -13,12 +13,6 @@ async function main() {
     console.log("Sending tx with the account:", sender.address);
     console.log("Sender account balance:", (await sender.getBalance()).toString());
 
-    const RegimentAddress = '';
-    const RegimentImplementationAddress = '';
-    
-    const MerkleTreeAddress = '';
-    const MerkleTreeImplementationAddress = '0x5c2A9c0dA618c8ba7798A0B16bE091b2d56aaB64';
-    
     const CommonLib = "0x408c4e6df51bcab94aed8a80f431ce5b1ed32b51";
     const BridgeInAddress = '0x8243C4927257ef20dbF360b012C9f72f9A6427c3';
     const BridgeInImplementationAddress = '0xA60C9C8E4d761a8e32AA0985d22E9d9Df0aEF568';
@@ -60,18 +54,6 @@ async function main() {
 
     const BridgeIn = await ethers.getContractFactory("BridgeIn");
     const bridgeIn = await BridgeIn.attach(BridgeInAddress);
-
-    const RegimentImplementation = await ethers.getContractFactory("RegimentImplementation");
-    const regimentImplementation = await RegimentImplementation.attach(RegimentAddress);
-
-    const Regiment = await ethers.getContractFactory("Regiment");
-    const regiment = await Regiment.attach(RegimentAddress);
-
-    const MerkleTreeImplementation = await ethers.getContractFactory("MerkleTreeImplementation");
-    const merkleTreeImplementation = await MerkleTreeImplementation.attach(MerkleTreeAddress);
-
-    const MerkleTree = await ethers.getContractFactory("MerkleTree");
-    const merkleTree = await MerkleTree.attach(MerkleTreeAddress);
 
     const MultiSign = await ethers.getContractFactory("MultiSigWallet");
     const multiSign = await MultiSign.attach(MultiSigWalletAddress);
@@ -155,38 +137,38 @@ async function main() {
     // const config1 = await bridgeOutImplementation.getCrossChainConfig(1931928);
     // console.log(config1);
 
-    const message = "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAGnLyTOw6SMBdPZKmb46FecEANo8LRDjnw4E8P7hsZs2AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD0JAFgjCOJgQfZ9axsX7fc/mt4B7JB7p3OgLqHDwFiDa/bYAAAAAAAAAAAAAAADWQdBWhqIUiZQfU2oChBFtz5xzUA==";
-    const buffer = Buffer.from(message, "base64"); // Base64 转 Buffer
-    const messageHex =  "0x" + buffer.toString("hex");
-    console.log("messageHex:",messageHex);
-    const bytesData = ethers.utils.arrayify(messageHex);
-    console.log("message bytes",bytesData);
-    const extraData = "EjY6TgRRWVYyYqCmOaIlQc104CN6eBfHs3ahBKou0fk=";
-    const extraDataBuffer = Buffer.from(extraData, "base64"); // Base64 转 Buffer
-    const extraDataHex =  "0x" + extraDataBuffer.toString("hex");
-    console.log("extraDataHex:",extraDataHex);
-    const extra = ethers.utils.arrayify(extraDataHex);
-    console.log("extra bytes",extra);
-    let tokenTransferMetadata = {
-        extraData:extra,
-        targetChainId: 11155111,
-        tokenAddress: "0x310e7bD119253b9F9F3AC0cD191A1b8b5b1b3b84",
-        symbol:"SGR-1",
-        amount:1000000
-    };
-    const encodedData = ethers.utils.defaultAbiCoder.encode(
-        ["uint256", "string", "string", "uint256", "bytes"],
-        [
-            tokenTransferMetadata.targetChainId,
-            tokenTransferMetadata.tokenAddress,
-            tokenTransferMetadata.symbol,
-            tokenTransferMetadata.amount,
-            tokenTransferMetadata.extraData
-        ]
-    );
-    console.log(encodedData);
-    // await mockRamp.transmit(1931928,11155111,bytesData,"293dHYMKjfEuTEkveb5h775avTyW69jBgHMYiWQqtdSdTfsfEP","0x3c37E0A09eAFEaA7eFB57107802De1B28A6f5F07",tokenAmount);
-    await bridgeOutImplementation.forwardMessage(1931928,11155111,"293dHYMKjfEuTEkveb5h775avTyW69jBgHMYiWQqtdSdTfsfEP","0x3c37E0A09eAFEaA7eFB57107802De1B28A6f5F07",bytesData,tokenTransferMetadata);
+    // const message = "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAGnLyTOw6SMBdPZKmb46FecEANo8LRDjnw4E8P7hsZs2AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD0JAFgjCOJgQfZ9axsX7fc/mt4B7JB7p3OgLqHDwFiDa/bYAAAAAAAAAAAAAAADWQdBWhqIUiZQfU2oChBFtz5xzUA==";
+    // const buffer = Buffer.from(message, "base64"); // Base64 转 Buffer
+    // const messageHex =  "0x" + buffer.toString("hex");
+    // console.log("messageHex:",messageHex);
+    // const bytesData = ethers.utils.arrayify(messageHex);
+    // console.log("message bytes",bytesData);
+    // const extraData = "EjY6TgRRWVYyYqCmOaIlQc104CN6eBfHs3ahBKou0fk=";
+    // const extraDataBuffer = Buffer.from(extraData, "base64"); // Base64 转 Buffer
+    // const extraDataHex =  "0x" + extraDataBuffer.toString("hex");
+    // console.log("extraDataHex:",extraDataHex);
+    // const extra = ethers.utils.arrayify(extraDataHex);
+    // console.log("extra bytes",extra);
+    // let tokenTransferMetadata = {
+    //     extraData:extra,
+    //     targetChainId: 11155111,
+    //     tokenAddress: "0x310e7bD119253b9F9F3AC0cD191A1b8b5b1b3b84",
+    //     symbol:"SGR-1",
+    //     amount:1000000
+    // };
+    // const encodedData = ethers.utils.defaultAbiCoder.encode(
+    //     ["uint256", "string", "string", "uint256", "bytes"],
+    //     [
+    //         tokenTransferMetadata.targetChainId,
+    //         tokenTransferMetadata.tokenAddress,
+    //         tokenTransferMetadata.symbol,
+    //         tokenTransferMetadata.amount,
+    //         tokenTransferMetadata.extraData
+    //     ]
+    // );
+    // console.log(encodedData);
+    // // await mockRamp.transmit(1931928,11155111,bytesData,"293dHYMKjfEuTEkveb5h775avTyW69jBgHMYiWQqtdSdTfsfEP","0x3c37E0A09eAFEaA7eFB57107802De1B28A6f5F07",tokenAmount);
+    // await bridgeOutImplementation.forwardMessage(1931928,11155111,"293dHYMKjfEuTEkveb5h775avTyW69jBgHMYiWQqtdSdTfsfEP","0x3c37E0A09eAFEaA7eFB57107802De1B28A6f5F07",bytesData,tokenTransferMetadata);
     // const report = "0xad7e409ac555674279d727b9613cce7a77187a7ba6b3b66ccb5adf5eab5ef2eb00000000000000000000000000000000000000000000000000000000001d7a980000000000000000000000000000000000000000000000000000000000aa36a700000000000000000000000000000000000000000000000000000000000000a00000000000000000000000003c37e0a09eafeaa7efb57107802de1b28a6f5f0700000000000000000000000000000000000000000000000000000000000000323239336448594d4b6a66457554456b7665623568373735617654795736396a4267484d5969575171746453645466736645500000000000000000000000000000";
     // const message = "0x0000000000000000000000000000000000000000000000000000000000000029a1b2e4b980a70b0540967af854beecf176844da55c36601f7849c614e6ecfb500000000000000000000000000000000000000000000000000000000005f5e1000feaf05dabfd8a5f64d7c4293ec20aaf1ab4765a5482f195dc906c3804b2be2d000000000000000000000000f8a143451383e5c5a58fde92664dae08fb9f7f1b";
     // const decode = "0x00000000000000000000000000000000000000000000000000000000000000c00000000000000000000000000000000000000000000000000000000000aa36a7000000000000000000000000000000000000000000000000000000000000014000000000000000000000000000000000000000000000000000000000000001a0000000000000000000000000000000000000000000000000000000000000020000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000042307837373136313735663865646565306637376530323036323231343031386234346636626161613630333930373832646639626466323834366266323266353038000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000002a30783363333745304130396541464561413765464235373130373830324465314232384136663546303700000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000002a307838616444353762386144364332393142433345336666463839463736376663413038653045374162000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000003454c460000000000000000000000000000000000000000000000000000000000";
@@ -228,8 +210,9 @@ async function main() {
     // // get swap info
     // var swapIdMain = await bridgeOutImplementation.getSwapId(addAddress, chainIdMain);
     // console.log("main swap id:",swapIdMain);
-    // var info = await bridgeOutImplementation.getSwapInfo(swapIdMain);
-    // console.log("from chain id:",info.fromChainId);
+    var swapIdMain = "0x815ad056f615f06c2dc9c414c96fa940da5a4b101ebb697ec00665a26677dc9b";
+    var info = await bridgeOutImplementation.getSwapInfo(swapIdMain);
+    console.log("from chain id:",info.fromChainId);
     // console.log("regiment id:",info.regimentId);
     // console.log("token:",info.token);
     // var tokenKeyMain = _generateTokenKey(addAddress,chainIdMain);

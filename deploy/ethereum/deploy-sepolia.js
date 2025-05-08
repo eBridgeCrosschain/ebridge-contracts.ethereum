@@ -14,13 +14,13 @@ async function main() {
     const merkleTreeAddress = '';
     const multiSigWalletAddress = '';
     const bridgeInAddress = '0x8243C4927257ef20dbF360b012C9f72f9A6427c3';
-    const bridgeInImplementationAddress = '0xD0718b58D7B7f8F830d172364b876546674F0d9B';
+    const bridgeInImplementationAddress = '0x9Cc6B92f444A3599EDb90Ffe8D3DD8cBc8B96308';
     const bridgeOutAddress = '0x3c37E0A09eAFEaA7eFB57107802De1B28A6f5F07';
-    const bridgeOutImplementationAddress = '0x214521DdadaAe5561916aAe5c842C51438ab7dF0';
+    const bridgeOutImplementationAddress = '0xB7ab0534128D4f2F9319d9B3194E7505d8501D32';
     const bridgeInLibAddress = '';
     const bridgeOutLibAddress = '';
-    const LimiterAddress = '';
-    const LimiterImplementationAddress = '';
+    const LimiterAddress = '0x69aDad711f41C32FF48A6B95f0d66c635185D521';
+    const LimiterImplementationAddress = '0x4135B011Fd6A047DA21aa7Ee426240D0f9eD9F84';
     const tokenPoolImplementationAddress = '';
     const tokenPoolAddress = '';
     const commonLibAddress = '0x408c4E6dF51BCab94aed8A80F431CE5b1ED32b51';
@@ -32,11 +32,11 @@ async function main() {
     // const mock = await MockRampTest.deploy();
     // console.log("commonLib address:", mock.address);
 
-    // common library
-    console.log("Start to deploy CommonLib.");
-    const CommonLib = await ethers.getContractFactory("CommonLibrary");
-    const commonLib = await CommonLib.deploy();
-    console.log("commonLib address:", commonLib.address);
+    // // common library
+    // console.log("Start to deploy CommonLib.");
+    // const CommonLib = await ethers.getContractFactory("CommonLibrary");
+    // const commonLib = await CommonLib.deploy();
+    // console.log("commonLib address:", commonLib.address);
 
     // //BridgeIn library
     // console.log("Start to deploy BridgeInLib.");
@@ -45,7 +45,7 @@ async function main() {
     // console.log("bridgeInLib address:", bridgeInLib.address);
 
 
-    // // BridgeInImplementation
+    // BridgeInImplementation
     // console.log("Start to deploy BridgeInImplementation contract.");
     // const BridgeInImplementation = await ethers.getContractFactory("BridgeInImplementation",{
     //         libraries:{
@@ -54,7 +54,7 @@ async function main() {
     //     });
     // const bridgeInImplementation = await BridgeInImplementation.deploy();
     // console.log("BridgeInImplementation address:", bridgeInImplementation.address);
-    //
+
     // // //BridgeOut library
     // console.log("Start to deploy BridgeOutLib.");
     // const BridgeOutLib = await ethers.getContractFactory("BridgeOutLibrary");
@@ -94,11 +94,11 @@ async function main() {
     //     constructorArguments: [],
     //     contract: "contracts/libraries/BridgeInLibrary.sol:BridgeInLibrary"
     // })
-    await run("verify:verify", {
-            address: bridgeOutImplementationAddress,
-            constructorArguments: [],
-            contract: "contracts/BridgeOutImplementationV1.sol:BridgeOutImplementationV1"
-          })
+    // await run("verify:verify", {
+    //         address: bridgeOutImplementationAddress,
+    //         constructorArguments: [],
+    //         contract: "contracts/BridgeOutImplementationV1.sol:BridgeOutImplementationV1"
+    //       })
 
      // TokenPoolImplementation
     // console.log("start deploy tokenPool implementation.")
@@ -136,28 +136,6 @@ async function main() {
     //     constructorArguments: [],
     //     contract: "contracts/RegimentImplementation.sol:RegimentImplementation"
     //   })
-
-    // // //regiment contract
-    // console.log("Start to deploy regiment contract.");
-    const regimentImplementationAddress = '0x44846e35FbAd298c286575daCE76A8b03449c24b';
-    // const Regiment = await ethers.getContractFactory("Regiment");
-    // const regimentProxy = await Regiment.deploy(_memberJoinLimit, _regimentLimit, _maximumAdminsCount, regimentImplementationAddress);
-    // console.log("Regiment address:", regimentProxy.address);
-
-      
-    // //deploy merkleTree implementation
-    // console.log("Start to deploy merkle tree implementation contract.");
-    // const MerkleTreeImplementation = await ethers.getContractFactory("MerkleTreeImplementation");
-    // const merkleTreeImplememtation = await MerkleTreeImplementation.deploy();
-    // console.log("merkleTree implementation address:", merkleTreeImplememtation.address);
-
-    // //deploy merkleTree
-    // console.log("Start to deploy merkle tree contract.");
-    const merkleTreeImplementationAddress = '0x551424aCa6961aF8dB63b0b0492ED5BA5083d8Df';
-    // const MerkleTree = await ethers.getContractFactory("MerkleTree");
-    // const merkleTree = await MerkleTree.deploy(regimentAddress,merkleTreeImplementationAddress);
-    // console.log("merkleTree address:", merkleTree.address);
-
 
     // //MultiSigWallet
     // console.log("Start to deploy MultiSigWallet contract.");
@@ -208,18 +186,14 @@ async function main() {
 
     //LimiterImplementation
     // console.log("start deploy limiter implementation.")
-    // const LimiterImplementation = await ethers.getContractFactory("LimiterImplementation",{
-    //     libraries:{
-    //          BridgeInLibrary : bridgeInLibAddress
-    //     }
-    // });
+    // const LimiterImplementation = await ethers.getContractFactory("LimiterImplementation");
     // const limiterImplementation = await LimiterImplementation.deploy();
     // console.log("limiterImplementation address:", limiterImplementation.address);
-        //     await run("verify:verify", {
-        // address: LimiterImplementationAddress,
-        // constructorArguments: [],
-        // contract: "contracts/LimiterImplementation.sol:LimiterImplementation"
-        //   })
+    //         await run("verify:verify", {
+    //     address: LimiterImplementationAddress,
+    //     constructorArguments: [],
+    //     contract: "contracts/LimiterImplementation.sol:LimiterImplementation"
+    //       })
     
     // Limiter
     // console.log("start deploy limiter.")

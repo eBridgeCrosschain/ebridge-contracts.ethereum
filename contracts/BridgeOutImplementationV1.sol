@@ -14,8 +14,6 @@ import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
 import "./libraries/CommonLibrary.sol";
 import "./libraries/StringHex.sol";
-import "hardhat/console.sol";
-
 
 pragma solidity 0.8.9;
 
@@ -121,16 +119,12 @@ contract BridgeOutImplementationV1 is ProxyStorage {
     }
 
     function initialize(
-        address _merkleTree,
-        address _regiment,
         address _bridgeIn,
         address _tokenAddress,
         address _approveController,
         address _multiSigWallet
     ) external onlyOwner {
-        require(merkleTree == address(0), "already initialized");
-        merkleTree = _merkleTree;
-        regiment = _regiment;
+        require(bridgeIn == address(0), "already initialized");
         bridgeIn = _bridgeIn;
         tokenAddress = _tokenAddress;
         approveController = _approveController;
@@ -280,15 +274,11 @@ contract BridgeOutImplementationV1 is ProxyStorage {
     view
     returns (
         string memory fromChainId,
-        bytes32 regimentId,
-        bytes32 spaceId,
         address token,
         SwapTargetToken memory targetToken
     )
     {
         fromChainId = swapInfos[swapId].targetToken.fromChainId;
-        regimentId = swapInfos[swapId].regimentId;
-        spaceId = swapInfos[swapId].spaceId;
         token = swapInfos[swapId].targetToken.token;
         targetToken = swapInfos[swapId].targetToken;
     }

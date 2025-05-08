@@ -30,17 +30,8 @@ describe("MultiSigWallet", function () {
         const bridgeInImplementation = await BridgeInImplementation.deploy();
         const bridgeInProxy = await BridgeIn.deploy(multiSigWallet.address,weth.address,account1.address, bridgeInImplementation.address);
         const bridgeIn = BridgeInImplementation.attach(bridgeInProxy.address);
-        const _memberJoinLimit = 10;
-        const _regimentLimit = 20;
-        const _maximumAdminsCount = 3;
-
-        const RegimentImplementation = await ethers.getContractFactory("RegimentImplementation");
-        const Regiment = await ethers.getContractFactory("Regiment");
-        const regimentImplementation = await RegimentImplementation.deploy();
-        const regimentProxy = await Regiment.deploy(_memberJoinLimit, _regimentLimit, _maximumAdminsCount,regimentImplementation.address);
-        const regiment = RegimentImplementation.attach(regimentProxy.address);
         
-        return { bridgeIn, multiSigWallet, owner, account, account1, account2, account3, account4,bridgeOutMock, regiment };
+        return { bridgeIn, multiSigWallet, owner, account, account1, account2, account3, account4,bridgeOutMock };
 
     }
 
@@ -220,32 +211,6 @@ describe("MultiSigWallet", function () {
                 // console.log("result",result);
                 // expect(result).to.equal("tokenKey already added");
                 
-            });
-            it("Should executeTransaction success creeateRegiment", async function () {
-                const { bridgeIn, multiSigWallet, owner, account, account1, account2,account3, account4,bridgeOutMock,regiment } = await loadFixture(deployMultiSigWalletFixture);
-                console.log(multiSigWallet.address);
-                await regiment.ChangeController(multiSigWallet.address);
-                var controller = await regiment.GetController();
-                console.log(controller);
-                let ABI1 = [
-                    "function CreateRegiment(address manager,address[] initialMemberList)"
-                    ];
-                var _initialMemberList = [account.address, account1.address, account2.address, account3.address];
-                var manager = account4.address;
-                let iface1 = new ethers.utils.Interface(ABI1);
-                let data1 = iface1.encodeFunctionData("CreateRegiment",[manager, _initialMemberList]);
-                console.log(data1);
-                var tx = await multiSigWallet.connect(account1).submitTransaction(regiment.address, 0, data1);
-                console.log(tx);
-                var transactionId = 0;
-                await multiSigWallet.connect(account).confirmTransaction(transactionId);
-                await multiSigWallet.connect(account1).confirmTransaction(transactionId);
-                var tx1 = await multiSigWallet.connect(account2).confirmTransaction(transactionId);
-                console.log("result",tx1);
-
-                var result = await regiment.GetRegimentMemberList("0x2613847bbf0e26fa3cc3088905be8d332258f1ae5ce36eb159019151e41f71cd");
-                console.log(result);
-
             });
         })
 

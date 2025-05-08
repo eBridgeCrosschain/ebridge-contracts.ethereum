@@ -12,8 +12,6 @@ const {address} = require("hardhat/internal/core/config/config-validation");
 describe("BridgeIn", function () {
     async function deployBridgeInFixture() {
         // Contracts are deployed using the first signer/account by default
-        const {merkleTree, regimentId, regiment}
-            = await deployMerkleTreeFixture()
 
         const {elf, usdt, weth} = await deployTokensFixture();
 
@@ -66,49 +64,6 @@ describe("BridgeIn", function () {
         let contractInfo = {bridgeIn, bridgeOutMock, limiter, tokenPool, rampMock};
         let tokenInfo = {weth, elf, usdt};
         return {accountInfo, contractInfo, tokenInfo};
-    }
-
-    async function deployMerkleTreeFixture() {
-        // Contracts are deployed using the first signer/account by default
-        const {regiment, owner, regimentId} = await loadFixture(deployRegimentFixture);
-
-        const MerkleTreeImplementation = await ethers.getContractFactory("MerkleTreeImplementation");
-        const MerkleTree = await ethers.getContractFactory("MerkleTree");
-        const merkleTreeImplementation = await MerkleTreeImplementation.deploy();
-        const merkleTreeProxy = await MerkleTree.deploy(regiment.address, merkleTreeImplementation.address);
-        const merkleTree = MerkleTreeImplementation.attach(merkleTreeProxy.address);
-
-        return {merkleTree, owner, regimentId, regiment};
-    }
-
-    async function deployRegimentFixture() {
-        // Contracts are deployed using the first signer/account by default
-        const _memberJoinLimit = 10;
-        const _regimentLimit = 20;
-        const _maximumAdminsCount = 3;
-
-        const [owner] = await ethers.getSigners();
-        const RegimentImplementation = await ethers.getContractFactory("RegimentImplementation");
-        const Regiment = await ethers.getContractFactory("Regiment");
-        const regimentImplementation = await RegimentImplementation.deploy();
-        const regimentProxy = await Regiment.deploy(_memberJoinLimit, _regimentLimit, _maximumAdminsCount, regimentImplementation.address);
-        const regiment = RegimentImplementation.attach(regimentProxy.address);
-
-        const _manager = owner.address;
-        const _initialMemberList = [owner.address];
-
-        let tx = await regiment.CreateRegiment(_manager, _initialMemberList);
-        const receipt = await tx.wait();
-        const data = receipt.logs[0].data;
-        const topics = receipt.logs[0].topics;
-        const interface = new ethers.utils.Interface(["event RegimentCreated(uint256 create_time, address manager,address[] InitialMemberList,bytes32 regimentId)"]);
-        const event = interface.decodeEventLog("RegimentCreated", data, topics);
-        let regimentId = event.regimentId;
-        let _newAdmins = [owner.address];
-        let originSenderAddress = owner.address;
-        await regiment.AddAdmins(regimentId, _newAdmins);
-
-        return {regiment, owner, regimentId};
     }
 
     async function deployTokensFixture() {

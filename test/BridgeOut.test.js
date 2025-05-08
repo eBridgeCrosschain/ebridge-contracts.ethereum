@@ -9,9 +9,6 @@ describe("BridgeOut", function () {
     async function deployBridgeOutFixture() {
         // Contracts are deployed using the first signer/account by default
 
-        const {merkleTree, regimentId, regiment}
-            = await deployMerkleTreeFixture()
-
         const {elf, usdt, weth} = await deployTokensFixture();
         const LIB = await ethers.getContractFactory("CommonLibrary");
         const lib = await LIB.deploy();
@@ -33,7 +30,7 @@ describe("BridgeOut", function () {
             });
 
         const bridgeOutImplementation = await BridgeOutImplementation.deploy();
-        const bridgeOutProxy = await BridgeOut.deploy(merkleTree.address, regiment.address, bridgeInMock.address, approveController.address, multiSign.address, weth.address, bridgeOutImplementation.address);
+        const bridgeOutProxy = await BridgeOut.deploy(bridgeInMock.address, approveController.address, multiSign.address, weth.address, bridgeOutImplementation.address);
         const bridgeOut = BridgeOutImplementation.attach(bridgeOutProxy.address);
 
         const LimiterImplementation = await ethers.getContractFactory("LimiterImplementation");
@@ -76,49 +73,6 @@ describe("BridgeOut", function () {
         const weth = await WETH.deploy();
 
         return {elf, usdt, weth};
-    }
-
-    async function deployRegimentFixture() {
-        // Contracts are deployed using the first signer/account by default
-        const _memberJoinLimit = 10;
-        const _regimentLimit = 20;
-        const _maximumAdminsCount = 3;
-
-        const [owner] = await ethers.getSigners();
-        const RegimentImplementation = await ethers.getContractFactory("RegimentImplementation");
-        const Regiment = await ethers.getContractFactory("Regiment");
-        const regimentImplementation = await RegimentImplementation.deploy();
-        const regimentProxy = await Regiment.deploy(_memberJoinLimit, _regimentLimit, _maximumAdminsCount, regimentImplementation.address);
-        const regiment = RegimentImplementation.attach(regimentProxy.address);
-
-        const _manager = owner.address;
-        const _initialMemberList = [owner.address];
-
-        let tx = await regiment.CreateRegiment(_manager, _initialMemberList);
-        const receipt = await tx.wait();
-        const data = receipt.logs[0].data;
-        const topics = receipt.logs[0].topics;
-        const interface = new ethers.utils.Interface(["event RegimentCreated(uint256 create_time, address manager,address[] InitialMemberList,bytes32 regimentId)"]);
-        const event = interface.decodeEventLog("RegimentCreated", data, topics);
-        let regimentId = event.regimentId;
-        let _newAdmins = [owner.address];
-        let originSenderAddress = owner.address;
-        await regiment.AddAdmins(regimentId, _newAdmins);
-
-        return {regiment, owner, regimentId};
-    }
-
-    async function deployMerkleTreeFixture() {
-        // Contracts are deployed using the first signer/account by default
-        const {regiment, owner, regimentId} = await loadFixture(deployRegimentFixture);
-
-        const MerkleTreeImplementation = await ethers.getContractFactory("MerkleTreeImplementation");
-        const MerkleTree = await ethers.getContractFactory("MerkleTree");
-        const merkleTreeImplementation = await MerkleTreeImplementation.deploy();
-        const merkleTreeProxy = await MerkleTree.deploy(regiment.address, merkleTreeImplementation.address);
-        const merkleTree = MerkleTreeImplementation.attach(merkleTreeProxy.address);
-
-        return {merkleTree, owner, regimentId, regiment};
     }
 
     describe("deploy", function () {

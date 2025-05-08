@@ -12,7 +12,6 @@ import "./libraries/BridgeInLibrary.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
-import "hardhat/console.sol";
 
 contract BridgeInImplementation is ProxyStorage {
     using SafeMath for uint256;
@@ -212,7 +211,7 @@ contract BridgeInImplementation is ProxyStorage {
         generateReceipt(token, amount, targetChainId, targetAddress);
     }
 
-    function _approveAndLockToken(address token, uint256 amount, string calldata targetChainId, bytes32 tokenKey) internal {
+    function _approveAndLockToken(address token, uint256 amount, string calldata targetChainId) internal {
         _approve(token, tokenPool, amount);
         _lock(token, amount, targetChainId, msg.sender);
     }
@@ -236,7 +235,7 @@ contract BridgeInImplementation is ProxyStorage {
         bytes32 targetAddress
     ) internal {
         bytes32 tokenKey = _getTokenKey(token, targetChainId);
-        _approveAndLockToken(token, amount, targetChainId, tokenKey);
+        _approveAndLockToken(token, amount, targetChainId);
         tokenReceiptIndex[tokenKey] = tokenReceiptIndex[tokenKey].add(1);
         uint256 receiptIndex = tokenReceiptIndex[tokenKey];
         string memory receiptId = _generateReceiptId(tokenKey, receiptIndex.toString());
