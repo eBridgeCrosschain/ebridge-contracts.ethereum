@@ -18,14 +18,17 @@ contract LimiterImplementation is ProxyStorage {
   address public bridgeIn;
   address public bridgeOut;
 
-  modifier onlyAdmin() {
-    require(msg.sender == admin, 'no permission');
-    _;
-  }
-  modifier onlyBridge() {
-    require(msg.sender == bridgeIn || msg.sender == bridgeOut, 'no permission');
-    _;
-  }
+    event TokenRateLimitConsumed(bytes32 bucketId, address tokenAddress, uint256 amount);
+    event TokenDailyLimitConsumed(bytes32 dailyLimitId, address tokenAddress, uint256 amount);
+
+    modifier onlyAdmin() {
+        require(msg.sender == admin, 'no permission');
+        _;
+    }
+    modifier onlyBridge() {
+        require(msg.sender == bridgeIn || msg.sender == bridgeOut, 'no permission');
+        _;
+    }
 
   function changeAdmin(address _admin) external onlyAdmin{
     require(_admin != address(0), "invalid input");
@@ -43,21 +46,23 @@ contract LimiterImplementation is ProxyStorage {
     bridgeOut = _bridgeOut;
   }
 
-  function consumeDailyLimit(
-    bytes32 dailyLimitId,
-    address tokenAddress,
-    uint256 amount
-  ) external onlyBridge {
-    dailyLimit[dailyLimitId]._consume(tokenAddress, amount);
-  }
+    function consumeDailyLimit(
+        bytes32 dailyLimitId,
+        address tokenAddress,
+        uint256 amount
+    ) external onlyBridge {
+        dailyLimit[dailyLimitId]._consume(tokenAddress, amount);
+        emit TokenDailyLimitConsumed(dailyLimitId, tokenAddress, amount);
+    }
 
-  function consumeTokenBucket(
-    bytes32 bucketId,
-    address tokenAddress,
-    uint256 amount
-  ) external onlyBridge {
-    tokenBucket[bucketId]._consume(tokenAddress, amount);
-  }
+    function consumeTokenBucket(
+        bytes32 bucketId,
+        address tokenAddress,
+        uint256 amount
+    ) external onlyBridge {
+        tokenBucket[bucketId]._consume(tokenAddress, amount);
+        emit TokenRateLimitConsumed(bucketId,tokenAddress, amount);
+    }
 
   function setDailyLimit(
     DailyLimiter.DailyLimitConfig[] memory dailyLimitConfigs

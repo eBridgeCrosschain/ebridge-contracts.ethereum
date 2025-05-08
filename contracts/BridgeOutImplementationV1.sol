@@ -6,16 +6,14 @@ import "./interfaces/MerkleTreeInterface.sol";
 import "./interfaces/RegimentInterface.sol";
 import "./interfaces/NativeTokenInterface.sol";
 import "./interfaces/RampInterface.sol";
-import "./libraries/CommonLibrary.sol";
-import "./libraries/StringHex.sol";
-import "hardhat/console.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
-
+import "./libraries/CommonLibrary.sol";
+import "./libraries/StringHex.sol";
 
 
 pragma solidity 0.8.9;
@@ -93,7 +91,7 @@ contract BridgeOutImplementationV1 is ProxyStorage {
     );
 
     modifier onlyBridgeInContract() {
-        require(msg.sender == bridgeIn, "no permission");
+        require(msg.sender == bridgeIn, "BridgeOut:only for BridgeIn call");
         _;
     }
     modifier onlyWallet() {
@@ -135,13 +133,13 @@ contract BridgeOutImplementationV1 is ProxyStorage {
     }
 
     function changeMultiSignWallet(address _multiSigWallet) external onlyOwner {
-        require(_multiSigWallet != address(0), "invalid input");
+        require(_multiSigWallet != address(0), "BridgeOut:invalid input");
         multiSigWallet = _multiSigWallet;
     }
     
     function setCrossChainConfig(CommonLibrary.CrossChainConfig[] calldata _configs, address _oracleContract) external {
         oracleContract = _oracleContract;
-        require(_configs.length > 0, "invalid input");
+        require(_configs.length > 0, "BridgeOut:invalid input");
         for (uint i = 0; i < _configs.length; i++) {
             crossChainConfigMap[_configs[i].chainId] = CommonLibrary.CrossChainConfig(
                 _configs[i].bridgeContractAddress,
@@ -158,19 +156,19 @@ contract BridgeOutImplementationV1 is ProxyStorage {
     function createSwap(
         SwapTargetToken calldata targetToken
     ) external onlyWallet {
-        require(targetToken.token != address(0), "invalid input");
+        require(targetToken.token != address(0), "BridgeOut:invalid input");
         require(
             targetTokenList.length() < MaxTokenKeyCount,
-            "token list exceed"
+            "BridgeOut:token list exceed"
         );
         bytes32 tokenKey = _getTokenKey(
             targetToken.token,
             targetToken.fromChainId
         );
-        require(!targetTokenList.contains(tokenKey), "target token already exist");
+        require(!targetTokenList.contains(tokenKey), "BridgeOut:target token already exist");
         require(
             targetToken.originShare > 0 && targetToken.targetShare > 0,
-            "invalid swap ratio"
+            "BridgeOut:invalid swap ratio"
         );
         bytes32 swapId = keccak256(msg.data);
         swapInfos[swapId] = SwapInfo(swapId, bytes32(0), targetToken);
@@ -188,17 +186,18 @@ contract BridgeOutImplementationV1 is ProxyStorage {
         bytes memory message,
         IRamp.TokenTransferMetadata memory tokenTransferMetadata
     ) external whenNotPaused onlyOracle {
-        require(targetChainId == block.chainid, "invalid chain id");
+        require(targetChainId == block.chainid, "BridgeOut:invalid chain id");
         CommonLibrary.CrossChainConfig memory crossChainConfig = crossChainConfigMap[uint32(sourceChainId)];
-        require(crossChainConfig.chainId == uint32(sourceChainId), "invalid source chain id");
-        require(CommonLibrary.compareStrings(sender, crossChainConfig.bridgeContractAddress), "invalid sender");
-        require(receiver == address(this), "invalid receiver");
+        require(crossChainConfig.chainId == uint32(sourceChainId), "BridgeOut:invalid source chain id");
+        require(CommonLibrary.compareStrings(sender, crossChainConfig.bridgeContractAddress), "BridgeOut:invalid sender");
+        require(receiver == address(this), "BridgeOut:invalid receiver");
         bytes32 swapHashId = tokenTransferMetadata.extraData.bytesToBytes32();
         CommonLibrary.ReceiptInfo memory receiptInfo = CommonLibrary.decodeMessageAndVerify(message);
         SwapInfo storage swapInfo = swapInfos[swapHashId];
-        require(ledger[receiptInfo.receiptHash].leafNodeIndex == 0, "already recorded");
-        require(receiptInfo.amount > 0, "invalid amount");
-        require(swapInfo.targetToken.token == CommonLibrary.toAddress(tokenTransferMetadata.tokenAddress), "invalid token");
+        require(swapInfo.swapId != bytes32(0), "BridgeOut:swap pair not found");
+        require(ledger[receiptInfo.receiptHash].leafNodeIndex == 0, "BridgeOut:already recorded");
+        require(receiptInfo.amount > 0, "BridgeOut:invalid amount");
+        require(swapInfo.targetToken.token == CommonLibrary.toAddress(tokenTransferMetadata.tokenAddress), "BridgeOut:invalid token");
         ledger[receiptInfo.receiptHash].leafNodeIndex = 1;
         _completeReceipt(receiptInfo, swapInfo);
         emit NewTransmission(swapHashId, msg.sender, receiptInfo.receiptId, receiptInfo.receiptHash);
@@ -218,7 +217,7 @@ contract BridgeOutImplementationV1 is ProxyStorage {
         bytes32 swapId = swapInfo.swapId;
         address receiverAddress = receiptInfo.receiveAddress;
         SwapAmounts storage swapAmounts = ledger[receiptInfo.receiptHash];
-        require(swapAmounts.receiver == address(0), "already claimed");
+        require(swapAmounts.receiver == address(0), "BridgeOut:already claimed");
         swapAmounts.receiver = receiverAddress;
         address token = swapInfo.targetToken.token;
         ILimiter(limiter).consumeDailyLimit(swapId, token, targetTokenAmount);
@@ -257,17 +256,32 @@ contract BridgeOutImplementationV1 is ProxyStorage {
     function getSwapInfo(
         bytes32 swapId
     )
-        external
-        view
-        returns (
-            string memory fromChainId,
-            address token,
-            SwapTargetToken memory targetToken
-        )
+    external
+    view
+    returns (
+        string memory fromChainId,
+        bytes32 regimentId,
+        bytes32 spaceId,
+        address token,
+        SwapTargetToken memory targetToken
+    )
     {
         fromChainId = swapInfos[swapId].targetToken.fromChainId;
+        regimentId = swapInfos[swapId].regimentId;
+        spaceId = swapInfos[swapId].spaceId;
         token = swapInfos[swapId].targetToken.token;
         targetToken = swapInfos[swapId].targetToken;
+    }
+    
+    function updateSwapRatio(
+        bytes32 swapId,
+        uint64 originShare,
+        uint64 targetShare
+    ) external onlyWallet {
+        require(swapInfos[swapId].swapId != bytes32(0), "BridgeOut:swap pair not found");
+        require(originShare > 0 && targetShare > 0, "BridgeOut:invalid swap ratio");
+        swapInfos[swapId].targetToken.originShare = originShare;
+        swapInfos[swapId].targetToken.targetShare = targetShare;
     }
 
 }
