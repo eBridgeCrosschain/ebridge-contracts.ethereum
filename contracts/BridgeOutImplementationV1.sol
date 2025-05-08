@@ -108,15 +108,13 @@ contract BridgeOutImplementationV1 is ProxyStorage {
     }
 
     function initialize(
-        address _regiment,
         address _bridgeIn,
         address _tokenAddress,
         address _multiSigWallet,
         address _limiter,
         address _tokenPool
     ) external onlyOwner {
-        require(regiment == address(0), "already initialized");
-        regiment = _regiment;
+        require(bridgeIn == address(0), "already initialized");
         bridgeIn = _bridgeIn;
         tokenAddress = _tokenAddress;
         multiSigWallet = _multiSigWallet;
@@ -137,7 +135,7 @@ contract BridgeOutImplementationV1 is ProxyStorage {
         multiSigWallet = _multiSigWallet;
     }
     
-    function setCrossChainConfig(CommonLibrary.CrossChainConfig[] calldata _configs, address _oracleContract) external {
+    function setCrossChainConfig(CommonLibrary.CrossChainConfig[] calldata _configs, address _oracleContract) external onlyBridgeInContract {
         oracleContract = _oracleContract;
         require(_configs.length > 0, "BridgeOut:invalid input");
         for (uint i = 0; i < _configs.length; i++) {
@@ -202,14 +200,7 @@ contract BridgeOutImplementationV1 is ProxyStorage {
         _completeReceipt(receiptInfo, swapInfo);
         emit NewTransmission(swapHashId, msg.sender, receiptInfo.receiptId, receiptInfo.receiptHash);
     }
-
-    function _checkParams(bytes32 swapId) private view returns (SwapInfo storage){
-        require(!isPaused, "BridgeOut:paused");
-        SwapInfo storage swapInfo = swapInfos[swapId];
-        require(swapInfo.swapId != bytes32(0), "swap pair not found");
-        return swapInfo;
-    }
-
+    
     function _completeReceipt(CommonLibrary.ReceiptInfo memory receiptInfo, SwapInfo memory swapInfo) private {
         uint256 targetTokenAmount = receiptInfo.amount
             .mul(swapInfo.targetToken.targetShare)
@@ -260,15 +251,11 @@ contract BridgeOutImplementationV1 is ProxyStorage {
     view
     returns (
         string memory fromChainId,
-        bytes32 regimentId,
-        bytes32 spaceId,
         address token,
         SwapTargetToken memory targetToken
     )
     {
         fromChainId = swapInfos[swapId].targetToken.fromChainId;
-        regimentId = swapInfos[swapId].regimentId;
-        spaceId = swapInfos[swapId].spaceId;
         token = swapInfos[swapId].targetToken.token;
         targetToken = swapInfos[swapId].targetToken;
     }

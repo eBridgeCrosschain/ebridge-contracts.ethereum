@@ -10,7 +10,6 @@ pragma solidity 0.8.9;
 
 contract BridgeOut is Proxy {
     constructor(
-        address _regiment,
         address _bridgeIn,
         address _multiSigWallet,
         address _tokenAddress,
@@ -19,7 +18,6 @@ contract BridgeOut is Proxy {
         address _implementation
     ) Proxy(_implementation) {
         require(
-                _regiment != address(0) &&
                 _bridgeIn != address(0) &&
                 _tokenAddress != address(0) &&
                 _limiter != address(0) && 
@@ -30,8 +28,7 @@ contract BridgeOut is Proxy {
         delegateTo(
             _implementation,
             abi.encodeWithSignature(
-                "initialize(address,address,address,address,address,address)",
-                _regiment,
+                "initialize(address,address,address,address,address)",
                 _bridgeIn,
                 _tokenAddress,
                 _multiSigWallet,

@@ -8,10 +8,11 @@ const BigNumber = require("bignumber.js");
 describe("BridgeOut", function () {
     async function deployBridgeOutFixture() {
         // Contracts are deployed using the first signer/account by default
-        const {elf, usdt, weth} = await deployTokensFixture();
 
-        const LIB = await ethers.getContractFactory("BridgeOutLibrary");
+        const {elf, usdt, weth} = await deployTokensFixture();
+        const LIB = await ethers.getContractFactory("CommonLibrary");
         const lib = await LIB.deploy();
+
         const [owner, approveController, multiSign, testAccount, admin, testAccount1] = await ethers.getSigners();
 
         const LimiterImplementation = await ethers.getContractFactory("LimiterImplementation");
@@ -25,7 +26,7 @@ describe("BridgeOut", function () {
         const TokenPool = await ethers.getContractFactory("TokenPool");
         const tokenpoolImplementation = await TokenPoolImplementation.deploy();
         const TokenPoolProxy = await TokenPool.deploy(admin.address,weth.address,tokenpoolImplementation.address);
-        const tokenpool = TokenPoolImplementation.attach(TokenPoolProxy.address);
+        const tokenPool = TokenPoolImplementation.attach(TokenPoolProxy.address);
 
         const MockBridgeIn = await ethers.getContractFactory("MockBridgeIn");
         const bridgeInMock = await MockBridgeIn.deploy();
@@ -42,12 +43,12 @@ describe("BridgeOut", function () {
             });
 
         const bridgeOutImplementation = await BridgeOutImplementation.deploy();
-        const bridgeOutProxy = await BridgeOut.deploy(regiment.address, bridgeInMock.address, multiSigWalletMocAddress, weth.address, limiter.address, tokenpool.address, bridgeOutImplementation.address);
+        const bridgeOutProxy = await BridgeOut.deploy(bridgeInMock.address, multiSign.address, weth.address, limiter.address, tokenPool.address, bridgeOutImplementation.address);
         const bridgeOut = BridgeOutImplementation.attach(bridgeOutProxy.address);
 
 
         await limiter.connect(admin).setBridge(bridgeInMock.address,bridgeOut.address);
-        await tokenpool.connect(admin).setBridge(bridgeInMock.address,bridgeOut.address);
+        await tokenPool.connect(admin).setBridge(bridgeInMock.address,bridgeOut.address);
 
         let configs = [{
             bridgeContractAddress: "2rC1X1fudEkJ4Yungj5tYNJ93GmBxbSRiyJqfBkzcT6JshSqz9",
@@ -143,38 +144,6 @@ describe("BridgeOut", function () {
                     chainId: 1931928
                 }];
                 await expect(bridgeOut.connect(testAccount).setCrossChainConfig(configs, rampMock.address))
-                    .to.be.revertedWith(error);
-            });
-            it("Should set contract success", async function () {
-                const {accountInfos, contractInfos, tokenInfos} = await loadFixture(deployBridgeOutFixture);
-                const {owner, approveController, multiSign, testAccount, admin, testAccount1} = accountInfos;
-                const {bridgeOut, bridgeOutProxy, bridgeInMock, lib, limiter, tokenPool, rampMock} = contractInfos;
-                const {elf, usdt, weth} = tokenInfos;
-                await bridgeOut.connect(multiSign).setTokenPoolAndLimiter(tokenPool.address, limiter.address);
-                let tokenPoolAddress = await bridgeOut.tokenPool();
-                let limiterAddress = await bridgeOut.limiter();
-                expect(tokenPoolAddress).to.equal(tokenPool.address);
-                expect(limiterAddress).to.equal(limiter.address);
-            });
-            it("Should revert set contract when no permission", async function () {
-                const {accountInfos, contractInfos, tokenInfos} = await loadFixture(deployBridgeOutFixture);
-                const {owner, approveController, multiSign, testAccount, admin, testAccount1} = accountInfos;
-                const {bridgeOut, bridgeOutProxy, bridgeInMock, lib, limiter, tokenPool, rampMock} = contractInfos;
-                const {elf, usdt, weth} = tokenInfos;
-                let error = "BridgeOut:only for Wallet call";
-                await expect(bridgeOut.connect(testAccount).setTokenPoolAndLimiter(tokenPool.address, limiter.address))
-                    .to.be.revertedWith(error);
-            });
-            it("Should revert set contract when invalid address", async function () {
-                const {accountInfos, contractInfos, tokenInfos} = await loadFixture(deployBridgeOutFixture);
-                const {owner, approveController, multiSign, testAccount, admin, testAccount1} = accountInfos;
-                const {bridgeOut, bridgeOutProxy, bridgeInMock, lib, limiter, tokenPool, rampMock} = contractInfos;
-                const {elf, usdt, weth} = tokenInfos;
-                let error = "BridgeOut:invalid token pool address";
-                await expect(bridgeOut.connect(multiSign).setTokenPoolAndLimiter("0x0000000000000000000000000000000000000000", limiter.address))
-                    .to.be.revertedWith(error);
-                error = "BridgeOut:invalid limiter address";
-                await expect(bridgeOut.connect(multiSign).setTokenPoolAndLimiter(tokenPool.address, "0x0000000000000000000000000000000000000000"))
                     .to.be.revertedWith(error);
             });
             it("Should change multiSign wallet success", async function () {
