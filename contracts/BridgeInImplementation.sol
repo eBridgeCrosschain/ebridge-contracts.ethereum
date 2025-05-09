@@ -8,7 +8,6 @@ import "./interfaces/RampInterface.sol";
 import "./interfaces/TokenPoolInterface.sol";
 import "./libraries/CommonLibrary.sol";
 import "./libraries/StringHex.sol";
-import "./libraries/BridgeInLibrary.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
@@ -41,7 +40,6 @@ contract BridgeInImplementation is ProxyStorage {
     address public limiter;
     address public tokenPool;
     address public oracleContract;
-    BridgeInLibrary.ChainMapping private chainMapping;
     mapping(string => CommonLibrary.CrossChainConfig) private crossChainConfigMap;
 
     modifier whenNotPaused() {
