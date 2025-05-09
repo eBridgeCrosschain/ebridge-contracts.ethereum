@@ -11,26 +11,21 @@ async function main() {
     console.log("Sending tx with the account:", sender.address);
     console.log("Sender account balance:", (await sender.getBalance()).toString());
 
-    const RegimentAddress = '0x180A7f033E5dCeFEB85Ed045957FE82a0B97efC0';
-    const RegimentImplementationAddress = '0x0C5ADDA344F68961038739E9B405202dd8F7DEd8';
-    
-    const MerkleTreeAddress = '0xdCb341739e9F4f46ACFCb31EEf81C8560d1835fB';
-    const MerkleTreeImplementationAddress = '0xE5673B2541A2D5C9ed3fEA648d88ac05C677f83C';
-    
-    const BridgeInLib = '0x4A91FE2893c77F7C9a44bbDE1a4d226DDe0612ed';
+    const CommonLib = '0xC33cC89EF5D4Ef845eD280886dee803937506857';
     const BridgeInAddress = '0xbAf5D0cA1e63CD10E479F227d2dc88E066F63872';
-    const BridgeInImplementationAddress = '0x01A2EA8D36283F2dc93F31EB8378c1E737938ef4';
+    const BridgeInImplementationAddress = '0xD7C80E5035D4Bb2630E8367Ca7a0b9Db9F3A2717';
 
-    const BridgeOutLib = '0x15BBf8aBBC1c9cfcAc1498dD4E066f1483bAF185';
     const BridgeOutAddress = '0xE383261ABc2A32bdd54dC9cFB5C77407C5E660ef';
-    const BridgeOutImplementationAddress = '0x61e8A390c0bD8a49E2E54568F62169beb2026115';
+    const BridgeOutImplementationAddress = '0xE30382636E09a94aAF7b7e8e03a948624AbdE284';
 
     const LimiterAddress = '0xAA8a4d12F7272fFA2e67F82c88D628f0E629299B';
-    const LimiterImplementationAddress = '0xBc170837fd38F8BB0d81d9bE5327b7A9613a7D85';
+    const LimiterImplementationAddress = '0xDcB192379260A29DE6D9C4ce4BAc6f663599dad9';
 
     const TimelockAddress = '0xBDDfac1151A307e1bF7A8cEA4fd7999eF67bdb41';
     const MultiSigWalletAddress = '0x6f1084A0D432201499C3a9ebFc52999Dd80ec749';
 
+    const tokenPoolImplementationAddress = '';
+    const tokenPoolAddress = '';
 
     // elfAddress = "0xbf2179859fc6D5BEE9Bf9158632Dc51678a4100e";
     // usdtAddress = "0xdAC17F958D2ee523a2206206994597C13D831ec7";
@@ -38,28 +33,13 @@ async function main() {
 
     const BridgeInImplementation = await ethers.getContractFactory("BridgeInImplementation",{
         libraries:{
-            BridgeInLibrary : BridgeInLib
+            CommonLibrary : CommonLib
         }
     });
     const bridgeInImplementation = await BridgeInImplementation.attach(BridgeInAddress);
 
-    const BridgeOutLibrary = await ethers.getContractFactory("BridgeOutLibrary");
-    const lib = await BridgeOutLibrary.attach(BridgeOutLib);
-
     const BridgeIn = await ethers.getContractFactory("BridgeIn");
     const bridgeIn = await BridgeIn.attach(BridgeInAddress);
-
-    const RegimentImplementation = await ethers.getContractFactory("RegimentImplementation");
-    const regimentImplementation = await RegimentImplementation.attach(RegimentAddress);
-
-    const Regiment = await ethers.getContractFactory("Regiment");
-    const regiment = await Regiment.attach(RegimentAddress);
-
-    const MerkleTreeImplementation = await ethers.getContractFactory("MerkleTreeImplementation");
-    const merkleTreeImplementation = await MerkleTreeImplementation.attach(MerkleTreeAddress);
-
-    const MerkleTree = await ethers.getContractFactory("MerkleTree");
-    const merkleTree = await MerkleTree.attach(MerkleTreeAddress);
 
     const MultiSign = await ethers.getContractFactory("MultiSigWallet");
     const multiSign = await MultiSign.attach(MultiSigWalletAddress);
@@ -69,7 +49,7 @@ async function main() {
 
     const BridgeOutImplementation = await ethers.getContractFactory("BridgeOutImplementationV1",{
         libraries:{
-            BridgeOutLibrary : BridgeOutLib
+            CommonLibrary : CommonLib
         }
     });
     const bridgeOutImplementation = await BridgeOutImplementation.attach(BridgeOutAddress);
@@ -78,15 +58,11 @@ async function main() {
     const bridgeOut = await BridgeOut.attach(BridgeOutAddress);
 
 
-    const LimiterImplementation = await ethers.getContractFactory("LimiterImplementation",{
-        libraries:{
-            BridgeInLibrary : BridgeInLib
-        }
-    });
+    const LimiterImplementation = await ethers.getContractFactory("LimiterImplementation");
     const limiterImplementation = await LimiterImplementation.attach(LimiterAddress);
 
-    let blockTimestamp = await getCurrentTimestampBigInt();
-    console.log(blockTimestamp);
+    // let blockTimestamp = await getCurrentTimestampBigInt();
+    // console.log(blockTimestamp);
 
     // let targetIn = bridgeIn.address;
     // console.log("bridge in:",targetIn);
@@ -124,15 +100,15 @@ async function main() {
     //     ));
     // console.log(queuedTxHash);
 
-
-    // let target = regiment.address;
+    //
+    // let target = LimiterAddress;
     // console.log("regiment:",target);
     // let delay = new BigNumber(86400);
     // let eta = new BigNumber(blockTimestamp).plus(delay);
     // let value = new BigNumber(0);;
     // let signature = 'updateImplementation(address)';
     // console.log("signature regiment:",signature);
-    // let data = encodeParameters(['address'], [RegimentImplementationAddress]);
+    // let data = encodeParameters(['address'], [LimiterImplementationAddress]);
     // console.log("data regiment:",data);
     // console.log("eta regiment:",eta.toString());
     // queuedTxHash = keccak256(
@@ -141,6 +117,60 @@ async function main() {
     //     [target, value.toString(), signature, data, eta.toString()]
     //     ));
     // console.log(queuedTxHash);
+
+    {
+        let ABI = [
+            "function setCrossChainConfig(tuple(string bridgeContractAddress,string targetChainId,uint32 chainId)[] _configs, address _oracleContract)"
+        ];
+        let iface = new ethers.utils.Interface(ABI);
+        console.log(iface);
+        let configs = [{
+            bridgeContractAddress:"2dKF3svqDXrYtA5mYwKfADiHajo37mLZHPHVVuGbEDoD9jSgE8",
+            targetChainId:"MainChain_AELF",
+            chainId:9992731
+        },{
+            bridgeContractAddress:"GZs6wyPDfz3vdEmgVd3FyrQfaWSXo9uRvc7Fbp5KSLKwMAANd",
+            targetChainId:"SideChain_tDVV",
+            chainId:1866392
+        }];
+        const ramp = "0x1AB10f471Fb3b853A630315b6a804e07dD1636c6";
+        var data = iface.encodeFunctionData("setCrossChainConfig", [configs, ramp])
+        console.log(data);
+        var result = await multiSign.submitTransaction(BridgeInAddress, 0, data);
+        console.log(result)
+    }
+
+    {
+        let ABI = ["function setTokenBucketConfig(tuple(bytes32 bucketId,bool isEnabled,uint128 tokenCapacity,uint128 rate)[] configs)"];
+        let iface = new ethers.utils.Interface(ABI);
+        console.log(iface);
+        var configs = [{
+            bucketId:"0xaeb0ba8f685c0cd172993807a576d91e6e73099f9e98176ebe1fe266744cdfe4",
+            isEnabled:true,
+            tokenCapacity:'100000000000000000000000',
+            rate:'1000000000000000000000'
+        },{
+            bucketId:"0xef3c1594cd7a4884ba423af3da31fddc5ccf8c88ba9019e4ce04563e74ce6151",
+            isEnabled:true,
+            tokenCapacity:'100000000000000000000000',
+            rate:'1000000000000000000000'
+        },{
+            bucketId:"0x44c20e46d8122519ff562ac581f33ac08df5d68d99419c132d6a862554597641",
+            isEnabled:true,
+            tokenCapacity:'100000000000000000000000',
+            rate:'1000000000000000000000'
+        },{
+            bucketId:"0x26b7b1e1047438860a7315f14e628be1e08e359ce861344127f2df139dc4660e",
+            isEnabled:true,
+            tokenCapacity:'100000000000000000000000',
+            rate:'1000000000000000000000'
+        }
+        ]
+        var data = iface.encodeFunctionData("setTokenBucketConfig", [configs])
+        console.log(data);
+        var result = await multiSign.submitTransaction(LimiterAddress, 0, data);
+        console.log(result)
+    }
     
 
 }
