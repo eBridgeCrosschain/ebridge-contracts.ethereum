@@ -10,19 +10,17 @@ async function main() {
     //initailize
     console.log("Sending tx with the account:", sender.address);
     console.log("Sender account balance:", (await sender.getBalance()).toString());
-
-    const regimentAddress = '0xce037d7175C530E0c5e0B9473B8318eea111dA7a';
-    const regimentImplementationAddress = '0xcBE05A71Fba4cBf7490758305411B6F261722d68';
+    
     const limiterAddress = '0x01A2EA8D36283F2dc93F31EB8378c1E737938ef4';
-    const limiterImplementationAddress = '0x4A91FE2893c77F7C9a44bbDE1a4d226DDe0612ed';
+    const limiterImplementationAddress = '0x5cF9109928203F40A3D5cD0b1008a3cC224e6b0f';
     const tokenPoolAddress = '0x61e8A390c0bD8a49E2E54568F62169beb2026115';
     const tokenPoolImplementationAddress = '0x15BBf8aBBC1c9cfcAc1498dD4E066f1483bAF185';
-    const commonLibAddress = '0xB7d9a6C5D1Bee6e98d2d5ff475CcCa36e00bDBd6';
+    const commonLibAddress = '0xC29bA7eE3f608a43d2e256CA4A8E93De306575d1';
     const bridgeInImplementationAddress = '0x2C058424c076c9E12f299C0Af07DC89284c841c8';
-    const bridgeInAddress = '0x7e308DC172faa2a6560C2cd806e8282C51E5BFA5';
+    const bridgeInAddress = '0x06dFaE0488FCa172500EeAd593Cb978DC5c32193';
 
     const bridgeOutImplementationAddress = '0x2a4494Cd792Fa979180555F19f521E8D2C28c619';
-    const bridgeOutAddress = '0xA251aE4C14C53d980699b14319bf2Ad5A4bC4A14';
+    const bridgeOutAddress = '0xE30382636E09a94aAF7b7e8e03a948624AbdE284';
     const multiSigWalletAddress = '';
 
     const nativeTokenAddress = '0x4200000000000000000000000000000000000006';
@@ -42,12 +40,6 @@ async function main() {
 
     const BridgeIn = await ethers.getContractFactory("BridgeIn");
     const bridgeIn = await BridgeIn.attach(bridgeInAddress);
-
-    const RegimentImplementation = await ethers.getContractFactory("RegimentImplementation");
-    const regimentImplementation = await RegimentImplementation.attach(regimentAddress);
-
-    const Regiment = await ethers.getContractFactory("Regiment");
-    const regiment = await Regiment.attach(regimentAddress);
 
     const TokenPoolImplementation = await ethers.getContractFactory("TokenPoolImplementation");
     const tokenPoolImplementation = await TokenPoolImplementation.attach(tokenPoolAddress);
@@ -77,16 +69,29 @@ async function main() {
     // const TimeLock = await ethers.getContractFactory("Timelock");
     // const timelock = await TimeLock.attach(TimelockAddress);
 
-    const USDC = await ethers.getContractFactory("USDC");
-    const usdt = await USDC.attach(usdcAddress);
-
-    const WETH = await ethers.getContractFactory("WETH9");
-    const weth = await WETH.attach(nativeTokenAddress);
+    // const USDC = await ethers.getContractFactory("USDC");
+    // const usdt = await USDC.attach(usdcAddress);
+    //
+    // const WETH = await ethers.getContractFactory("WETH9");
+    // const weth = await WETH.attach(nativeTokenAddress);
     
     var chainIdMain = "MainChain_AELF";
     var chainIdSide = "SideChain_tDVV";
     
-    await bridgeInImplementation.updateImplementation(bridgeInImplementationAddress);
+    // await bridgeInImplementation.updateImplementation(bridgeInImplementationAddress);
+
+    // var configs = [{
+    //     bridgeContractAddress:"2dKF3svqDXrYtA5mYwKfADiHajo37mLZHPHVVuGbEDoD9jSgE8",
+    //     targetChainId:"MainChain_AELF",
+    //     chainId:9992731
+    // },{
+    //     bridgeContractAddress:"GZs6wyPDfz3vdEmgVd3FyrQfaWSXo9uRvc7Fbp5KSLKwMAANd",
+    //     targetChainId:"SideChain_tDVV",
+    //     chainId:1866392
+    // }];
+    // const ramp = "0x1AB10f471Fb3b853A630315b6a804e07dD1636c6";
+    // console.log(configs);
+    // await bridgeInImplementation.setCrossChainConfig(configs,ramp);
 
     // // 1. set bridge
     // console.log("Start to set bridge.")

@@ -13,14 +13,14 @@ async function main() {
     const regimentAddress = '0xce037d7175C530E0c5e0B9473B8318eea111dA7a';
     const regimentImplementationAddress = '0xcBE05A71Fba4cBf7490758305411B6F261722d68';
     const limiterAddress = '0x01A2EA8D36283F2dc93F31EB8378c1E737938ef4';
-    const limiterImplementationAddress = '0x4A91FE2893c77F7C9a44bbDE1a4d226DDe0612ed';
+    const limiterImplementationAddress = '0x5cF9109928203F40A3D5cD0b1008a3cC224e6b0f';
     const tokenPoolAddress = '0x61e8A390c0bD8a49E2E54568F62169beb2026115';
     const tokenPoolImplementationAddress = '0x15BBf8aBBC1c9cfcAc1498dD4E066f1483bAF185';
-    const bridgeInLibAddress = '0x0C5ADDA344F68961038739E9B405202dd8F7DEd8';
-    const bridgeInImplementationAddress = '0xfBB968F14DE8C5F7E0f3085223D341bb6D1B432E';
+    const commonLibAddress = '0xC29bA7eE3f608a43d2e256CA4A8E93De306575d1';
+    const bridgeInImplementationAddress = '0x84d53692c3FeFd20d8d3c0e62Fe9B57365BE52DF';
     const bridgeInAddress = '0x06dFaE0488FCa172500EeAd593Cb978DC5c32193';
     const bridgeOutLibAddress = '0xC33cC89EF5D4Ef845eD280886dee803937506857';
-    const bridgeOutImplementationAddress = '0xD7C80E5035D4Bb2630E8367Ca7a0b9Db9F3A2717';
+    const bridgeOutImplementationAddress = '0xD7385c037d8Cde9ABB877A95fdad40a363E5240c';
     const bridgeOutAddress = '0xE30382636E09a94aAF7b7e8e03a948624AbdE284';
     const multiSigWalletAddress = '';
     const timelockAddress = '';
@@ -104,11 +104,11 @@ async function main() {
     //     contract: "contracts/TokenPoolImplementation.sol:TokenPoolImplementation"
     // })
 
-    // Common library
-    console.log("Start to deploy CommonLib.");
-    const CommonLib = await ethers.getContractFactory("CommonLibrary");
-    const commonLib = await CommonLib.deploy();
-    console.log("common lib address:", commonLib.address);
+    // // Common library
+    // console.log("Start to deploy CommonLib.");
+    // const CommonLib = await ethers.getContractFactory("CommonLibrary");
+    // const commonLib = await CommonLib.deploy();
+    // console.log("common lib address:", commonLib.address);
 
 
     // // BridgeInImplementation
@@ -129,9 +129,9 @@ async function main() {
     // console.log("BridgeIn address:", bridgeInProxy.address);
 
     // await run("verify:verify", {
-    //     address: bridgeInLibAddress,
+    //     address: commonLibAddress,
     //     constructorArguments: [],
-    //     contract: "contracts/libraries/BridgeInLibrary.sol:BridgeInLibrary"
+    //     contract: "contracts/libraries/CommonLibrary.sol:CommonLibrary"
     // })
     // await run("verify:verify", {
     //     address: bridgeInImplementationAddress,
@@ -151,7 +151,7 @@ async function main() {
     // const bridgeOutLib = await BridgeOutLib.deploy();
     // console.log("bridgeOutLib address:", bridgeOutLib.address);
 
-    
+    //
     // // BridgeOutImplementationV1
     // console.log("Start to deploy BridgeOutImplementationV1 contract.");
     // const BridgeOutImplementation = await ethers.getContractFactory("BridgeOutImplementationV1",{
@@ -173,11 +173,11 @@ async function main() {
     //     constructorArguments: [],
     //     contract: "contracts/libraries/BridgeOutLibrary.sol:BridgeOutLibrary"
     // })
-    // await run("verify:verify", {
-    //     address: bridgeOutImplementationAddress,
-    //     constructorArguments: [],
-    //     contract: "contracts/BridgeOutImplementationV1.sol:BridgeOutImplementationV1"
-    // })
+    await run("verify:verify", {
+        address: bridgeOutImplementationAddress,
+        constructorArguments: [],
+        contract: "contracts/BridgeOutImplementationV1.sol:BridgeOutImplementationV1"
+    })
     // await run("verify:verify", {
     //     address: bridgeOutAddress,
     //     constructorArguments: [regimentAddress, bridgeInAddress ,mockMultiSigWalletAddress, nativeTokenAddress, limiterAddress, tokenPoolAddress, bridgeOutImplementationAddress],
