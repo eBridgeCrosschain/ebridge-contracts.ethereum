@@ -13,19 +13,17 @@ async function main() {
 
     const RegimentAddress = '0x282BA3b79B47Bcbcf56d4C729ebe82b0E3Ed2e16';
     const RegimentImplementationAddress = '0xC109d3298F6fbcb18c5890e91fa4b3E9Ee3FbE20';
-    
+
     const MerkleTreeAddress = '0x1B74aFb1d664597Fcd39301B0Eee43fc605E7FC0';
     const MerkleTreeImplementationAddress = '0x3B380dD87a41Ab01dd64fAd9c311ceBa9B12EA60';
-    
-    const BridgeInLib = '0x2484DD3f5a8f0425E910f2B4cdD687ba7deF5516';
-    const BridgeInAddress = '0xD032D743A87586039056E3d35894D9F0560E26Be';
-    const BridgeInImplementationAddress = '0x45CbDf520A91556736826FC6063A53838f1144CA';
 
-    const BridgeOutLib = '0xfE50386988d9ad9FAf4f6Cd44D9041FA597fc9bE';
-    const BridgeOutAddress = '0x4C6720dec7C7dcdE1c7B5E9dd2b327370AC9F834';
-    const BridgeOutImplementationAddress = '0x6050DF9F273D055bd84D5475Ee4B8aCFD16688a4';
+    const commonLib = '0xb01e9Dd2170348209525Cff6acecfeD57306dB30';
 
-    const LimiterAddress = '0x37cf44B567bA9e2a26E38B777Cc1001b7289324B';
+    const BridgeInAddress = '0xFA51BBf197183ce43509C67ce28095f66F60a518';
+
+    const BridgeOutAddress = '0xA56cb58f75D440258973dBC2a3D78237ca67b705';
+
+    const LimiterAddress = '0x22A05FEAb252fC903880EB37002862c997404AA0';
     const LimiterImplementationAddress = '0xF38C0Ba707b2398477B26BEa7EF28189290e7bD2';
 
     const TimelockAddress = '0x5e3c4c00aC600B00030a667D44bD96d299cdE2dc';
@@ -40,13 +38,10 @@ async function main() {
 
     const BridgeInImplementation = await ethers.getContractFactory("BridgeInImplementation",{
         libraries:{
-            BridgeInLibrary : BridgeInLib
+            CommonLibrary : commonLib
         }
     });
     const bridgeInImplementation = await BridgeInImplementation.attach(BridgeInAddress);
-
-    const BridgeOutLibrary = await ethers.getContractFactory("BridgeOutLibrary");
-    const lib = await BridgeOutLibrary.attach(BridgeOutLib);
 
     const BridgeIn = await ethers.getContractFactory("BridgeIn");
     const bridgeIn = await BridgeIn.attach(BridgeInAddress);
@@ -71,7 +66,7 @@ async function main() {
 
     const BridgeOutImplementation = await ethers.getContractFactory("BridgeOutImplementationV1",{
         libraries:{
-            BridgeOutLibrary : BridgeOutLib
+            CommonLibrary : commonLib
         }
     });
     const bridgeOutImplementation = await BridgeOutImplementation.attach(BridgeOutAddress);
@@ -80,11 +75,7 @@ async function main() {
     const bridgeOut = await BridgeOut.attach(BridgeOutAddress);
 
 
-    const LimiterImplementation = await ethers.getContractFactory("LimiterImplementation",{
-        libraries:{
-            BridgeInLibrary : BridgeInLib
-        }
-    });
+    const LimiterImplementation = await ethers.getContractFactory("LimiterImplementation");
     const limiterImplementation = await LimiterImplementation.attach(LimiterAddress);
 
     const TokenPoolImplementation = await ethers.getContractFactory("TokenPoolImplementation");
@@ -159,59 +150,26 @@ async function main() {
     // console.log("token key:",tokenKeySide);
 
     // step 3: set daily limit
-    console.log("Start to set daily limit.")
-    const date = new Date();
-    const timestamp = Date.UTC(date.getFullYear(), date.getMonth(), date.getUTCDate(), 0, 0, 0, 0);
-    var refreshTime = timestamp  / 1000;
-    console.log(refreshTime);
+    // console.log("Start to set daily limit.")
+    // const date = new Date();
+    // const timestamp = Date.UTC(date.getFullYear(), date.getMonth(), date.getUTCDate(), 0, 0, 0, 0);
+    // var refreshTime = timestamp  / 1000;
+    // console.log(refreshTime);
     var config = [
         {
-           "dailyLimitId": "0x84e2d7a1b46b78b674e9c8bc819ef44376010d356db81f755ce4e56569cc28dd",
+           "dailyLimitId": "0xe85462293133eb8949b1e36fe0638f428f0c858b32873b093f7c2bc94fb0973f",
            "refreshTime": refreshTime,
-           "defaultTokenAmount": "100000000000000000000000"
-        },
-        {
-            "dailyLimitId": "0x09fab89c0f8c9da14b697737de77d3abb4356c3deb6da1d6f049f620390bbed0",
-            "refreshTime": refreshTime,
-            "defaultTokenAmount": "100000000000000000000000"
-        },
-        {
-           "dailyLimitId": "0x854518791703abea8507f0004e9b1a8331bd5616a3cb8d7e0e5933ff581f8ffc",
-           "refreshTime": refreshTime,
-           "defaultTokenAmount": "100000000000000000000000"
-        },
-        {
-            "dailyLimitId": "0xef9639bf4102e36447cf5f1f4d67739032890f04849b64714a90e4a55dbfe689",
-            "refreshTime": refreshTime,
-            "defaultTokenAmount": "100000000000000000000000"
+           "defaultTokenAmount": "5000000000000000000"
         }
     ];
-    await limiterImplementation.setDailyLimit(config);
+    // await limiterImplementation.setDailyLimit(config);
     // step 4: set rate limit
     console.log("Start to set rate limit.")
     var configs = [{
-        "bucketId": "0x84e2d7a1b46b78b674e9c8bc819ef44376010d356db81f755ce4e56569cc28dd",
+        "bucketId": "0xe85462293133eb8949b1e36fe0638f428f0c858b32873b093f7c2bc94fb0973f",
         "isEnabled": true,
-        "tokenCapacity": "10000000000000000000000",
-        "rate": "10000000000000000000000"
-      },
-      {
-        "bucketId": "0x09fab89c0f8c9da14b697737de77d3abb4356c3deb6da1d6f049f620390bbed0",
-        "isEnabled": true,
-        "tokenCapacity": "10000000000000000000000",
-        "rate": "10000000000000000000000"
-      },
-      {
-        "bucketId": "0x854518791703abea8507f0004e9b1a8331bd5616a3cb8d7e0e5933ff581f8ffc",
-        "isEnabled": true,
-        "tokenCapacity": "10000000000000000000000",
-        "rate": "10000000000000000000000"
-      },
-      {
-        "bucketId": "0xef9639bf4102e36447cf5f1f4d67739032890f04849b64714a90e4a55dbfe689",
-        "isEnabled": true,
-        "tokenCapacity": "10000000000000000000000",
-        "rate": "10000000000000000000000"
+        "tokenCapacity": "5000000000000000000",
+        "rate": "50000000000000000"
       }
     ];
     await limiterImplementation.setTokenBucketConfig(configs);

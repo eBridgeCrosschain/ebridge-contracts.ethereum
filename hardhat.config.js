@@ -9,7 +9,7 @@ require("@nomicfoundation/hardhat-toolbox");
 // }
 // console.log(result.parsed);
 // const API_KEY = process.env.apikey;
-
+//
 // console.log("API_KEY--------" + API_KEY)
 // Replace this private key with your Goerli account private key
 // To export your private key from Metamask, open Metamask and
@@ -49,15 +49,16 @@ module.exports = {
   },
   networks: {
     hardhat: {
+      chainId: 11155111,
       allowUnlimitedContractSize: true
-    }
+    },
     // bsc_test: {
-    //   url: "https://data-seed-prebsc-1-s1.binance.org:8545",
+    //   url: "https://bsc-testnet-rpc.publicnode.com",
     //   chainId: 97,
     //   accounts: [process.env.key0,process.env.key1]
     // },
     // sepolia: {
-    //   url: "https://sepolia.infura.io/v3/" + API_KEY,
+    //   url: "https://ethereum-sepolia-rpc.publicnode.com",
     //   chainId: 11155111,
     //   accounts: [process.env.key0,process.env.key1]
     // }
