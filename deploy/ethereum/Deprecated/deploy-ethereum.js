@@ -86,11 +86,11 @@ async function main() {
     // const LimiterImplementation = await ethers.getContractFactory("LimiterImplementation");
     // const limiterImplementation = await LimiterImplementation.deploy();
     // console.log("limiterImplementation address:", limiterImplementation.address);
-        await run("verify:verify", {
-    address: LimiterImplementationAddress,
-    constructorArguments: [],
-    contract: "contracts/LimiterImplementation.sol:LimiterImplementation"
-      })
+    //     await run("verify:verify", {
+    // address: LimiterImplementationAddress,
+    // constructorArguments: [],
+    // contract: "contracts/LimiterImplementation.sol:LimiterImplementation"
+    //   })
 
     //     //deploy regiment implementation
     // console.log("Start to deploy regiment implementation contract.");
